@@ -1,73 +1,133 @@
-# Welcome to your Lovable project
+# mindro-webapp
 
-## Project info
+A modern, full-featured web application for mental health professionals to manage their clinical practice, including scheduling, electronic health records, teleconsultation, financial management, and more.
 
-**URL**: https://lovable.dev/projects/16e25a9f-2d9a-4c9f-af5d-1e8f882fb900
+---
 
-## How can I edit this code?
+## Table of Contents
+- [Architecture](#architecture)
+- [Folder Structure](#folder-structure)
+- [Technologies](#technologies)
+- [Getting Started](#getting-started)
+- [Developing New Features](#developing-new-features)
+- [Fixing Bugs](#fixing-bugs)
+- [Contributing](#contributing)
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## Architecture
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/16e25a9f-2d9a-4c9f-af5d-1e8f882fb900) and start prompting.
+Mindro WebApp is a modular, scalable, and maintainable React application built with TypeScript and Vite. It uses a feature-based folder structure, state management with Zustand, and modern UI libraries. The app supports both professional and administrative roles, with protected routes and role-based access.
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend:** React 18, TypeScript, Vite
+- **State Management:** Zustand
+- **Routing:** React Router DOM
+- **UI:** Tailwind CSS, Radix UI, Lucide Icons
+- **Data Fetching:** React Query, Axios
+- **Authentication:** Context API
+- **Other:** date-fns, zod, embla-carousel, recharts, twilio-video
 
-**Use your preferred IDE**
+## Folder Structure
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+├── public/                 # Static assets
+├── src/
+│   ├── components/         # Reusable UI and feature components
+│   ├── context/            # React context providers (Auth, Theme, etc.)
+│   ├── hooks/              # Custom React hooks
+│   ├── lib/                # Utility functions
+│   ├── pages/              # Page components (routed)
+│   ├── services/           # API and business logic
+│   ├── stores/             # Zustand state slices
+│   ├── types/              # TypeScript types and interfaces
+│   ├── App.tsx             # Main app component
+│   ├── main.tsx            # Entry point
+│   └── index.css           # Global styles (Tailwind)
+├── package.json            # Project metadata and scripts
+├── vite.config.ts          # Vite configuration
+├── tailwind.config.ts      # Tailwind CSS configuration
+├── tsconfig.json           # TypeScript configuration
+└── README.md               # Project documentation
 ```
 
-**Edit a file directly in GitHub**
+## Technologies
+- **React 18**
+- **TypeScript**
+- **Vite**
+- **Tailwind CSS**
+- **Radix UI**
+- **Zustand**
+- **React Query**
+- **Axios**
+- **React Router DOM**
+- **Lucide React**
+- **date-fns**
+- **zod**
+- **twilio-video**
+- **Recharts**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Getting Started
 
-**Use GitHub Codespaces**
+### Prerequisites
+- Node.js (v18+ recommended)
+- npm or yarn
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Installation
+```bash
+npm install
+# or
+yarn install
+```
 
-## What technologies are used for this project?
+### Running the App (Development)
+```bash
+npm run dev
+# or
+yarn dev
+```
+The app will be available at [http://localhost:8080](http://localhost:8080).
 
-This project is built with:
+### Building for Production
+```bash
+npm run build
+# or
+yarn build
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Preview Production Build
+```bash
+npm run preview
+# or
+yarn preview
+```
 
-## How can I deploy this project?
+### Linting
+```bash
+npm run lint
+# or
+yarn lint
+```
 
-Simply open [Lovable](https://lovable.dev/projects/16e25a9f-2d9a-4c9f-af5d-1e8f882fb900) and click on Share -> Publish.
+## Developing New Features
+1. **Create a new component or page** in the appropriate folder under `src/components` or `src/pages`.
+2. **Add state logic** using Zustand slices in `src/stores` if needed.
+3. **Add routes** in `src/App.tsx` if your feature is a new page.
+4. **Use existing UI components** or create new ones following the project’s design system (Tailwind + Radix UI).
+5. **Write types** in `src/types` for new data structures.
+6. **Test your feature** locally and ensure it does not break existing functionality.
 
-## Can I connect a custom domain to my Lovable project?
+## Fixing Bugs
+1. **Reproduce the bug** and locate the relevant code (use the folder structure and component names for guidance).
+2. **Write tests or manual steps** to confirm the bug is fixed.
+3. **Follow the code style** (TypeScript, functional components, hooks, Zustand for state).
+4. **Run linting** and ensure no errors remain.
+5. **Commit with a clear message** describing the fix.
 
-Yes, you can!
+## Contributing
+- Fork the repository and create a feature branch.
+- Follow the existing code style and structure.
+- Open a pull request with a clear description of your changes.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+For more details, see the code comments and explore the `src/` directory for examples of best practices.
