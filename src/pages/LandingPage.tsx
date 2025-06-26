@@ -12,28 +12,15 @@ const LandingPage: React.FC = () => {
           {/* Hero content */}
           <div className="lg:w-1/2 space-y-6">
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 dark:text-white">
-              Com a nossa plataforma, você <span className="text-indigo-600">cuida dos seus pacientes</span> — nós cuidamos do resto.
+              Plataforma para <span className="text-indigo-600">Profissionais</span> de Saúde Mental
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-lg">
-              Plataforma completa para profissionais de saúde mental com agendamento e confirmação por IA integrado no WhatsApp do profissional.
+              Simplifique a gestão do seu consultório com nossa plataforma completa. 
+              Agendamentos, prontuário eletrônico, teleconsultas e muito mais.
             </p>
-            <div className="bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-500">
-              <p className="text-indigo-800 font-medium">
-                🎁 Comece agora com 7 dias grátis
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Link to="/register">
-                <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white px-8">
-                  Começar Grátis Agora
-                </Button>
-              </Link>
-              <Link to="/platform/resources">
-                <Button variant="outline" size="lg" className="border-indigo-600 text-indigo-600 hover:bg-indigo-50">
-                  Conheça os Recursos
-                </Button>
-              </Link>
-            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Especialmente desenvolvido para Psicólogos, Psicanalistas, Terapeutas e Neuropsicólogos.
+            </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               ✅ Agendamento inteligente com IA • ✅ WhatsApp integrado • ✅ Sem burocracia
             </p>
@@ -115,7 +102,7 @@ const LandingPage: React.FC = () => {
             </h2>
             <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               Descubra como a mindro pode transformar sua prática profissional com 
-              7 dias grátis, sem necessidade de cartão de crédito.
+              7 dias grátis em qualquer plano, sem necessidade de cartão de crédito.
             </p>
           </div>
           
@@ -127,7 +114,7 @@ const LandingPage: React.FC = () => {
             </Link>
             <Link to="/register">
               <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                Começar Grátis (7 dias)
+                Cadastrar
               </Button>
             </Link>
           </div>

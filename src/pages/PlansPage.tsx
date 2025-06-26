@@ -36,7 +36,7 @@ const PlansPage: React.FC = () => {
         "Suporte por email",
       ],
       limitations: [],
-      buttonText: "Começar Grátis",
+      buttonText: "Escolher Plano",
       buttonVariant: "outline",
       popular: false,
       color: "green",
