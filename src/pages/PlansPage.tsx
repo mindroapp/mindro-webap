@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,12 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import MarketingLayout from "@/components/layouts/MarketingLayout";
 
+// Função utilitária para calcular o preço anual com desconto global
+const GLOBAL_ANNUAL_DISCOUNT = 0.15; // 15%
+function calculatePriceAnnually(priceMonthly: number, discount: number = GLOBAL_ANNUAL_DISCOUNT): number {
+  return +(priceMonthly * (1 - discount));
+}
+
 const PlansPage: React.FC = () => {
   const [billingAnnually, setBillingAnnually] = useState(true);
   const navigate = useNavigate();
@@ -23,8 +28,8 @@ const PlansPage: React.FC = () => {
     {
       name: "Essencial",
       description: "Para profissionais iniciantes",
-      priceMonthly: 79,
-      priceAnnually: 67.15, // 15% desconto
+      priceMonthly: 97,
+      // priceAnnually será calculado dinamicamente
       features: [
         "20 agendamentos por mês",
         "Lembretes automáticos",
@@ -37,15 +42,15 @@ const PlansPage: React.FC = () => {
       ],
       limitations: [],
       buttonText: "Escolher Plano",
-      buttonVariant: "outline",
+      buttonVariant: "default",
       popular: false,
       color: "green",
     },
     {
       name: "Profissional",
       description: "Para profissionais estabelecidos",
-      priceMonthly: 149,
-      priceAnnually: 126.65, // 15% desconto
+      priceMonthly: 189,
+      // priceAnnually será calculado dinamicamente
       features: [
         "Agendamento ilimitado",
         "Lembretes automáticos",
@@ -66,8 +71,8 @@ const PlansPage: React.FC = () => {
     {
       name: "Premium",
       description: "Para clínicas e profissionais avançados",
-      priceMonthly: 229,
-      priceAnnually: 194.65, // 15% desconto
+      priceMonthly: 299,
+      // priceAnnually será calculado dinamicamente
       features: [
         "Agendamento ilimitado + personalização",
         "Prontuário ilimitado + backups",
@@ -187,12 +192,12 @@ const PlansPage: React.FC = () => {
               <CardContent className="flex-grow">
                 <div className="mb-6">
                   <p className={`text-4xl font-bold ${getPriceColor(plan.color)}`}>
-                    R$ {billingAnnually ? plan.priceAnnually.toFixed(2) : plan.priceMonthly}
+                    R$ {billingAnnually ? calculatePriceAnnually(plan.priceMonthly).toFixed(2) : plan.priceMonthly}
                     <span className="text-base font-normal text-gray-500">/mês</span>
                   </p>
                   {billingAnnually && (
                     <p className="text-sm text-gray-500">
-                      Faturado anualmente como R$ {(plan.priceAnnually * 12).toFixed(2)}
+                      Faturado anualmente como R$ {(calculatePriceAnnually(plan.priceMonthly) * 12).toFixed(2)}
                     </p>
                   )}
                 </div>
@@ -254,13 +259,6 @@ const PlansPage: React.FC = () => {
             <p className="text-gray-600 mb-4">
               Comece agora com 7 dias grátis e descubra como podemos transformar sua prática profissional.
             </p>
-            <Button 
-              onClick={handlePlanSelection}
-              size="lg" 
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
-            >
-              Começar Agora Grátis
-            </Button>
           </div>
         </div>
       </div>
