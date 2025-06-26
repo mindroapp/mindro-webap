@@ -1,6 +1,6 @@
 
 import { cn } from "@/lib/utils";
-import { Calendar, Home, Menu, Users, CreditCard } from "lucide-react";
+import { BarChart3, Calendar, Menu, Users, Wallet } from "lucide-react";
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 
@@ -8,10 +8,10 @@ const SidebarMenu: React.FC = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: Home },
+    { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
     { name: "Pacientes", href: "/patients", icon: Users },
     { name: "Agendamentos", href: "/schedule", icon: Calendar },
-    { name: "Financeiro", href: "/financial", icon: CreditCard },
+    { name: "Financeiro", href: "/financial", icon: Wallet },
   ];
 
   const toggleMobileMenu = () => {

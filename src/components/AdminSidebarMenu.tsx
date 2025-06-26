@@ -1,6 +1,6 @@
 
 import { cn } from "@/lib/utils";
-import { Users, Home, Menu, MessageSquare } from "lucide-react";
+import { Users, Menu, MessageSquare, BarChart3, HelpCircle } from "lucide-react";
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 
@@ -8,9 +8,9 @@ const AdminSidebarMenu: React.FC = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const navigation = [
-    { name: "Dashboard", href: "/admin/dashboard", icon: Home },
+    { name: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
     { name: "Clientes", href: "/admin/clients", icon: Users },
-    { name: "Suporte", href: "/admin/support", icon: MessageSquare },
+    { name: "Suporte", href: "/admin/support", icon: HelpCircle },
     { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageSquare },
   ];
 

@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
-import { LogOut, ShieldCheck, Users, BarChart3, MessageCircle, MessageSquare, Home, Calendar } from "lucide-react";
+import { LogOut, ShieldCheck, Users, BarChart3, MessageCircle, MessageSquare, Home, Calendar, Wallet, HelpCircle } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -34,7 +34,7 @@ const Header: React.FC = () => {
   const adminLinks = [
     { name: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
     { name: "Clientes", href: "/admin/clients", icon: Users },
-    { name: "Suporte", href: "/admin/support", icon: MessageSquare },
+    { name: "Suporte", href: "/admin/support", icon: HelpCircle },
     { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageCircle },
   ];
 
@@ -42,6 +42,7 @@ const Header: React.FC = () => {
     { name: "Dashboard", href: "/dashboard", icon: Home },
     { name: "Pacientes", href: "/patients", icon: Users },
     { name: "Agendamentos", href: "/schedule", icon: Calendar },
+    { name: "Financeiro", href: "/financial", icon: Wallet },
   ];
 
   return (
