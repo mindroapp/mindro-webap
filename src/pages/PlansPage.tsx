@@ -1,5 +1,6 @@
 
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,99 +10,139 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CheckCircle, HelpCircle } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { CheckCircle, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import MarketingLayout from "@/components/layouts/MarketingLayout";
 
 const PlansPage: React.FC = () => {
   const [billingAnnually, setBillingAnnually] = useState(true);
+  const navigate = useNavigate();
 
   const plans = [
     {
-      name: "Básico",
-      description: "Para profissionais autônomos iniciando na carreira",
-      priceMonthly: 69.90,
-      priceAnnually: 49.90,
+      name: "Essencial",
+      description: "Para profissionais iniciantes",
+      priceMonthly: 79,
+      priceAnnually: 67.15, // 15% desconto
       features: [
-        "Agendamento de até 30 consultas/mês",
-        "Prontuário eletrônico básico",
-        "1 usuário",
-        "Suporte por email",
-        "Teleconsulta com limite de 5h/mês",
+        "20 agendamentos por mês",
+        "Lembretes automáticos",
+        "Até 30 pacientes ativos",
+        "5 teleconsultas/mês",
+        "Chat seguro até 5 pacientes",
         "Recibos simples",
+        "Criptografia padrão",
+        "Suporte por email",
       ],
-      limitations: [
-        "Sem integrações",
-        "Sem personalização",
-        "Sem backup avançado",
-        "Sem relatórios avançados",
-      ],
+      limitations: [],
       buttonText: "Começar Grátis",
       buttonVariant: "outline",
       popular: false,
+      color: "green",
     },
     {
       name: "Profissional",
-      description: "Para profissionais estabelecidos com prática individual",
-      priceMonthly: 129.90,
-      priceAnnually: 99.90,
+      description: "Para profissionais estabelecidos",
+      priceMonthly: 149,
+      priceAnnually: 126.65, // 15% desconto
       features: [
         "Agendamento ilimitado",
-        "Prontuário eletrônico completo",
-        "1 usuário",
-        "Suporte prioritário",
-        "Teleconsulta ilimitada",
-        "Recibos e faturas personalizados",
-        "Integração com WhatsApp",
         "Lembretes automáticos",
-        "Relatórios básicos",
-        "Personalização da agenda",
+        "Prontuário eletrônico ilimitado",
+        "20 teleconsultas/mês em HD",
+        "Chat seguro até 30 pacientes",
+        "Controle de pacotes e recibos personalizados",
+        "Segurança avançada com backups",
+        "Suporte por email + chat",
+        "7 dias grátis",
       ],
       limitations: [],
       buttonText: "Escolher Plano",
       buttonVariant: "default",
       popular: true,
+      color: "yellow",
     },
     {
-      name: "Enterprise",
-      description: "Para clínicas e grupos de profissionais",
-      priceMonthly: 299.90,
-      priceAnnually: 249.90,
+      name: "Premium",
+      description: "Para clínicas e profissionais avançados",
+      priceMonthly: 229,
+      priceAnnually: 194.65, // 15% desconto
       features: [
-        "Todas as funcionalidades do plano Profissional",
-        "Até 10 usuários",
-        "Gestão de equipe",
-        "Agenda compartilhada",
-        "Dashboard administrativo",
-        "Relatórios avançados",
-        "Exportação de dados",
-        "API para integrações personalizadas",
-        "Armazenamento ilimitado",
-        "Suporte 24/7",
-        "Gerenciamento financeiro avançado"
+        "Agendamento ilimitado + personalização",
+        "Prontuário ilimitado + backups",
+        "Teleconsulta ilimitada com prioridade",
+        "Chat ilimitado com notificações em tempo real",
+        "Relatórios avançados + integrações",
+        "Criptografia + LGPD + HIPAA",
+        "Suporte prioritário (email, chat, onboarding)",
+        "Acesso a novidades beta",
+        "7 dias grátis",
       ],
       limitations: [],
-      buttonText: "Fale com Vendas",
+      buttonText: "Escolher Plano",
       buttonVariant: "default",
       popular: false,
+      color: "blue",
     }
   ];
+
+  const handlePlanSelection = () => {
+    navigate("/register");
+  };
+
+  const getCardStyle = (color: string, popular: boolean) => {
+    const baseStyle = "flex flex-col transition-all duration-200 hover:shadow-lg";
+    
+    if (popular) {
+      return `${baseStyle} border-yellow-400 shadow-lg relative scale-105`;
+    }
+    
+    switch (color) {
+      case "green":
+        return `${baseStyle} border-green-200 hover:border-green-400`;
+      case "yellow":
+        return `${baseStyle} border-yellow-200 hover:border-yellow-400`;
+      case "blue":
+        return `${baseStyle} border-blue-200 hover:border-blue-400`;
+      default:
+        return baseStyle;
+    }
+  };
+
+  const getIconColor = (color: string) => {
+    switch (color) {
+      case "green":
+        return "text-green-600";
+      case "yellow":
+        return "text-yellow-600";
+      case "blue":
+        return "text-blue-600";
+      default:
+        return "text-green-600";
+    }
+  };
+
+  const getPriceColor = (color: string) => {
+    switch (color) {
+      case "green":
+        return "text-green-700";
+      case "yellow":
+        return "text-yellow-700";
+      case "blue":
+        return "text-blue-700";
+      default:
+        return "text-green-700";
+    }
+  };
 
   return (
     <MarketingLayout>
       <div className="container mx-auto py-12 px-4 max-w-6xl">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4 text-indigo-700">Planos e Preços</h1>
+          <h1 className="text-4xl font-bold mb-4 text-indigo-700">🧠 Planos da Plataforma para Profissionais de Saúde Mental</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Escolha o plano ideal para sua prática em saúde mental.
-            Todos os planos incluem acesso à nossa plataforma completa.
+            Escolha o plano ideal para sua prática. Com a nossa plataforma, você cuida dos seus pacientes — nós cuidamos do resto.
           </p>
 
           <div className="flex items-center justify-center mt-8 space-x-3">
@@ -117,7 +158,7 @@ const PlansPage: React.FC = () => {
               <Label htmlFor="billing-toggle" className={billingAnnually ? "font-medium" : "text-gray-500"}>
                 Pagamento Anual
               </Label>
-              <span className="text-xs text-green-600">Economia de até 30%</span>
+              <span className="text-xs text-green-600">💸 Economia de 15%</span>
             </div>
           </div>
         </div>
@@ -126,28 +167,32 @@ const PlansPage: React.FC = () => {
           {plans.map((plan, index) => (
             <Card 
               key={index} 
-              className={`flex flex-col ${
-                plan.popular ? "border-indigo-400 shadow-lg relative" : ""
-              }`}
+              className={getCardStyle(plan.color, plan.popular)}
             >
               {plan.popular && (
-                <div className="absolute top-0 right-0 bg-indigo-700 text-white px-3 py-1 rounded-bl-lg rounded-tr-lg text-sm font-medium">
-                  Popular
+                <div className="absolute top-0 right-0 bg-yellow-500 text-white px-3 py-1 rounded-bl-lg rounded-tr-lg text-sm font-medium">
+                  🏆 Popular
                 </div>
               )}
               <CardHeader>
-                <CardTitle className="text-xl">{plan.name}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className={`w-4 h-4 rounded-full ${
+                    plan.color === 'green' ? 'bg-green-500' : 
+                    plan.color === 'yellow' ? 'bg-yellow-500' : 'bg-blue-500'
+                  }`}></div>
+                  <CardTitle className="text-xl">{plan.name}</CardTitle>
+                </div>
                 <CardDescription>{plan.description}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
                 <div className="mb-6">
-                  <p className="text-4xl font-bold text-indigo-700">
-                    R${billingAnnually ? plan.priceAnnually : plan.priceMonthly}
+                  <p className={`text-4xl font-bold ${getPriceColor(plan.color)}`}>
+                    R$ {billingAnnually ? plan.priceAnnually.toFixed(2) : plan.priceMonthly}
                     <span className="text-base font-normal text-gray-500">/mês</span>
                   </p>
                   {billingAnnually && (
                     <p className="text-sm text-gray-500">
-                      Faturado anualmente como R${(plan.priceAnnually * 12).toFixed(2)}
+                      Faturado anualmente como R$ {(plan.priceAnnually * 12).toFixed(2)}
                     </p>
                   )}
                 </div>
@@ -155,23 +200,23 @@ const PlansPage: React.FC = () => {
                 <div className="space-y-3">
                   {plan.features.map((feature, featureIndex) => (
                     <div key={featureIndex} className="flex items-start">
-                      <CheckCircle className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                      <CheckCircle className={`h-5 w-5 ${getIconColor(plan.color)} mr-2 flex-shrink-0 mt-0.5`} />
                       <span className="text-gray-700">{feature}</span>
-                    </div>
-                  ))}
-
-                  {plan.limitations.map((limitation, limitationIndex) => (
-                    <div key={limitationIndex} className="flex items-start text-gray-400">
-                      <CheckCircle className="h-5 w-5 text-gray-300 mr-2 flex-shrink-0 mt-0.5" />
-                      <span>{limitation}</span>
                     </div>
                   ))}
                 </div>
               </CardContent>
               <CardFooter>
                 <Button 
+                  onClick={handlePlanSelection}
                   className={`w-full ${
-                    plan.buttonVariant === "default" ? "bg-indigo-700 hover:bg-indigo-800" : ""
+                    plan.buttonVariant === "default" 
+                      ? plan.color === 'green' 
+                        ? "bg-green-600 hover:bg-green-700" 
+                        : plan.color === 'yellow'
+                        ? "bg-yellow-600 hover:bg-yellow-700"
+                        : "bg-blue-600 hover:bg-blue-700"
+                      : ""
                   }`}
                   variant={plan.buttonVariant as "default" | "outline"}
                 >
@@ -183,77 +228,39 @@ const PlansPage: React.FC = () => {
         </div>
 
         <div className="mt-16 bg-indigo-50 p-8 rounded-xl">
-          <h2 className="text-2xl font-bold mb-6 text-center text-indigo-700">Perguntas Frequentes sobre Planos</h2>
+          <h2 className="text-2xl font-bold mb-6 text-center text-indigo-700">🎁 Bônus e Condições</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-            <div>
-              <h3 className="text-lg font-medium mb-2 text-indigo-700">Posso mudar de plano depois?</h3>
-              <p className="text-gray-600">
-                Sim, você pode fazer upgrade ou downgrade do seu plano a qualquer momento. 
-                As mudanças serão refletidas no próximo ciclo de faturamento.
-              </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+              <div className="text-2xl mb-2">✅</div>
+              <h3 className="font-medium text-indigo-700 mb-2">7 dias grátis</h3>
+              <p className="text-gray-600 text-sm">No plano Profissional e Premium</p>
             </div>
             
-            <div>
-              <h3 className="text-lg font-medium mb-2 text-indigo-700">Existe período mínimo de contratação?</h3>
-              <p className="text-gray-600">
-                Não existe período mínimo para os planos mensais. Para planos anuais, 
-                o compromisso é de 12 meses, com possibilidade de cancelamento mediante uma taxa.
-              </p>
+            <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+              <div className="text-2xl mb-2">💸</div>
+              <h3 className="font-medium text-indigo-700 mb-2">15% de desconto</h3>
+              <p className="text-gray-600 text-sm">No pagamento anual</p>
             </div>
             
-            <div>
-              <h3 className="text-lg font-medium mb-2 text-indigo-700">Preciso fornecer cartão de crédito para testar?</h3>
-              <p className="text-gray-600">
-                Não, você pode experimentar nosso plano básico gratuitamente por 14 dias 
-                sem fornecer informações de pagamento.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-medium mb-2 text-indigo-700">Como funciona o suporte técnico?</h3>
-              <p className="text-gray-600">
-                Todos os planos incluem suporte técnico. A diferença está no tempo de resposta e nos 
-                canais disponíveis (email, chat, telefone), que variam de acordo com o plano escolhido.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-medium mb-2 text-indigo-700">Posso adicionar usuários extras?</h3>
-              <p className="text-gray-600">
-                Sim, nos planos Enterprise você pode adicionar usuários extras por um valor adicional 
-                por usuário/mês. Entre em contato com nossa equipe de vendas para mais detalhes.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-medium mb-2 text-indigo-700">Os preços incluem impostos?</h3>
-              <p className="text-gray-600">
-                Todos os preços apresentados já incluem impostos para pessoas físicas. 
-                Para empresas, os valores podem variar de acordo com o regime tributário.
-              </p>
+            <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+              <div className="text-2xl mb-2">🔁</div>
+              <h3 className="font-medium text-indigo-700 mb-2">Flexibilidade total</h3>
+              <p className="text-gray-600 text-sm">Mude de plano quando quiser</p>
             </div>
           </div>
           
-          <div className="mt-10 text-center">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="link" 
-                    className="text-indigo-700"
-                  >
-                    Precisa de um plano personalizado? <HelpCircle className="h-4 w-4 ml-1" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="w-80 text-sm">
-                    Para necessidades específicas, oferecemos planos personalizados. 
-                    Entre em contato com nossa equipe de vendas para discutir suas necessidades.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">
+              Comece agora com 7 dias grátis e descubra como podemos transformar sua prática profissional.
+            </p>
+            <Button 
+              onClick={handlePlanSelection}
+              size="lg" 
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              Começar Agora Grátis
+            </Button>
           </div>
         </div>
       </div>

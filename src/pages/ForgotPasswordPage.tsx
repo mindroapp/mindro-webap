@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -5,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -49,7 +51,15 @@ const ForgotPasswordPage: React.FC = () => {
 
         <Card className="shadow-md">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl md:text-2xl text-center">Recuperar Senha</CardTitle>
+            <div className="flex items-center justify-between">
+              <Link to="/" className="text-indigo-600 hover:text-indigo-700 transition-colors">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+              <div className="flex-1 text-center">
+                <CardTitle className="text-xl md:text-2xl">Recuperar Senha</CardTitle>
+              </div>
+              <div className="w-5"></div>
+            </div>
             <CardDescription className="text-center">
               Insira seu e-mail para receber instruções de recuperação
             </CardDescription>

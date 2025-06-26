@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
 
 const RegisterPage: React.FC = () => {
   const [name, setName] = useState("");
@@ -40,7 +41,15 @@ const RegisterPage: React.FC = () => {
 
     try {
       await register(name, email, password);
-      navigate("/dashboard", { replace: true });
+      
+      // Extrair primeiro nome
+      const firstName = name.split(' ')[0];
+      
+      // Redirecionar para página de agradecimento
+      navigate("/thank-you", { 
+        replace: true,
+        state: { firstName }
+      });
     } catch (err: any) {
       const errorMessage = err?.response?.data?.message || "Falha no registro. Por favor, tente novamente.";
       setError(errorMessage);
@@ -60,10 +69,17 @@ const RegisterPage: React.FC = () => {
           </Link>
         </div>
 
-
         <Card className="shadow-md">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl md:text-2xl text-center">Crie uma conta</CardTitle>
+            <div className="flex items-center justify-between">
+              <Link to="/" className="text-indigo-600 hover:text-indigo-700 transition-colors">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+              <div className="flex-1 text-center">
+                <CardTitle className="text-xl md:text-2xl">Crie uma conta</CardTitle>
+              </div>
+              <div className="w-5"></div>
+            </div>
             <CardDescription className="text-center">
               Insira suas informações para se registrar
             </CardDescription>

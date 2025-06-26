@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -64,6 +63,8 @@ const queryClient = new QueryClient({
   },
 });
 
+import ThankYouPage from "./pages/ThankYouPage";
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -77,6 +78,7 @@ const App = () => (
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
         <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+        <Route path="/thank-you" element={<ThankYouPage />} />
         
         {/* Novas rotas da plataforma */}
         <Route path="/platform/resources" element={<PlatformResourcesPage />} />

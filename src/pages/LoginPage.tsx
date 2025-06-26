@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { ArrowLeft } from "lucide-react";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -77,7 +78,15 @@ const LoginPage: React.FC = () => {
         
         <Card className="shadow-md">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl md:text-2xl text-center">Entrar</CardTitle>
+            <div className="flex items-center justify-between">
+              <Link to="/" className="text-indigo-600 hover:text-indigo-700 transition-colors">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+              <div className="flex-1 text-center">
+                <CardTitle className="text-xl md:text-2xl">Entrar</CardTitle>
+              </div>
+              <div className="w-5"></div>
+            </div>
             <CardDescription className="text-center">
               Digite suas credenciais para acessar sua conta
             </CardDescription>
