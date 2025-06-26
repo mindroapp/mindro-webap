@@ -1,17 +1,22 @@
 
 import { cn } from "@/lib/utils";
-import { BarChart3, Calendar, Menu, Users, Wallet } from "lucide-react";
+import { BarChart3, Calendar, Menu, Users, Wallet, Settings, MessageCircle, Smartphone } from "lucide-react";
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 const SidebarMenu: React.FC = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  // Mock status do WhatsApp - substituir por dados reais
+  const [whatsappConnected, setWhatsappConnected] = useState(false);
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
     { name: "Pacientes", href: "/patients", icon: Users },
     { name: "Agendamentos", href: "/schedule", icon: Calendar },
     { name: "Financeiro", href: "/financial", icon: Wallet },
+    { name: "Configurações", href: "/professional-settings", icon: Settings },
+    { name: "Suporte", href: "/professional-support", icon: MessageCircle },
   ];
 
   const toggleMobileMenu = () => {
@@ -52,6 +57,19 @@ const SidebarMenu: React.FC = () => {
               <span className="text-3xl font-bold text-gray-900 dark:text-white">
                 mind<span className="text-indigo-600">ro</span>
               </span>
+            </div>
+          </div>
+
+          {/* Status WhatsApp */}
+          <div className="px-4 mb-4">
+            <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-muted/50 rounded-md">
+              <Smartphone className="h-4 w-4" />
+              <span className="text-sm font-medium">WhatsApp</span>
+              {whatsappConnected ? (
+                <Badge variant="default" className="bg-green-500 text-xs">Conectado</Badge>
+              ) : (
+                <Badge variant="secondary" className="text-xs">Desconectado</Badge>
+              )}
             </div>
           </div>
 

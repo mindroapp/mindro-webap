@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -42,6 +43,11 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import ClientsManagement from "./pages/admin/ClientsManagement";
 import WhatsAppConfig from "./pages/admin/WhatsAppConfig";
 import SupportRequests from "./pages/admin/SupportRequests";
+import ProfessionalsManagement from "./pages/admin/ProfessionalsManagement";
+
+// Novas páginas para profissionais
+import ProfessionalSettings from "./pages/ProfessionalSettings";
+import ProfessionalSupport from "./pages/ProfessionalSupport";
 
 // Componente para redirecionar com base no papel do usuário
 const RoleBasedRedirect = () => {
@@ -115,11 +121,16 @@ const App = () => (
         {/* Rota de Suporte para Clientes */}
         <Route path="/support" element={<ProtectedRoute><SupportTickets /></ProtectedRoute>} />
 
+        {/* Rotas de Configurações e Suporte para Profissionais */}
+        <Route path="/professional-settings" element={<ProtectedRoute><ProfessionalSettings /></ProtectedRoute>} />
+        <Route path="/professional-support" element={<ProtectedRoute><ProfessionalSupport /></ProtectedRoute>} />
+
         {/* Rota de Configurações para qualquer usuário autenticado */}
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         
         {/* Rotas Administrativas */}
         <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/professionals" element={<ProtectedRoute><ProfessionalsManagement /></ProtectedRoute>} />
         <Route path="/admin/clients" element={<ProtectedRoute><ClientsManagement /></ProtectedRoute>} />
         <Route path="/admin/whatsapp" element={<ProtectedRoute><WhatsAppConfig /></ProtectedRoute>} />
         <Route path="/admin/support" element={<ProtectedRoute><SupportRequests /></ProtectedRoute>} />

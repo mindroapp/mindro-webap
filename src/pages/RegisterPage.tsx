@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
+import InputMask from 'react-input-mask';
 
 const RegisterPage: React.FC = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -21,7 +23,7 @@ const RegisterPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !email || !password || !confirmPassword) {
+    if (!name || !email || !phone || !password || !confirmPassword) {
       setError("Por favor, preencha todos os campos");
       return;
     }
@@ -36,11 +38,18 @@ const RegisterPage: React.FC = () => {
       return;
     }
 
+    // Validar telefone
+    const phoneNumbers = phone.replace(/\D/g, '');
+    if (phoneNumbers.length < 10) {
+      setError("Por favor, insira um telefone válido");
+      return;
+    }
+
     setError("");
     setIsSubmitting(true);
 
     try {
-      await register(name, email, password);
+      await register(name, email, password, phone);
       
       // Extrair primeiro nome
       const firstName = name.split(' ')[0];
@@ -94,7 +103,7 @@ const RegisterPage: React.FC = () => {
               
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome completo</Label>
+                  <Label htmlFor="name">Nome completo *</Label>
                   <Input
                     id="name"
                     type="text"
@@ -106,7 +115,7 @@ const RegisterPage: React.FC = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email *</Label>
                   <Input
                     id="email"
                     type="email"
@@ -116,9 +125,28 @@ const RegisterPage: React.FC = () => {
                     required
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Telefone *</Label>
+                  <InputMask
+                    mask="(99) 9 9999-9999"
+                    maskChar={null}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  >
+                    {(inputProps: any) => (
+                      <Input
+                        {...inputProps}
+                        id="phone"
+                        placeholder="(85) 9 9285-0222"
+                        required
+                      />
+                    )}
+                  </InputMask>
+                </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
+                  <Label htmlFor="password">Senha *</Label>
                   <Input
                     id="password"
                     type="password"
@@ -130,7 +158,7 @@ const RegisterPage: React.FC = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirme a senha</Label>
+                  <Label htmlFor="confirm-password">Confirme a senha *</Label>
                   <Input
                     id="confirm-password"
                     type="password"
