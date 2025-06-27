@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { connect, Room } from 'twilio-video';
@@ -61,75 +60,13 @@ const VideoMeeting = () => {
     };
   }, [searchParams, toast]);
 
-  const handleJoinCall = async () => {
-    if (!token) {
-      toast({
-        title: "Erro",
-        description: "Token e nome da sala são obrigatórios.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const response = await fetch('http://localhost:3001/generate-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identity: `User-${Math.random()}`, roomName }),
-      });
-
-      const { token: accessToken } = await response.json();
-
-      const room = await connect(accessToken, { name: roomName });
-      setRoom(room);
-
-      toast({
-        title: "Conectado",
-        description: "Você entrou na sala com sucesso.",
-      });
-
-      // Exibir vídeo local
-      const localTrack = Array.from(room.localParticipant.videoTracks.values())[0].track;
-      if (localVideoRef.current) {
-        localTrack.attach(localVideoRef.current);
-      }
-
-      // Gerenciar participantes remotos
-      const handleParticipantConnected = (participant: any) => {
-        participant.on('trackSubscribed', (track: any) => {
-          if (track.kind === 'video' && remoteVideoRef.current) {
-            track.attach(remoteVideoRef.current);
-          }
-        });
-      };
-
-      room.participants.forEach(handleParticipantConnected);
-      room.on('participantConnected', handleParticipantConnected);
-
-      // Limitar a sala a 2 participantes
-      room.on('participantConnected', () => {
-        if (room.participants.size > 2) {
-          toast({
-            title: "Sala cheia",
-            description: "A sala já atingiu o limite de 2 participantes.",
-            variant: "destructive",
-          });
-          room.disconnect();
-          setRoom(null);
-        }
-      });
-
-      room.on('participantDisconnected', () => {
-        setParticipants(Array.from(room.participants.values()));
-      });
-    } catch (error) {
-      console.error('Erro ao entrar na sala:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível entrar na sala.",
-        variant: "destructive",
-      });
-    }
+  const handleJoinCall = () => {
+    // Mock: Simula entrada na sala sem API/token
+    setRoom({} as Room); // apenas para renderizar a interface de reunião
+    toast({
+      title: "Conectado",
+      description: "Você entrou na sala (mock).",
+    });
   };
 
   const handleEndCall = () => {
