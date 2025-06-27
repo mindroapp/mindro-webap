@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Send, History, Wifi, WifiOff, Upload, Bold, Italic, Smile, Users, User } from "lucide-react";
+import { MessageCircle, Send, History, Wifi, WifiOff, Upload, Bold, Italic, Smile, Users, User, Image, FileText } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -71,6 +71,7 @@ const WhatsAppConfig: React.FC = () => {
   const [messageType, setMessageType] = useState("individual");
   const [selectedProfessionals, setSelectedProfessionals] = useState<string[]>([]);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const { toast } = useToast();
 
   const handleConnect = () => {
@@ -93,11 +94,32 @@ const WhatsAppConfig: React.FC = () => {
     });
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "O arquivo deve ter no máximo 10MB.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      setUploadedFile(file);
+      toast({
+        title: "Arquivo carregado",
+        description: `${file.name} foi carregado com sucesso.`
+      });
+    }
+  };
+
   const handleSendMessage = () => {
-    if (!messageText.trim()) {
+    if (!messageText.trim() && !uploadedFile) {
       toast({
         title: "Erro",
-        description: "Digite uma mensagem antes de enviar.",
+        description: "Digite uma mensagem ou selecione um arquivo antes de enviar.",
         variant: "destructive"
       });
       return;
@@ -125,6 +147,7 @@ const WhatsAppConfig: React.FC = () => {
     setMessageText("");
     setPhoneNumber("");
     setSelectedProfessionals([]);
+    setUploadedFile(null);
   };
 
   const formatMessage = (text: string, format: string) => {
@@ -151,6 +174,10 @@ const WhatsAppConfig: React.FC = () => {
       const newText = text.substring(0, start) + formattedText + text.substring(end);
       setMessageText(newText);
     }
+  };
+
+  const canSendMessage = () => {
+    return isConnected && (messageText.trim() || uploadedFile);
   };
 
   return (
@@ -347,9 +374,6 @@ const WhatsAppConfig: React.FC = () => {
                         <Button variant="outline" size="sm">
                           <Smile className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm">
-                          <Upload className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
                     <Textarea
@@ -361,7 +385,33 @@ const WhatsAppConfig: React.FC = () => {
                     />
                   </div>
 
-                  {messageText && (
+                  <div className="space-y-2">
+                    <Label>Anexar Arquivo</Label>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        type="file"
+                        accept="image/*,application/pdf,.doc,.docx"
+                        onChange={handleFileUpload}
+                        className="flex-1"
+                      />
+                      <Button variant="outline" size="sm">
+                        <Upload className="h-4 w-4 mr-1" />
+                        Upload
+                      </Button>
+                    </div>
+                    {uploadedFile && (
+                      <div className="flex items-center space-x-2 p-2 bg-green-50 border border-green-200 rounded">
+                        {uploadedFile.type.startsWith('image/') ? (
+                          <Image className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <FileText className="h-4 w-4 text-green-600" />
+                        )}
+                        <span className="text-sm text-green-700">{uploadedFile.name}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {(messageText || uploadedFile) && (
                     <div className="space-y-2">
                       <Label>Pré-visualização</Label>
                       <div className="p-3 border rounded-lg bg-green-50">
@@ -370,7 +420,19 @@ const WhatsAppConfig: React.FC = () => {
                             <MessageCircle className="h-4 w-4 text-white" />
                           </div>
                           <div className="bg-white p-2 rounded-lg shadow-sm max-w-xs">
-                            <p className="text-sm whitespace-pre-wrap">{messageText}</p>
+                            {messageText && (
+                              <p className="text-sm whitespace-pre-wrap">{messageText}</p>
+                            )}
+                            {uploadedFile && (
+                              <div className="mt-2 flex items-center space-x-2">
+                                {uploadedFile.type.startsWith('image/') ? (
+                                  <Image className="h-4 w-4 text-gray-500" />
+                                ) : (
+                                  <FileText className="h-4 w-4 text-gray-500" />
+                                )}
+                                <span className="text-xs text-gray-600">{uploadedFile.name}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -379,7 +441,7 @@ const WhatsAppConfig: React.FC = () => {
 
                   <Button 
                     onClick={handleSendMessage} 
-                    disabled={!isConnected}
+                    disabled={!canSendMessage()}
                     className="w-full"
                   >
                     <Send className="h-4 w-4 mr-2" />

@@ -8,17 +8,15 @@ import SessionCard from "@/components/SessionCard";
 import SessionEditModal from "@/components/SessionEditModal";
 import ElectronicRecordModal from "@/components/ElectronicRecordModal";
 import PatientHistory from "@/components/PatientHistory";
-import InitialAssessmentEditModal from "@/components/InitialAssessmentEditModal";
 import PatientEditModal from "@/components/PatientEditModal";
-import PaymentList from "@/components/financial/PaymentList";
-import PackageList from "@/components/financial/PackageList";
-import PaymentModal from "@/components/financial/PaymentModal";
-import PackageModal from "@/components/financial/PackageModal";
+import DocumentUploadModal from "@/components/DocumentUploadModal";
+import InitialAssessmentModal from "@/components/InitialAssessmentModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { 
   FileText, 
   Plus, 
@@ -30,7 +28,8 @@ import {
   Download,
   History,
   CreditCard,
-  Package
+  Receipt,
+  MessageSquare
 } from "lucide-react";
 
 const PatientDetail: React.FC = () => {
@@ -40,10 +39,37 @@ const PatientDetail: React.FC = () => {
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [viewingElectronicRecord, setViewingElectronicRecord] = useState<Session | null>(null);
   const [isViewingHistory, setIsViewingHistory] = useState(false);
-  const [isEditingInitialRecord, setIsEditingInitialRecord] = useState(false);
   const [isEditingPatient, setIsEditingPatient] = useState(false);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
+  const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
+  const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
+
+  // Mock data para sessões financeiras
+  const financialSessions = [
+    {
+      id: "1",
+      date: "2024-01-15",
+      value: 200,
+      status: "paid",
+      paymentMethod: "PIX",
+      notes: "Sessão individual - 50min"
+    },
+    {
+      id: "2",
+      date: "2024-01-22",
+      value: 200,
+      status: "pending",
+      paymentMethod: "Cartão",
+      notes: "Sessão individual - 50min"
+    },
+    {
+      id: "3",
+      date: "2024-01-29",
+      value: 200,
+      status: "paid",
+      paymentMethod: "Dinheiro",
+      notes: "Sessão individual - 50min"
+    }
+  ];
 
   useEffect(() => {
     if (id) {
@@ -88,10 +114,6 @@ const PatientDetail: React.FC = () => {
     setIsViewingHistory(true);
   };
 
-  const handleEditInitialRecord = () => {
-    setIsEditingInitialRecord(true);
-  };
-
   const handleEditPatient = () => {
     setIsEditingPatient(true);
   };
@@ -99,6 +121,30 @@ const PatientDetail: React.FC = () => {
   const getSortedSessions = () => {
     if (!selectedPatient?.sessions) return [];
     return [...selectedPatient.sessions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "paid":
+        return <Badge className="bg-green-100 text-green-800">Pago</Badge>;
+      case "pending":
+        return <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
+      case "cancelled":
+        return <Badge className="bg-red-100 text-red-800">Cancelado</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
+  const getPaymentMethodLabel = (method: string) => {
+    const methods: Record<string, string> = {
+      pix: "PIX",
+      cash: "Dinheiro",
+      creditCard: "Cartão de Crédito",
+      debitCard: "Cartão de Débito",
+      bankTransfer: "Transferência"
+    };
+    return methods[method] || method;
   };
 
   if (isLoading) {
@@ -164,7 +210,7 @@ const PatientDetail: React.FC = () => {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Detalhes do Paciente</h1>
             </div>
             
-            <Button variant="outline" onClick={handleViewHistory}>
+            <Button variant="outline" onClick={() => setIsViewingHistory(true)}>
               <History size={16} className="mr-1" /> Ver Histórico Completo
             </Button>
           </div>
@@ -270,7 +316,7 @@ const PatientDetail: React.FC = () => {
             <TabsContent value="documents" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Documentos</h2>
-                <Button onClick={() => navigate(`/patients/${id}/documents/upload`)}>
+                <Button onClick={() => setIsDocumentModalOpen(true)}>
                   <Upload size={16} className="mr-1" /> Enviar Documento
                 </Button>
               </div>
@@ -284,7 +330,7 @@ const PatientDetail: React.FC = () => {
                   <p className="text-gray-500 mb-4">
                     Nenhum documento foi enviado para este paciente ainda.
                   </p>
-                  <Button onClick={() => navigate(`/patients/${id}/documents/upload`)}>
+                  <Button onClick={() => setIsDocumentModalOpen(true)}>
                     <Upload size={16} className="mr-1" /> Enviar primeiro documento
                   </Button>
                 </div>
@@ -345,15 +391,10 @@ const PatientDetail: React.FC = () => {
             <TabsContent value="initial-record" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Avaliação Inicial</h2>
-                {selectedPatient.initialRecord ? (
-                  <Button variant="outline" onClick={handleEditInitialRecord}>
-                    <Edit size={16} className="mr-1" /> Editar Avaliação
-                  </Button>
-                ) : (
-                  <Button onClick={() => navigate(`/patients/${id}/initial-record/new`)}>
-                    <Plus size={16} className="mr-1" /> Criar Avaliação
-                  </Button>
-                )}
+                <Button onClick={() => setIsAssessmentModalOpen(true)}>
+                  <Plus size={16} className="mr-1" /> 
+                  {selectedPatient.initialRecord ? "Editar Avaliação" : "Criar Avaliação"}
+                </Button>
               </div>
   
               {!selectedPatient.initialRecord ? (
@@ -365,7 +406,7 @@ const PatientDetail: React.FC = () => {
                   <p className="text-gray-500 mb-4">
                     A avaliação inicial deste paciente ainda não foi registrada.
                   </p>
-                  <Button onClick={() => navigate(`/patients/${id}/initial-record/new`)}>
+                  <Button onClick={() => setIsAssessmentModalOpen(true)}>
                     <Plus size={16} className="mr-1" /> Criar avaliação inicial
                   </Button>
                 </div>
@@ -430,33 +471,66 @@ const PatientDetail: React.FC = () => {
             <TabsContent value="financial" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Financeiro</h2>
-                <div className="space-x-2">
-                  <Button onClick={() => setIsPackageModalOpen(true)} className="bg-indigo-700 hover:bg-indigo-800">
-                    <Package size={16} className="mr-1" /> Novo Pacote
-                  </Button>
-                  <Button onClick={() => setIsPaymentModalOpen(true)} className="bg-indigo-700 hover:bg-indigo-800">
-                    <CreditCard size={16} className="mr-1" /> Novo Pagamento
-                  </Button>
-                </div>
+                <Button className="bg-indigo-700 hover:bg-indigo-800">
+                  <Plus size={16} className="mr-1" /> Novo Registro
+                </Button>
               </div>
               
               <Card>
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-medium mb-4">Pacotes de Sessões</h3>
-                  <PackageList patientId={id} />
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-medium mb-4">Histórico de Pagamentos</h3>
-                  <PaymentList patientId={id} />
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left pb-3 font-medium">Data da Sessão</th>
+                          <th className="text-left pb-3 font-medium">Valor</th>
+                          <th className="text-left pb-3 font-medium">Status</th>
+                          <th className="text-left pb-3 font-medium">Forma de Pagamento</th>
+                          <th className="text-left pb-3 font-medium">Observações</th>
+                          <th className="text-left pb-3 font-medium">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {financialSessions.map((session) => (
+                          <tr key={session.id} className="border-b">
+                            <td className="py-3">
+                              {new Date(session.date).toLocaleDateString('pt-BR')}
+                            </td>
+                            <td className="py-3 font-medium">
+                              R$ {session.value.toFixed(2)}
+                            </td>
+                            <td className="py-3">
+                              {getStatusBadge(session.status)}
+                            </td>
+                            <td className="py-3">
+                              {getPaymentMethodLabel(session.paymentMethod)}
+                            </td>
+                            <td className="py-3 text-sm text-gray-600">
+                              {session.notes}
+                            </td>
+                            <td className="py-3">
+                              <div className="flex space-x-2">
+                                <Button size="sm" variant="outline">
+                                  <Receipt className="h-3 w-3 mr-1" />
+                                  Recibo
+                                </Button>
+                                <Button size="sm" variant="outline">
+                                  <MessageSquare className="h-3 w-3 mr-1" />
+                                  WhatsApp
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
-          
-          {/* Edit Session Modal */}
+
+          {/* Modals */}
           {editingSession && id && (
             <SessionEditModal
               patientId={id}
@@ -466,7 +540,6 @@ const PatientDetail: React.FC = () => {
             />
           )}
           
-          {/* Electronic Record Modal */}
           {viewingElectronicRecord && id && (
             <ElectronicRecordModal
               patientId={id}
@@ -476,7 +549,6 @@ const PatientDetail: React.FC = () => {
             />
           )}
           
-          {/* Patient History Modal */}
           {id && isViewingHistory && (
             <PatientHistory
               patientId={id}
@@ -484,18 +556,7 @@ const PatientDetail: React.FC = () => {
               onClose={() => setIsViewingHistory(false)}
             />
           )}
-          
-          {/* Edit Initial Assessment Modal */}
-          {selectedPatient.initialRecord && id && isEditingInitialRecord && (
-            <InitialAssessmentEditModal
-              patientId={id}
-              initialRecord={selectedPatient.initialRecord}
-              isOpen={isEditingInitialRecord}
-              onClose={() => setIsEditingInitialRecord(false)}
-            />
-          )}
 
-          {/* Edit Patient Modal */}
           {isEditingPatient && (
             <PatientEditModal
               patient={selectedPatient}
@@ -503,6 +564,18 @@ const PatientDetail: React.FC = () => {
               onClose={() => setIsEditingPatient(false)}
             />
           )}
+
+          <DocumentUploadModal
+            isOpen={isDocumentModalOpen}
+            onClose={() => setIsDocumentModalOpen(false)}
+            patientId={id || ""}
+          />
+
+          <InitialAssessmentModal
+            isOpen={isAssessmentModalOpen}
+            onClose={() => setIsAssessmentModalOpen(false)}
+            patientId={id || ""}
+          />
         </main>
       </div>
     </div>
