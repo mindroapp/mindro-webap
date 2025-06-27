@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -8,9 +7,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Eye, CheckCircle, XCircle, Pause, Play, Search } from "lucide-react";
+import { Eye, CheckCircle, XCircle, Pause, Play, Search, Edit, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import ProfessionalEditModal from "@/components/ProfessionalEditModal";
+import DocumentViewModal from "@/components/DocumentViewModal";
 
 // Mock data atualizado
 const pendingProfessionals = [
@@ -22,7 +23,7 @@ const pendingProfessionals = [
     profession: "Psicólogo",
     registration: "CRP 11/12345",
     requestDate: "2024-01-15",
-    documents: ["diploma.pdf", "crp.pdf"]
+    documents: ["diploma.pdf", "crp.pdf", "identidade.pdf"]
   },
   {
     id: 2,
@@ -32,7 +33,7 @@ const pendingProfessionals = [
     profession: "Psicanalista",
     registration: "CFP 12345",
     requestDate: "2024-01-14",
-    documents: ["diploma.pdf", "cfp.pdf"]
+    documents: ["diploma.pdf", "cfp.pdf", "comprovante_residencia.pdf"]
   }
 ];
 
@@ -45,7 +46,8 @@ const activeProfessionals = [
     profession: "Psicólogo",
     registration: "CRP 11/54321",
     status: "Ativo",
-    joinDate: "2023-12-01"
+    joinDate: "2023-12-01",
+    plan: "Profissional"
   },
   {
     id: 4,
@@ -55,7 +57,8 @@ const activeProfessionals = [
     profession: "Terapeuta",
     registration: "CRT 98765",
     status: "Suspenso",
-    joinDate: "2023-11-15"
+    joinDate: "2023-11-15",
+    plan: "Básico"
   },
   {
     id: 5,
@@ -65,7 +68,8 @@ const activeProfessionals = [
     profession: "Neuropsicólogo",
     registration: "CRP 11/67890",
     status: "Ativo",
-    joinDate: "2023-10-20"
+    joinDate: "2023-10-20",
+    plan: "Premium"
   }
 ];
 
@@ -74,6 +78,8 @@ const ProfessionalsManagement: React.FC = () => {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
   const [activateDialogOpen, setActivateDialogOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [professionFilter, setProfessionFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -182,16 +188,28 @@ const ProfessionalsManagement: React.FC = () => {
                 </Badge>
               </div>
             )}
+            {professional?.plan && (
+              <div>
+                <label className="font-semibold">Plano:</label>
+                <Badge variant="outline">{professional.plan}</Badge>
+              </div>
+            )}
           </div>
           {professional?.documents && (
             <div>
-              <label className="font-semibold">Documentos:</label>
-              <div className="flex gap-2 mt-2">
-                {professional.documents.map((doc: string, index: number) => (
-                  <Button key={index} variant="outline" size="sm">
-                    {doc}
-                  </Button>
-                ))}
+              <div className="flex items-center justify-between">
+                <label className="font-semibold">Documentos:</label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedProfessional(professional);
+                    setDocumentsModalOpen(true);
+                  }}
+                >
+                  <FileText className="h-4 w-4 mr-1" />
+                  Ver Documentos
+                </Button>
               </div>
             </div>
           )}
@@ -342,7 +360,7 @@ const ProfessionalsManagement: React.FC = () => {
                       <TableHead>Email</TableHead>
                       <TableHead>Telefone</TableHead>
                       <TableHead>Profissão</TableHead>
-                      <TableHead>Registro</TableHead>
+                      <TableHead>Plano</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Data de Entrada</TableHead>
                       <TableHead>Ações</TableHead>
@@ -355,7 +373,9 @@ const ProfessionalsManagement: React.FC = () => {
                         <TableCell>{professional.email}</TableCell>
                         <TableCell>{professional.phone}</TableCell>
                         <TableCell>{professional.profession}</TableCell>
-                        <TableCell>{professional.registration}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{professional.plan}</Badge>
+                        </TableCell>
                         <TableCell>
                           <Badge variant={professional.status === "Ativo" ? "default" : "destructive"}>
                             {professional.status}
@@ -372,6 +392,17 @@ const ProfessionalsManagement: React.FC = () => {
                                 </Button>
                               }
                             />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-blue-600 hover:text-blue-700"
+                              onClick={() => {
+                                setSelectedProfessional(professional);
+                                setEditModalOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
                             {professional.status === "Ativo" ? (
                               <Button
                                 variant="outline"
@@ -476,6 +507,18 @@ const ProfessionalsManagement: React.FC = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <ProfessionalEditModal
+          isOpen={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          professional={selectedProfessional}
+        />
+
+        <DocumentViewModal
+          isOpen={documentsModalOpen}
+          onClose={() => setDocumentsModalOpen(false)}
+          documents={selectedProfessional?.documents || []}
+        />
       </div>
     </AdminLayout>
   );

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Send, History, Wifi, WifiOff, Upload, Bold, Italic, Smile, Users, User, Image, FileText } from "lucide-react";
+import { MessageCircle, Send, History, Wifi, WifiOff, Upload, Bold, Italic, Smile, Users, User, Image, FileText, Filter } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import MessageTemplates from "@/components/MessageTemplates";
 
 // Dados fictícios para profissionais
 const professionals = [
@@ -58,7 +59,7 @@ const messageHistory = [
     message: "Manutenção programada para domingo das 2h às 4h.",
     type: "Broadcast",
     sentAt: "2024-01-14 16:45",
-    status: "Enviado"
+    status: "Falhou"
   }
 ];
 
@@ -72,6 +73,13 @@ const WhatsAppConfig: React.FC = () => {
   const [selectedProfessionals, setSelectedProfessionals] = useState<string[]>([]);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [showTemplates, setShowTemplates] = useState(false);
+  
+  // Filtros para histórico
+  const [recipientFilter, setRecipientFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  
   const { toast } = useToast();
 
   const handleConnect = () => {
@@ -150,6 +158,11 @@ const WhatsAppConfig: React.FC = () => {
     setUploadedFile(null);
   };
 
+  const handleSelectTemplate = (template: string) => {
+    setMessageText(template);
+    setShowTemplates(false);
+  };
+
   const formatMessage = (text: string, format: string) => {
     const textarea = document.getElementById("message-text") as HTMLTextAreaElement;
     if (!textarea) return;
@@ -179,6 +192,14 @@ const WhatsAppConfig: React.FC = () => {
   const canSendMessage = () => {
     return isConnected && (messageText.trim() || uploadedFile);
   };
+
+  const filteredHistory = messageHistory.filter((message) => {
+    const matchesRecipient = recipientFilter === "all" || message.recipients.toLowerCase().includes(recipientFilter.toLowerCase());
+    const matchesType = typeFilter === "all" || message.type === typeFilter;
+    const matchesStatus = statusFilter === "all" || message.status === statusFilter;
+    
+    return matchesRecipient && matchesType && matchesStatus;
+  });
 
   return (
     <AdminLayout>
@@ -268,46 +289,74 @@ const WhatsAppConfig: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="mensagens" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Enviar Mensagens</CardTitle>
-                <CardDescription>
-                  Envie mensagens individuais ou em lote para os profissionais.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  <div>
-                    <Label>Tipo de Envio</Label>
-                    <Select value={messageType} onValueChange={setMessageType}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="individual">Individual</SelectItem>
-                        <SelectItem value="lote">Lote</SelectItem>
-                        <SelectItem value="todos">Todos os Profissionais</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Enviar Mensagens</CardTitle>
+                  <CardDescription>
+                    Envie mensagens individuais ou em lote para os profissionais.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Tipo de Envio</Label>
+                      <Select value={messageType} onValueChange={setMessageType}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="individual">Individual</SelectItem>
+                          <SelectItem value="lote">Lote</SelectItem>
+                          <SelectItem value="todos">Todos os Profissionais</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  {messageType === "individual" && (
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Número do WhatsApp (opcional)</Label>
-                        <Input
-                          placeholder="+55 11 99999-9999"
-                          value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value)}
-                        />
+                    {messageType === "individual" && (
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Número do WhatsApp (opcional)</Label>
+                          <Input
+                            placeholder="+55 11 99999-9999"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label>Ou selecione profissionais cadastrados:</Label>
+                          <div className="space-y-2 mt-2 max-h-32 overflow-y-auto border rounded p-2">
+                            {professionals.map((prof) => (
+                              <div key={prof.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={prof.id}
+                                  checked={selectedProfessionals.includes(prof.id)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedProfessionals([...selectedProfessionals, prof.id]);
+                                    } else {
+                                      setSelectedProfessionals(selectedProfessionals.filter(id => id !== prof.id));
+                                    }
+                                  }}
+                                />
+                                <label htmlFor={prof.id} className="text-sm">
+                                  {prof.name} - {prof.profession}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
+                    )}
+
+                    {messageType === "lote" && (
                       <div>
-                        <Label>Ou selecione profissionais cadastrados:</Label>
+                        <Label>Selecionar profissionais:</Label>
                         <div className="space-y-2 mt-2 max-h-32 overflow-y-auto border rounded p-2">
                           {professionals.map((prof) => (
                             <div key={prof.id} className="flex items-center space-x-2">
                               <Checkbox
-                                id={prof.id}
+                                id={`lote-${prof.id}`}
                                 checked={selectedProfessionals.includes(prof.id)}
                                 onCheckedChange={(checked) => {
                                   if (checked) {
@@ -317,188 +366,203 @@ const WhatsAppConfig: React.FC = () => {
                                   }
                                 }}
                               />
-                              <label htmlFor={prof.id} className="text-sm">
+                              <label htmlFor={`lote-${prof.id}`} className="text-sm">
                                 {prof.name} - {prof.profession}
                               </label>
                             </div>
                           ))}
                         </div>
                       </div>
-                    </div>
-                  )}
-
-                  {messageType === "lote" && (
-                    <div>
-                      <Label>Selecionar profissionais:</Label>
-                      <div className="space-y-2 mt-2 max-h-32 overflow-y-auto border rounded p-2">
-                        {professionals.map((prof) => (
-                          <div key={prof.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`lote-${prof.id}`}
-                              checked={selectedProfessionals.includes(prof.id)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedProfessionals([...selectedProfessionals, prof.id]);
-                                } else {
-                                  setSelectedProfessionals(selectedProfessionals.filter(id => id !== prof.id));
-                                }
-                              }}
-                            />
-                            <label htmlFor={`lote-${prof.id}`} className="text-sm">
-                              {prof.name} - {prof.profession}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="message-text">Mensagem</Label>
-                      <div className="flex space-x-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => formatMessage(messageText, "bold")}
-                        >
-                          <Bold className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => formatMessage(messageText, "italic")}
-                        >
-                          <Italic className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Smile className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <Textarea
-                      id="message-text"
-                      placeholder="Digite sua mensagem..."
-                      value={messageText}
-                      onChange={(e) => setMessageText(e.target.value)}
-                      rows={4}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Anexar Arquivo</Label>
-                    <div className="flex items-center space-x-2">
-                      <Input
-                        type="file"
-                        accept="image/*,application/pdf,.doc,.docx"
-                        onChange={handleFileUpload}
-                        className="flex-1"
-                      />
-                      <Button variant="outline" size="sm">
-                        <Upload className="h-4 w-4 mr-1" />
-                        Upload
-                      </Button>
-                    </div>
-                    {uploadedFile && (
-                      <div className="flex items-center space-x-2 p-2 bg-green-50 border border-green-200 rounded">
-                        {uploadedFile.type.startsWith('image/') ? (
-                          <Image className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <FileText className="h-4 w-4 text-green-600" />
-                        )}
-                        <span className="text-sm text-green-700">{uploadedFile.name}</span>
-                      </div>
                     )}
-                  </div>
 
-                  {(messageText || uploadedFile) && (
                     <div className="space-y-2">
-                      <Label>Pré-visualização</Label>
-                      <div className="p-3 border rounded-lg bg-green-50">
-                        <div className="flex items-start space-x-2">
-                          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                            <MessageCircle className="h-4 w-4 text-white" />
-                          </div>
-                          <div className="bg-white p-2 rounded-lg shadow-sm max-w-xs">
-                            {messageText && (
-                              <p className="text-sm whitespace-pre-wrap">{messageText}</p>
-                            )}
-                            {uploadedFile && (
-                              <div className="mt-2 flex items-center space-x-2">
-                                {uploadedFile.type.startsWith('image/') ? (
-                                  <Image className="h-4 w-4 text-gray-500" />
-                                ) : (
-                                  <FileText className="h-4 w-4 text-gray-500" />
-                                )}
-                                <span className="text-xs text-gray-600">{uploadedFile.name}</span>
-                              </div>
-                            )}
-                          </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="message-text">Mensagem</Label>
+                        <div className="flex space-x-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowTemplates(!showTemplates)}
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Templates
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => formatMessage(messageText, "bold")}
+                          >
+                            <Bold className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => formatMessage(messageText, "italic")}
+                          >
+                            <Italic className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
+                      <Textarea
+                        id="message-text"
+                        placeholder="Digite sua mensagem..."
+                        value={messageText}
+                        onChange={(e) => setMessageText(e.target.value)}
+                        rows={4}
+                      />
                     </div>
-                  )}
 
-                  <Button 
-                    onClick={handleSendMessage} 
-                    disabled={!canSendMessage()}
-                    className="w-full"
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    Enviar Mensagem
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                    <div className="space-y-2">
+                      <Label>Anexar Arquivo</Label>
+                      <div className="flex items-center space-x-2">
+                        <Input
+                          type="file"
+                          accept="image/*,application/pdf,.doc,.docx"
+                          onChange={handleFileUpload}
+                          className="flex-1"
+                        />
+                        <Button variant="outline" size="sm">
+                          <Upload className="h-4 w-4 mr-1" />
+                          Upload
+                        </Button>
+                      </div>
+                      {uploadedFile && (
+                        <div className="flex items-center space-x-2 p-2 bg-green-50 border border-green-200 rounded">
+                          {uploadedFile.type.startsWith('image/') ? (
+                            <Image className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <FileText className="h-4 w-4 text-green-600" />
+                          )}
+                          <span className="text-sm text-green-700">{uploadedFile.name}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button 
+                      onClick={handleSendMessage} 
+                      disabled={!canSendMessage()}
+                      className="w-full"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Enviar Mensagem
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {showTemplates && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Templates de Mensagens</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <MessageTemplates onSelectTemplate={handleSelectTemplate} />
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
           
           <TabsContent value="historico" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Histórico de Mensagens</CardTitle>
-                <CardDescription>
-                  Visualize todas as mensagens enviadas pela plataforma.
-                </CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Histórico de Mensagens</CardTitle>
+                    <CardDescription>
+                      Visualize todas as mensagens enviadas pela plataforma.
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Filter className="h-4 w-4" />
+                    <span className="text-sm font-medium">Filtros</span>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="rounded-md border overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Destinatários</TableHead>
-                        <TableHead>Mensagem</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Data/Hora</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {messageHistory.map((message) => (
-                        <TableRow key={message.id}>
-                          <TableCell className="font-medium">{message.recipients}</TableCell>
-                          <TableCell className="max-w-xs truncate">{message.message}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {message.type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{message.sentAt}</TableCell>
-                          <TableCell>
-                            <Badge variant="default" className="bg-green-500">
-                              {message.status}
-                            </Badge>
-                          </TableCell>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label>Destinatário</Label>
+                      <Select value={recipientFilter} onValueChange={setRecipientFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Filtrar por destinatário" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos</SelectItem>
+                          <SelectItem value="dr. joão">Dr. João Silva</SelectItem>
+                          <SelectItem value="dra. maria">Dra. Maria Santos</SelectItem>
+                          <SelectItem value="profissionais">Todos os profissionais</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Tipo</Label>
+                      <Select value={typeFilter} onValueChange={setTypeFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Filtrar por tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos</SelectItem>
+                          <SelectItem value="Individual">Individual</SelectItem>
+                          <SelectItem value="Lote">Lote</SelectItem>
+                          <SelectItem value="Broadcast">Broadcast</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Status</Label>
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Filtrar por status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos</SelectItem>
+                          <SelectItem value="Enviado">Enviado</SelectItem>
+                          <SelectItem value="Falhou">Falhou</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="rounded-md border overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Destinatários</TableHead>
+                          <TableHead>Mensagem</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Data/Hora</TableHead>
+                          <TableHead>Status</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredHistory.map((message) => (
+                          <TableRow key={message.id}>
+                            <TableCell className="font-medium">{message.recipients}</TableCell>
+                            <TableCell className="max-w-xs truncate">{message.message}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">
+                                {message.type}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{message.sentAt}</TableCell>
+                            <TableCell>
+                              <Badge variant={message.status === "Enviado" ? "default" : "destructive"}>
+                                {message.status}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="configuracoes" className="space-y-6">
-            
             <Card>
               <CardHeader>
                 <CardTitle>Configurações Gerais</CardTitle>

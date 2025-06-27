@@ -7,12 +7,11 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { Badge } from "@/components/ui/badge";
 
 const AdminDashboard: React.FC = () => {
-  // Dados para cadastros por semana
-  const weeklySignups = [
-    { week: "Sem 1", cadastros: 12 },
-    { week: "Sem 2", cadastros: 19 },
-    { week: "Sem 3", cadastros: 8 },
-    { week: "Sem 4", cadastros: 15 },
+  // Dados para planos contratados
+  const planTypes = [
+    { plan: "Básico", profissionais: 45, color: "#8884d8" },
+    { plan: "Profissional", profissionais: 78, color: "#82ca9d" },
+    { plan: "Premium", profissionais: 33, color: "#ffc658" },
   ];
 
   // Dados para tipos de mensagens WhatsApp
@@ -117,18 +116,18 @@ const AdminDashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Cadastros por Semana</CardTitle>
-              <CardDescription>Novos profissionais cadastrados</CardDescription>
+              <CardTitle>Profissionais por Tipo de Plano</CardTitle>
+              <CardDescription>Distribuição por plano contratado</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weeklySignups}>
+                  <BarChart data={planTypes}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="week" />
+                    <XAxis dataKey="plan" />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="cadastros" fill="#8884d8" />
+                    <Bar dataKey="profissionais" fill="#8884d8" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
