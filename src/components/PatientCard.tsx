@@ -1,5 +1,5 @@
+
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { Patient } from "@/stores/patientStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,11 +8,10 @@ import { FileText } from "lucide-react";
 
 interface PatientCardProps {
   patient: Patient;
+  onClick?: () => void;
 }
 
-const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
-  const navigate = useNavigate();
-
+const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -41,10 +40,6 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
     }
     
     return age;
-  };
-
-  const viewPatient = () => {
-    navigate(`/patients/${patient.id}`);
   };
 
   return (
@@ -102,7 +97,7 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient }) => {
           <Button 
             variant="ghost" 
             className="w-full text-psycho-primary hover:text-psycho-primary hover:bg-psycho-muted"
-            onClick={viewPatient}
+            onClick={onClick}
           >
             Ver detalhes
           </Button>
