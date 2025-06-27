@@ -235,7 +235,9 @@ const FinancialPage: React.FC = () => {
                     <XAxis dataKey="status" />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="count" fill={(entry) => entry.color} />
+                    {sessionStatus.map((entry, index) => (
+                      <Bar key={`bar-${index}`} dataKey="count" fill={entry.color} />
+                    ))}
                   </BarChart>
                 </ResponsiveContainer>
               </div>
