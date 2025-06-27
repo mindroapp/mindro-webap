@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import {
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Send, History, Wifi, WifiOff, Upload, Bold, Italic, Smile, Users, User, Image, FileText, Filter } from "lucide-react";
+import { MessageCircle, Send, History, Wifi, WifiOff, Upload, Bold, Italic, Smile, Users, User, Image, FileText, Filter, MessageSquare } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
