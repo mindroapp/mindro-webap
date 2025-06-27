@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import {
@@ -12,9 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Send, Calendar, BarChart3, Plus, Trash2 } from "lucide-react";
+import { MessageCircle, Send, History, Wifi, WifiOff, Upload, Bold, Italic, Smile, Users, User } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -23,63 +24,134 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
-// Mensagens pré-programadas de exemplo
-const mockScheduledMessages = [
+// Dados fictícios para profissionais
+const professionals = [
+  { id: "1", name: "Dr. João Silva", phone: "+5511999999999", profession: "Psicólogo" },
+  { id: "2", name: "Dra. Maria Santos", phone: "+5511888888888", profession: "Psicanalista" },
+  { id: "3", name: "Dr. Carlos Lima", phone: "+5511777777777", profession: "Terapeuta" },
+];
+
+// Histórico de mensagens fictício
+const messageHistory = [
   {
     id: "1",
-    title: "Lembrete de Consulta",
-    message: "Olá {nome}, lembrando da sua consulta amanhã às {horario} com {profissional}. Confirma sua presença?",
-    trigger: "1 dia antes",
-    status: "Ativo"
+    recipients: "3 profissionais",
+    message: "Lembrete: Nova atualização da plataforma disponível!",
+    type: "Lote",
+    sentAt: "2024-01-15 14:30",
+    status: "Enviado"
   },
   {
     id: "2",
-    title: "Agradecimento após consulta",
-    message: "Olá {nome}, esperamos que a consulta de hoje com {profissional} tenha sido produtiva. Qualquer dúvida estamos à disposição!",
-    trigger: "2 horas depois",
-    status: "Ativo"
+    recipients: "Dr. João Silva",
+    message: "Sua documentação foi aprovada. Bem-vindo à plataforma!",
+    type: "Individual",
+    sentAt: "2024-01-15 10:15",
+    status: "Enviado"
   },
   {
     id: "3",
-    title: "Confirmação de agendamento",
-    message: "Olá {nome}, sua consulta com {profissional} foi agendada para {data} às {horario}. Agradecemos a preferência!",
-    trigger: "Imediato",
-    status: "Ativo"
-  },
-  {
-    id: "4",
-    title: "Lembrete de pagamento",
-    message: "Olá {nome}, o pagamento referente à sessão de {data} está pendente. Poderia regularizar em até 3 dias? Obrigado!",
-    trigger: "5 dias depois",
-    status: "Inativo"
-  }
-];
-
-// Campanhas de exemplo
-const mockCampaigns = [
-  {
-    id: "1",
-    title: "Desconto Pacote de Sessões",
-    message: "Olá {nome}, que tal aproveitar nosso pacote especial com 10% de desconto para 5 sessões? Válido somente esta semana!",
-    segment: "Clientes inativos (30+ dias)",
-    scheduledDate: "15/05/2025",
-    status: "Agendada"
-  },
-  {
-    id: "2",
-    title: "Novos serviços",
-    message: "Olá {nome}, temos novos serviços disponíveis como terapia em grupo e avaliação psicológica completa. Saiba mais acessando nosso site!",
-    segment: "Todos os clientes",
-    scheduledDate: "20/05/2025",
-    status: "Rascunho"
+    recipients: "Todos os profissionais",
+    message: "Manutenção programada para domingo das 2h às 4h.",
+    type: "Broadcast",
+    sentAt: "2024-01-14 16:45",
+    status: "Enviado"
   }
 ];
 
 const WhatsAppConfig: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("configuracao");
+  const [activeTab, setActiveTab] = useState("conexao");
   const [whatsappNumber, setWhatsappNumber] = useState("+55 11 98765-4321");
-  const [isConnected, setIsConnected] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [messageText, setMessageText] = useState("");
+  const [messageType, setMessageType] = useState("individual");
+  const [selectedProfessionals, setSelectedProfessionals] = useState<string[]>([]);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const { toast } = useToast();
+
+  const handleConnect = () => {
+    setShowQRCode(true);
+    setTimeout(() => {
+      setIsConnected(true);
+      setShowQRCode(false);
+      toast({
+        title: "WhatsApp conectado",
+        description: "Conexão estabelecida com sucesso!"
+      });
+    }, 3000);
+  };
+
+  const handleDisconnect = () => {
+    setIsConnected(false);
+    toast({
+      title: "WhatsApp desconectado",
+      description: "Conexão encerrada."
+    });
+  };
+
+  const handleSendMessage = () => {
+    if (!messageText.trim()) {
+      toast({
+        title: "Erro",
+        description: "Digite uma mensagem antes de enviar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (messageType === "individual" && !phoneNumber && selectedProfessionals.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Selecione ao menos um destinatário.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Mensagem enviada",
+      description: `Mensagem enviada com sucesso para ${
+        messageType === "individual" 
+          ? phoneNumber || `${selectedProfessionals.length} profissional(is)`
+          : "todos os profissionais"
+      }!`
+    });
+
+    // Reset form
+    setMessageText("");
+    setPhoneNumber("");
+    setSelectedProfessionals([]);
+  };
+
+  const formatMessage = (text: string, format: string) => {
+    const textarea = document.getElementById("message-text") as HTMLTextAreaElement;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = text.substring(start, end);
+    
+    if (selectedText) {
+      let formattedText = "";
+      switch (format) {
+        case "bold":
+          formattedText = `*${selectedText}*`;
+          break;
+        case "italic":
+          formattedText = `_${selectedText}_`;
+          break;
+        default:
+          formattedText = selectedText;
+      }
+      
+      const newText = text.substring(0, start) + formattedText + text.substring(end);
+      setMessageText(newText);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -87,33 +159,289 @@ const WhatsAppConfig: React.FC = () => {
         <div className="flex justify-between items-center">
           <h2 className="text-3xl font-bold tracking-tight">Configurações de WhatsApp</h2>
           <div className="flex items-center space-x-2">
-            <span className={`inline-flex h-3 w-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
+            {isConnected ? <Wifi className="h-5 w-5 text-green-500" /> : <WifiOff className="h-5 w-5 text-red-500" />}
             <span className="text-sm font-medium">{isConnected ? 'Conectado' : 'Desconectado'}</span>
           </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
-            <TabsTrigger value="configuracao">
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Configuração
+          <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
+            <TabsTrigger value="conexao">
+              <Wifi className="h-4 w-4 mr-2" />
+              Conexão
             </TabsTrigger>
             <TabsTrigger value="mensagens">
-              <Calendar className="h-4 w-4 mr-2" />
+              <Send className="h-4 w-4 mr-2" />
               Mensagens
             </TabsTrigger>
-            <TabsTrigger value="campanhas">
-              <Send className="h-4 w-4 mr-2" />
-              Campanhas
+            <TabsTrigger value="historico">
+              <History className="h-4 w-4 mr-2" />
+              Histórico
+            </TabsTrigger>
+            <TabsTrigger value="configuracoes">
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Config
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="configuracao" className="space-y-6">
+          <TabsContent value="conexao" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Configuração do WhatsApp</CardTitle>
+                <CardTitle>Status da Conexão</CardTitle>
                 <CardDescription>
-                  Configure o número de WhatsApp oficial da plataforma.
+                  Gerencie a conexão do WhatsApp Business com a plataforma.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    {isConnected ? <Wifi className="h-8 w-8 text-green-500" /> : <WifiOff className="h-8 w-8 text-red-500" />}
+                    <div>
+                      <p className="font-medium">WhatsApp Business</p>
+                      <p className="text-sm text-gray-500">
+                        {isConnected ? `Conectado - ${whatsappNumber}` : "Desconectado"}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    {isConnected ? (
+                      <Button variant="outline" onClick={handleDisconnect}>
+                        Desconectar
+                      </Button>
+                    ) : (
+                      <Button onClick={handleConnect}>
+                        Conectar
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {showQRCode && (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center space-y-4">
+                        <div className="w-48 h-48 mx-auto bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                          <div className="text-center">
+                            <MessageCircle className="h-12 w-12 mx-auto text-gray-400 mb-2" />
+                            <p className="text-sm text-gray-500">QR Code apareceria aqui</p>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="font-medium">Escaneie o QR Code</p>
+                          <p className="text-sm text-gray-500">
+                            Abra o WhatsApp no seu telefone e escaneie este código
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="mensagens" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Enviar Mensagens</CardTitle>
+                <CardDescription>
+                  Envie mensagens individuais ou em lote para os profissionais.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-4">
+                  <div>
+                    <Label>Tipo de Envio</Label>
+                    <Select value={messageType} onValueChange={setMessageType}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="individual">Individual</SelectItem>
+                        <SelectItem value="lote">Lote</SelectItem>
+                        <SelectItem value="todos">Todos os Profissionais</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {messageType === "individual" && (
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Número do WhatsApp (opcional)</Label>
+                        <Input
+                          placeholder="+55 11 99999-9999"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label>Ou selecione profissionais cadastrados:</Label>
+                        <div className="space-y-2 mt-2 max-h-32 overflow-y-auto border rounded p-2">
+                          {professionals.map((prof) => (
+                            <div key={prof.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={prof.id}
+                                checked={selectedProfessionals.includes(prof.id)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedProfessionals([...selectedProfessionals, prof.id]);
+                                  } else {
+                                    setSelectedProfessionals(selectedProfessionals.filter(id => id !== prof.id));
+                                  }
+                                }}
+                              />
+                              <label htmlFor={prof.id} className="text-sm">
+                                {prof.name} - {prof.profession}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {messageType === "lote" && (
+                    <div>
+                      <Label>Selecionar profissionais:</Label>
+                      <div className="space-y-2 mt-2 max-h-32 overflow-y-auto border rounded p-2">
+                        {professionals.map((prof) => (
+                          <div key={prof.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`lote-${prof.id}`}
+                              checked={selectedProfessionals.includes(prof.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedProfessionals([...selectedProfessionals, prof.id]);
+                                } else {
+                                  setSelectedProfessionals(selectedProfessionals.filter(id => id !== prof.id));
+                                }
+                              }}
+                            />
+                            <label htmlFor={`lote-${prof.id}`} className="text-sm">
+                              {prof.name} - {prof.profession}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="message-text">Mensagem</Label>
+                      <div className="flex space-x-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => formatMessage(messageText, "bold")}
+                        >
+                          <Bold className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => formatMessage(messageText, "italic")}
+                        >
+                          <Italic className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Smile className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Upload className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <Textarea
+                      id="message-text"
+                      placeholder="Digite sua mensagem..."
+                      value={messageText}
+                      onChange={(e) => setMessageText(e.target.value)}
+                      rows={4}
+                    />
+                  </div>
+
+                  {messageText && (
+                    <div className="space-y-2">
+                      <Label>Pré-visualização</Label>
+                      <div className="p-3 border rounded-lg bg-green-50">
+                        <div className="flex items-start space-x-2">
+                          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                            <MessageCircle className="h-4 w-4 text-white" />
+                          </div>
+                          <div className="bg-white p-2 rounded-lg shadow-sm max-w-xs">
+                            <p className="text-sm whitespace-pre-wrap">{messageText}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <Button 
+                    onClick={handleSendMessage} 
+                    disabled={!isConnected}
+                    className="w-full"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Enviar Mensagem
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="historico" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Histórico de Mensagens</CardTitle>
+                <CardDescription>
+                  Visualize todas as mensagens enviadas pela plataforma.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Destinatários</TableHead>
+                        <TableHead>Mensagem</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Data/Hora</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {messageHistory.map((message) => (
+                        <TableRow key={message.id}>
+                          <TableCell className="font-medium">{message.recipients}</TableCell>
+                          <TableCell className="max-w-xs truncate">{message.message}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {message.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{message.sentAt}</TableCell>
+                          <TableCell>
+                            <Badge variant="default" className="bg-green-500">
+                              {message.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="configuracoes" className="space-y-6">
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Configurações Gerais</CardTitle>
+                <CardDescription>
+                  Configure as opções gerais do WhatsApp Business.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -142,173 +470,6 @@ const WhatsAppConfig: React.FC = () => {
                     id="auto-reply-message" 
                     defaultValue="Olá! Obrigado por entrar em contato com a Mindro. Em breve um de nossos atendentes irá te responder."
                   />
-                </div>
-                <div className="pt-4">
-                  <Button variant={isConnected ? "outline" : "default"} onClick={() => setIsConnected(!isConnected)}>
-                    {isConnected ? "Desconectar WhatsApp" : "Conectar WhatsApp"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Configurações Avançadas</CardTitle>
-                <CardDescription>
-                  Ajustes avançados para o serviço de WhatsApp.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch id="notification" defaultChecked />
-                  <Label htmlFor="notification">Receber notificações por e-mail</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch id="analytics" defaultChecked />
-                  <Label htmlFor="analytics">Coletar métricas de engajamento</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch id="batch" />
-                  <Label htmlFor="batch">Permitir envios em lotes maiores que 50 mensagens</Label>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="mensagens" className="space-y-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Mensagens Programadas</CardTitle>
-                  <CardDescription>
-                    Configure mensagens automáticas de acordo com eventos no sistema.
-                  </CardDescription>
-                </div>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nova Mensagem
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Título</TableHead>
-                        <TableHead className="hidden md:table-cell">Mensagem</TableHead>
-                        <TableHead>Gatilho</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="w-[80px]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {mockScheduledMessages.map((message) => (
-                        <TableRow key={message.id}>
-                          <TableCell className="font-medium">{message.title}</TableCell>
-                          <TableCell className="hidden md:table-cell max-w-xs truncate">{message.message}</TableCell>
-                          <TableCell>{message.trigger}</TableCell>
-                          <TableCell>
-                            <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                              ${message.status === "Ativo" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
-                            >
-                              {message.status}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="icon">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Modelos de Mensagem</CardTitle>
-                <CardDescription>Variáveis disponíveis: {"{nome}"}, {"{profissional}"}, {"{data}"}, {"{horario}"}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="border rounded-md p-3 space-y-2">
-                    <p className="font-medium">Confirmação de agendamento</p>
-                    <p className="text-sm text-gray-600">Olá {"{nome}"}, sua consulta com {"{profissional}"} foi agendada para {"{data}"} às {"{horario}"}. Agradecemos a preferência!</p>
-                  </div>
-                  <div className="border rounded-md p-3 space-y-2">
-                    <p className="font-medium">Lembrete de consulta</p>
-                    <p className="text-sm text-gray-600">Olá {"{nome}"}, lembrando da sua consulta amanhã às {"{horario}"} com {"{profissional}"}. Confirma sua presença?</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="campanhas" className="space-y-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Campanhas</CardTitle>
-                  <CardDescription>
-                    Gerencie campanhas de mensagens para seus clientes.
-                  </CardDescription>
-                </div>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nova Campanha
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Título</TableHead>
-                        <TableHead className="hidden md:table-cell">Segmento</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="w-[80px]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {mockCampaigns.map((campaign) => (
-                        <TableRow key={campaign.id}>
-                          <TableCell className="font-medium">{campaign.title}</TableCell>
-                          <TableCell className="hidden md:table-cell">{campaign.segment}</TableCell>
-                          <TableCell>{campaign.scheduledDate}</TableCell>
-                          <TableCell>
-                            <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                              ${campaign.status === "Agendada" ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"}`}
-                            >
-                              {campaign.status}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="icon">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Métricas de Campanhas</CardTitle>
-                <CardDescription>
-                  Estatísticas de desempenho das campanhas enviadas.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[220px] flex items-center justify-center bg-slate-50 dark:bg-slate-900/50 rounded-md">
-                  <BarChart3 className="h-16 w-16 text-slate-300" />
                 </div>
               </CardContent>
             </Card>

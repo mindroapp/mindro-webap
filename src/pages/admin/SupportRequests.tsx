@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import {
@@ -30,10 +29,17 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Search } from "lucide-react";
+import { Search, MessageCircle, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-// Dados fictícios de solicitações de suporte
+// Dados fictícios de suporte atualizados
+const supportStats = {
+  total: 127,
+  open: 18,
+  inProgress: 23,
+  resolved: 86
+};
+
 const mockSupportRequests = [
   {
     id: "sr1",
@@ -58,18 +64,6 @@ const mockSupportRequests = [
         sender: "suporte",
         message: "Olá! Estamos verificando o problema. Você poderia nos enviar um print da tela de erro?",
         timestamp: "10/04/2025 15:45"
-      },
-      {
-        id: "m3",
-        sender: "cliente",
-        message: "Claro, segue o print anexado.",
-        timestamp: "11/04/2025 09:10"
-      },
-      {
-        id: "m4",
-        sender: "suporte",
-        message: "Obrigado! Identificamos o problema e estamos trabalhando na correção. Deve ser resolvido em breve.",
-        timestamp: "12/04/2025 09:15"
       }
     ]
   },
@@ -254,31 +248,33 @@ const SupportRequests: React.FC = () => {
     });
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "Crítica":
-        return "bg-red-100 text-red-800";
-      case "Alta":
-        return "bg-orange-100 text-orange-800";
-      case "Média":
-        return "bg-amber-100 text-amber-800";
-      case "Baixa":
-        return "bg-blue-100 text-blue-800";
+  const getStatIcon = (type: string) => {
+    switch (type) {
+      case "total":
+        return MessageCircle;
+      case "open":
+        return AlertTriangle;
+      case "inProgress":
+        return Clock;
+      case "resolved":
+        return CheckCircle;
       default:
-        return "bg-gray-100 text-gray-800";
+        return MessageCircle;
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Aberto":
-        return "bg-blue-100 text-blue-800";
-      case "Em Andamento":
-        return "bg-amber-100 text-amber-800";
-      case "Resolvido":
-        return "bg-green-100 text-green-800";
+  const getStatColor = (type: string) => {
+    switch (type) {
+      case "total":
+        return "text-blue-600";
+      case "open":
+        return "text-red-600";
+      case "inProgress":
+        return "text-amber-600";
+      case "resolved":
+        return "text-green-600";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "text-blue-600";
     }
   };
 
@@ -289,11 +285,38 @@ const SupportRequests: React.FC = () => {
           <h2 className="text-3xl font-bold tracking-tight">Gestão de Suporte</h2>
         </div>
 
+        {/* Cards de estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[
+            { key: "total", label: "Total de Chamados", value: supportStats.total },
+            { key: "open", label: "Abertos", value: supportStats.open },
+            { key: "inProgress", label: "Em Andamento", value: supportStats.inProgress },
+            { key: "resolved", label: "Resolvidos", value: supportStats.resolved }
+          ].map((stat) => {
+            const IconComponent = getStatIcon(stat.key);
+            return (
+              <Card key={stat.key}>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className={`p-2 bg-gray-50 rounded-md mr-4`}>
+                      <IconComponent className={`h-6 w-6 ${getStatColor(stat.key)}`} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">{stat.label}</p>
+                      <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle>Solicitações de Suporte</CardTitle>
             <CardDescription>
-              Gerencie todas as solicitações de suporte dos clientes.
+              Gerencie todas as solicitações de suporte dos profissionais.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -315,10 +338,10 @@ const SupportRequests: React.FC = () => {
                   className="w-full md:w-auto"
                 >
                   <TabsList className="grid grid-cols-4 w-full md:w-auto">
-                    <TabsTrigger value="todos">Todos</TabsTrigger>
-                    <TabsTrigger value="abertos">Abertos</TabsTrigger>
-                    <TabsTrigger value="andamento">Em Andamento</TabsTrigger>
-                    <TabsTrigger value="resolvidos">Resolvidos</TabsTrigger>
+                    <TabsTrigger value="todos">Todos ({supportStats.total})</TabsTrigger>
+                    <TabsTrigger value="abertos">Abertos ({supportStats.open})</TabsTrigger>
+                    <TabsTrigger value="andamento">Andamento ({supportStats.inProgress})</TabsTrigger>
+                    <TabsTrigger value="resolvidos">Resolvidos ({supportStats.resolved})</TabsTrigger>
                   </TabsList>
                 </Tabs>
               </div>
@@ -340,17 +363,30 @@ const SupportRequests: React.FC = () => {
                       <TableRow 
                         key={request.id}
                         className="cursor-pointer hover:bg-muted/80"
-                        onClick={() => handleSelectRequest(request)}
+                        onClick={() => {
+                          setSelectedRequest(request);
+                          setIsDetailOpen(true);
+                          setUpdateStatus(request.status);
+                        }}
                       >
                         <TableCell className="font-medium">{request.clientName}</TableCell>
                         <TableCell>{request.subject}</TableCell>
                         <TableCell className="hidden md:table-cell">
-                          <Badge variant="outline" className={getPriorityColor(request.priority)}>
+                          <Badge variant="outline" className={
+                            request.priority === "Crítica" ? "bg-red-100 text-red-800" :
+                            request.priority === "Alta" ? "bg-orange-100 text-orange-800" :
+                            request.priority === "Média" ? "bg-amber-100 text-amber-800" :
+                            "bg-blue-100 text-blue-800"
+                          }>
                             {request.priority}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={getStatusColor(request.status)}>
+                          <Badge variant="outline" className={
+                            request.status === "Aberto" ? "bg-blue-100 text-blue-800" :
+                            request.status === "Em Andamento" ? "bg-amber-100 text-amber-800" :
+                            "bg-green-100 text-green-800"
+                          }>
                             {request.status}
                           </Badge>
                         </TableCell>
@@ -375,6 +411,7 @@ const SupportRequests: React.FC = () => {
         </Card>
       </div>
 
+      {/* Dialog de detalhes - mantido o mesmo */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           {selectedRequest && (
@@ -409,7 +446,12 @@ const SupportRequests: React.FC = () => {
                   <div>
                     <Label className="text-xs text-muted-foreground">Prioridade</Label>
                     <div className="mt-1">
-                      <Badge variant="outline" className={getPriorityColor(selectedRequest.priority)}>
+                      <Badge variant="outline" className={
+                        selectedRequest.priority === "Crítica" ? "bg-red-100 text-red-800" :
+                        selectedRequest.priority === "Alta" ? "bg-orange-100 text-orange-800" :
+                        selectedRequest.priority === "Média" ? "bg-amber-100 text-amber-800" :
+                        "bg-blue-100 text-blue-800"
+                      }>
                         {selectedRequest.priority}
                       </Badge>
                     </div>
@@ -433,13 +475,23 @@ const SupportRequests: React.FC = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <Label>Histórico de Mensagens</Label>
-                    <Button variant="outline" size="sm" onClick={handleUpdateStatus} disabled={!updateStatus || updateStatus === selectedRequest.status}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        toast({
+                          title: "Status atualizado",
+                          description: `Chamado atualizado para "${updateStatus}" com sucesso.`
+                        });
+                      }} 
+                      disabled={!updateStatus || updateStatus === selectedRequest.status}
+                    >
                       Atualizar Status
                     </Button>
                   </div>
                   
                   <div className="space-y-4 max-h-[300px] overflow-y-auto p-2">
-                    {selectedRequest.messages.map((message: any) => (
+                    {selectedRequest.messages?.map((message: any) => (
                       <div 
                         key={message.id} 
                         className={`p-3 rounded-lg ${
@@ -478,7 +530,18 @@ const SupportRequests: React.FC = () => {
                 <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
                   Fechar
                 </Button>
-                <Button onClick={handleSendMessage} disabled={!newMessage.trim()} className="bg-psycho-primary hover:bg-psycho-primary/90">
+                <Button 
+                  onClick={() => {
+                    if (!newMessage.trim()) return;
+                    toast({
+                      title: "Mensagem enviada",
+                      description: "Sua resposta foi enviada ao cliente com sucesso."
+                    });
+                    setNewMessage("");
+                  }} 
+                  disabled={!newMessage.trim()} 
+                  className="bg-psycho-primary hover:bg-psycho-primary/90"
+                >
                   Enviar Resposta
                 </Button>
               </DialogFooter>

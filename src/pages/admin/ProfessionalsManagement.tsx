@@ -6,10 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Eye, CheckCircle, XCircle, Pause } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Eye, CheckCircle, XCircle, Pause, Play, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock data - substituir por dados reais da API
+// Mock data atualizado
 const pendingProfessionals = [
   {
     id: 1,
@@ -26,10 +29,10 @@ const pendingProfessionals = [
     name: "Dra. Maria Santos",
     email: "maria@exemplo.com", 
     phone: "(85) 9 8888-8888",
-    profession: "Psiquiatra",
-    registration: "CRM 12345",
+    profession: "Psicanalista",
+    registration: "CFP 12345",
     requestDate: "2024-01-14",
-    documents: ["diploma.pdf", "crm.pdf"]
+    documents: ["diploma.pdf", "cfp.pdf"]
   }
 ];
 
@@ -51,8 +54,18 @@ const activeProfessionals = [
     phone: "(85) 9 6666-6666", 
     profession: "Terapeuta",
     registration: "CRT 98765",
-    status: "Ativo",
+    status: "Suspenso",
     joinDate: "2023-11-15"
+  },
+  {
+    id: 5,
+    name: "Dr. Pedro Oliveira",
+    email: "pedro@exemplo.com",
+    phone: "(85) 9 5555-5555", 
+    profession: "Neuropsicólogo",
+    registration: "CRP 11/67890",
+    status: "Ativo",
+    joinDate: "2023-10-20"
   }
 ];
 
@@ -60,23 +73,69 @@ const ProfessionalsManagement: React.FC = () => {
   const [selectedProfessional, setSelectedProfessional] = useState<any>(null);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
+  const [activateDialogOpen, setActivateDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [professionFilter, setProfessionFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const { toast } = useToast();
 
   const handleAcceptProfessional = (id: number) => {
     console.log("Aceitar profissional:", id);
-    // Implementar lógica de aceitar profissional
+    toast({
+      title: "Profissional aprovado",
+      description: "O profissional foi movido para a lista de ativos com sucesso."
+    });
   };
 
   const handleRejectProfessional = (id: number) => {
     console.log("Rejeitar profissional:", id);
     setRejectDialogOpen(false);
-    // Implementar lógica de rejeitar profissional
+    toast({
+      title: "Profissional rejeitado",
+      description: "A solicitação foi rejeitada e o profissional foi notificado."
+    });
   };
 
   const handleSuspendProfessional = (id: number) => {
     console.log("Suspender profissional:", id);
     setSuspendDialogOpen(false);
-    // Implementar lógica de suspender profissional
+    toast({
+      title: "Profissional suspenso",
+      description: "O acesso do profissional foi suspenso."
+    });
   };
+
+  const handleActivateProfessional = (id: number) => {
+    console.log("Ativar profissional:", id);
+    setActivateDialogOpen(false);
+    toast({
+      title: "Profissional ativado",
+      description: "O acesso do profissional foi reativado."
+    });
+  };
+
+  const filteredActiveProfessionals = activeProfessionals.filter((professional) => {
+    const matchesSearch = 
+      professional.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      professional.profession.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      professional.registration.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesProfession = professionFilter === "all" || professional.profession === professionFilter;
+    const matchesStatus = statusFilter === "all" || professional.status === statusFilter;
+    
+    return matchesSearch && matchesProfession && matchesStatus;
+  });
+
+  const filteredPendingProfessionals = pendingProfessionals.filter((professional) => {
+    const matchesSearch = 
+      professional.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      professional.profession.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      professional.registration.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesProfession = professionFilter === "all" || professional.profession === professionFilter;
+    
+    return matchesSearch && matchesProfession;
+  });
 
   const ViewDetailsDialog = ({ professional, trigger }: { professional: any; trigger: React.ReactNode }) => (
     <Dialog>
@@ -115,6 +174,14 @@ const ProfessionalsManagement: React.FC = () => {
                 <p>{professional.requestDate}</p>
               </div>
             )}
+            {professional?.status && (
+              <div>
+                <label className="font-semibold">Status:</label>
+                <Badge variant={professional.status === "Ativo" ? "default" : "destructive"}>
+                  {professional.status}
+                </Badge>
+              </div>
+            )}
           </div>
           {professional?.documents && (
             <div>
@@ -145,13 +212,42 @@ const ProfessionalsManagement: React.FC = () => {
           </p>
         </div>
 
+        {/* Filtros */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Buscar por nome, profissão ou registro..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={professionFilter} onValueChange={setProfessionFilter}>
+                <SelectTrigger className="w-full md:w-48">
+                  <SelectValue placeholder="Filtrar por profissão" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as profissões</SelectItem>
+                  <SelectItem value="Psicólogo">Psicólogo</SelectItem>
+                  <SelectItem value="Psicanalista">Psicanalista</SelectItem>
+                  <SelectItem value="Terapeuta">Terapeuta</SelectItem>
+                  <SelectItem value="Neuropsicólogo">Neuropsicólogo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
         <Tabs defaultValue="requests" className="space-y-4">
           <TabsList>
             <TabsTrigger value="requests">
-              Solicitações ({pendingProfessionals.length})
+              Solicitações ({filteredPendingProfessionals.length})
             </TabsTrigger>
             <TabsTrigger value="active">
-              Ativos ({activeProfessionals.length})
+              Ativos ({filteredActiveProfessionals.length})
             </TabsTrigger>
           </TabsList>
 
@@ -166,6 +262,7 @@ const ProfessionalsManagement: React.FC = () => {
                     <TableRow>
                       <TableHead>Nome</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Telefone</TableHead>
                       <TableHead>Profissão</TableHead>
                       <TableHead>Registro</TableHead>
                       <TableHead>Data</TableHead>
@@ -173,10 +270,11 @@ const ProfessionalsManagement: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pendingProfessionals.map((professional) => (
+                    {filteredPendingProfessionals.map((professional) => (
                       <TableRow key={professional.id}>
                         <TableCell className="font-medium">{professional.name}</TableCell>
                         <TableCell>{professional.email}</TableCell>
+                        <TableCell>{professional.phone}</TableCell>
                         <TableCell>{professional.profession}</TableCell>
                         <TableCell>{professional.registration}</TableCell>
                         <TableCell>{professional.requestDate}</TableCell>
@@ -222,7 +320,19 @@ const ProfessionalsManagement: React.FC = () => {
           <TabsContent value="active">
             <Card>
               <CardHeader>
-                <CardTitle>Profissionais Ativos</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Profissionais Ativos</CardTitle>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Filtrar por status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os status</SelectItem>
+                      <SelectItem value="Ativo">Ativo</SelectItem>
+                      <SelectItem value="Suspenso">Suspenso</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -230,20 +340,26 @@ const ProfessionalsManagement: React.FC = () => {
                     <TableRow>
                       <TableHead>Nome</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Telefone</TableHead>
                       <TableHead>Profissão</TableHead>
+                      <TableHead>Registro</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Data de Entrada</TableHead>
                       <TableHead>Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {activeProfessionals.map((professional) => (
+                    {filteredActiveProfessionals.map((professional) => (
                       <TableRow key={professional.id}>
                         <TableCell className="font-medium">{professional.name}</TableCell>
                         <TableCell>{professional.email}</TableCell>
+                        <TableCell>{professional.phone}</TableCell>
                         <TableCell>{professional.profession}</TableCell>
+                        <TableCell>{professional.registration}</TableCell>
                         <TableCell>
-                          <Badge variant="default">{professional.status}</Badge>
+                          <Badge variant={professional.status === "Ativo" ? "default" : "destructive"}>
+                            {professional.status}
+                          </Badge>
                         </TableCell>
                         <TableCell>{professional.joinDate}</TableCell>
                         <TableCell>
@@ -256,17 +372,31 @@ const ProfessionalsManagement: React.FC = () => {
                                 </Button>
                               }
                             />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-orange-600 hover:text-orange-700"
-                              onClick={() => {
-                                setSelectedProfessional(professional);
-                                setSuspendDialogOpen(true);
-                              }}
-                            >
-                              <Pause className="h-4 w-4" />
-                            </Button>
+                            {professional.status === "Ativo" ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-orange-600 hover:text-orange-700"
+                                onClick={() => {
+                                  setSelectedProfessional(professional);
+                                  setSuspendDialogOpen(true);
+                                }}
+                              >
+                                <Pause className="h-4 w-4" />
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-green-600 hover:text-green-700"
+                                onClick={() => {
+                                  setSelectedProfessional(professional);
+                                  setActivateDialogOpen(true);
+                                }}
+                              >
+                                <Play className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -278,7 +408,7 @@ const ProfessionalsManagement: React.FC = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Dialog de Rejeição */}
+        {/* Diálogos de confirmação */}
         <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
           <DialogContent>
             <DialogHeader>
@@ -302,7 +432,6 @@ const ProfessionalsManagement: React.FC = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Dialog de Suspensão */}
         <Dialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
           <DialogContent>
             <DialogHeader>
@@ -321,6 +450,28 @@ const ProfessionalsManagement: React.FC = () => {
                 onClick={() => handleSuspendProfessional(selectedProfessional?.id)}
               >
                 Suspender
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={activateDialogOpen} onOpenChange={setActivateDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmar Ativação</DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja reativar o cadastro de {selectedProfessional?.name}?
+                O profissional poderá realizar login novamente.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setActivateDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => handleActivateProfessional(selectedProfessional?.id)}
+              >
+                Ativar
               </Button>
             </DialogFooter>
           </DialogContent>
