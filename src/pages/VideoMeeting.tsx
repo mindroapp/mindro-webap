@@ -21,16 +21,14 @@ const VideoMeeting = () => {
   const [audioOn, setAudioOn] = useState(true);
   const [frontCamera, setFrontCamera] = useState(true);
 
-  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
     const setupStream = async () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
+        setLocalStream(stream);
       } catch (err) {
         toast({
           title: "Erro",
@@ -41,10 +39,6 @@ const VideoMeeting = () => {
     };
     setupStream();
     return () => {
-      if (localVideoRef.current && localVideoRef.current.srcObject) {
-        const s = localVideoRef.current.srcObject as MediaStream;
-        s.getTracks().forEach(track => track.stop());
-      }
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
@@ -92,7 +86,7 @@ const VideoMeeting = () => {
           <CardContent className="space-y-4">
             <AspectRatio ratio={16/9} className="bg-black rounded-lg overflow-hidden">
               <video
-                ref={localVideoRef}
+                ref={el => { if (el && localStream) el.srcObject = localStream; }}
                 autoPlay
                 playsInline
                 muted
@@ -121,33 +115,31 @@ const VideoMeeting = () => {
 
   return (
     <div className="fixed inset-0 w-screen h-screen bg-gray-900 flex flex-col items-center justify-center overflow-hidden">
-      <div className="flex-1 w-full flex items-center justify-center">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-5xl" style={{ aspectRatio: '16/9', minHeight: 180 }}>
-          {[0, 1].map((idx) => (
-            <div key={idx} className="relative bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center">
-              <AspectRatio ratio={16/9} className="w-full h-full flex items-center justify-center">
-                {videoOn ? (
-                  <video
-                    ref={localVideoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-700">
-                    <div className="h-20 w-20 rounded-full bg-gray-600 flex items-center justify-center text-white text-2xl">
-                      Você
-                    </div>
+      <div className="flex-1 w-full flex flex-col md:flex-row items-center justify-center gap-0">
+        {[0, 1].map((idx) => (
+          <div key={idx} className="flex-1 h-1/2 md:h-full md:w-1/2 w-full flex items-center justify-center bg-gray-800 overflow-hidden relative" style={{ minHeight: 0, minWidth: 0 }}>
+            <AspectRatio ratio={16/9} className="w-full h-full flex items-center justify-center">
+              {videoOn ? (
+                <video
+                  ref={el => { if (el && localStream) el.srcObject = localStream; }}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-700">
+                  <div className="h-20 w-20 rounded-full bg-gray-600 flex items-center justify-center text-white text-2xl">
+                    Você
                   </div>
-                )}
-              </AspectRatio>
-              <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 text-xs rounded">
-                Você
-              </div>
+                </div>
+              )}
+            </AspectRatio>
+            <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 text-xs rounded">
+              Você
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
       <div className="w-full flex justify-center bg-gray-800 p-3 md:p-4">
         <div className="flex flex-wrap justify-center gap-2 md:gap-4">
