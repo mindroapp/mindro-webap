@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, Users, UserCheck, Activity, MessageSquare, AlertTriangle, TrendingUp, Calendar, Wifi } from "lucide-react";
@@ -52,13 +51,6 @@ const AdminDashboard: React.FC = () => {
       trend: "up",
     },
     {
-      title: "Novos Cadastros",
-      value: "23",
-      change: "+12 esta semana",
-      icon: TrendingUp,
-      trend: "up",
-    },
-    {
       title: "Tickets Abertos",
       value: "8",
       change: "-2 hoje",
@@ -94,7 +86,7 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

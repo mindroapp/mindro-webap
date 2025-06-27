@@ -2,10 +2,25 @@
 import React from "react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Calendar, CalendarDays, Activity, BarChart3 } from "lucide-react";
+import { Users, Calendar, CalendarDays, Activity, BarChart3, User, TrendingUp } from "lucide-react";
+import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 
 const Dashboard: React.FC = () => {
-  // Dados simplificados para o dashboard profissional
+  // Dados para classificação por sexo
+  const genderData = [
+    { gender: "Masculino", count: 12, color: "#8884d8" },
+    { gender: "Feminino", count: 20, color: "#82ca9d" },
+  ];
+
+  // Dados para classificação por idade
+  const ageData = [
+    { ageRange: "18-25", count: 5 },
+    { ageRange: "26-35", count: 12 },
+    { ageRange: "36-45", count: 8 },
+    { ageRange: "46-55", count: 5 },
+    { ageRange: "56+", count: 2 },
+  ];
+
   const stats = [
     {
       title: "Total de Pacientes",
@@ -43,13 +58,6 @@ const Dashboard: React.FC = () => {
       bgColor: "bg-orange-50"
     },
     {
-      title: "Sessões Realizadas",
-      value: "127",
-      icon: Activity,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50"
-    },
-    {
       title: "Média de Sessões/Paciente",
       value: "4.2",
       icon: BarChart3,
@@ -70,7 +78,7 @@ const Dashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
           {stats.map((stat, index) => (
             <Card key={index}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -90,38 +98,54 @@ const Dashboard: React.FC = () => {
           ))}
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Resumo da Semana</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-blue-900">Próximos Agendamentos</p>
-                  <p className="text-sm text-blue-700">2 agendamentos hoje, 5 esta semana</p>
-                </div>
-                <div className="text-2xl font-bold text-blue-600">7</div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Classificação por Sexo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={genderData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="count"
+                      label={({ gender, count }) => `${gender}: ${count}`}
+                    >
+                      {genderData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-              
-              <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-green-900">Horários Disponíveis</p>
-                  <p className="text-sm text-green-700">3 slots livres hoje, 12 esta semana</p>
-                </div>
-                <div className="text-2xl font-bold text-green-600">15</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Classificação por Idade</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={ageData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="ageRange" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
-              
-              <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-purple-900">Sessões Pendentes</p>
-                  <p className="text-sm text-purple-700">Registros aguardando documentação</p>
-                </div>
-                <div className="text-2xl font-bold text-purple-600">3</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </DashboardLayout>
   );
