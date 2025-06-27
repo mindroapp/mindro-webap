@@ -1,3 +1,4 @@
+
 import { apiFetch } from "@/services/api";
 
 export interface LoginResponse {
@@ -21,6 +22,7 @@ export interface RegisterRequest {
   fullName: string;
   email: string;
   password: string;
+  phone: string;
   role?: string;
 }
 
@@ -36,10 +38,10 @@ const authService = {
     });
   },
 
-  async register(fullName: string, email: string, password: string) {
+  async register(fullName: string, email: string, password: string, phone: string) {
     return apiFetch<LoginResponse>("/users/register", {
       method: "POST",
-      body: JSON.stringify({ fullName, email, password }),
+      body: JSON.stringify({ fullName, email, password, phone }),
     });
   },
 
