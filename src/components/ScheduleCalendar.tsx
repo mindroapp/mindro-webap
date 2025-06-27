@@ -19,25 +19,47 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ type }) => {
   const [modalData, setModalData] = useState<any>(null);
   const { toast } = useToast();
 
-  // Mock data - dias com agenda livre (verde) e agendamentos (vermelho)
-  const availableDates = ["2024-01-15", "2024-01-16", "2024-01-18", "2024-01-20"];
-  const appointmentDates = ["2024-01-15", "2024-01-17", "2024-01-19"];
+  // Mock data - últimos dias do mês com agenda livre e agendamentos
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  
+  // Últimos 7 dias do mês atual
+  const lastWeekDates = [];
+  for (let i = 6; i >= 0; i--) {
+    const day = lastDayOfMonth - i;
+    const date = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    lastWeekDates.push(date);
+  }
+
+  // Mock - agenda livre (verde) nos últimos dias do mês
+  const availableDates = [lastWeekDates[0], lastWeekDates[2], lastWeekDates[4], lastWeekDates[6]];
+  
+  // Mock - agendamentos (vermelho) nos últimos dias do mês
+  const appointmentDates = [lastWeekDates[1], lastWeekDates[3], lastWeekDates[5]];
 
   // Mock agendamentos do dia
   const dayAppointments = [
     { id: "1", time: "09:00", patient: "João Silva", status: "confirmed" },
     { id: "2", time: "14:00", patient: "Maria Santos", status: "pending" },
+    { id: "3", time: "16:00", patient: "Pedro Costa", status: "confirmed" },
   ];
 
   const generateCalendarDays = () => {
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
     const firstDay = new Date(currentYear, currentMonth, 1);
     const lastDay = new Date(currentYear, currentMonth + 1, 0);
     const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
     
     const days = [];
+    
+    // Empty cells for days before the first day of the month
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push({ date: "", day: "", isEmpty: true });
+    }
+    
+    // Days of the month
     for (let i = 1; i <= daysInMonth; i++) {
       const date = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
       days.push({
@@ -45,9 +67,11 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ type }) => {
         day: i,
         isAvailable: type === "schedules" && availableDates.includes(date),
         hasAppointment: type === "appointments" && appointmentDates.includes(date),
-        isSelectable: type === "schedules" ? availableDates.includes(date) : appointmentDates.includes(date)
+        isSelectable: type === "schedules" ? availableDates.includes(date) : appointmentDates.includes(date),
+        isEmpty: false
       });
     }
+    
     return days;
   };
 
@@ -85,6 +109,19 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ type }) => {
     });
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
+  };
+
+  const getMonthName = () => {
+    const months = [
+      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+    return `${months[currentMonth]} ${currentYear}`;
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -97,6 +134,10 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ type }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="text-center mb-4">
+            <h3 className="text-lg font-semibold">{getMonthName()}</h3>
+          </div>
+          
           <div className="grid grid-cols-7 gap-2 mb-4">
             {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map(day => (
               <div key={day} className="text-center font-medium text-sm text-gray-500 p-2">
@@ -106,22 +147,30 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ type }) => {
           </div>
           
           <div className="grid grid-cols-7 gap-2">
-            {generateCalendarDays().map(({ date, day, isAvailable, hasAppointment, isSelectable }) => (
-              <Button
-                key={date}
-                variant="outline"
-                className={`
-                  h-12 p-0 text-sm
-                  ${isAvailable ? "bg-green-100 border-green-300 text-green-800 hover:bg-green-200" : ""}
-                  ${hasAppointment ? "bg-red-100 border-red-300 text-red-800 hover:bg-red-200" : ""}
-                  ${!isSelectable ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-                `}
-                onClick={() => handleDateClick(date, isSelectable)}
-                disabled={!isSelectable}
-              >
-                {day}
-              </Button>
-            ))}
+            {generateCalendarDays().map((dayInfo, index) => {
+              if (dayInfo.isEmpty) {
+                return <div key={index} className="h-12"></div>;
+              }
+              
+              const { date, day, isAvailable, hasAppointment, isSelectable } = dayInfo;
+              
+              return (
+                <Button
+                  key={date}
+                  variant="outline"
+                  className={`
+                    h-12 p-0 text-sm
+                    ${isAvailable ? "bg-green-100 border-green-300 text-green-800 hover:bg-green-200" : ""}
+                    ${hasAppointment ? "bg-red-100 border-red-300 text-red-800 hover:bg-red-200" : ""}
+                    ${!isSelectable ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                  `}
+                  onClick={() => handleDateClick(date, isSelectable)}
+                  disabled={!isSelectable}
+                >
+                  {day}
+                </Button>
+              );
+            })}
           </div>
 
           <div className="flex items-center justify-center space-x-6 mt-4 text-sm">
@@ -153,7 +202,7 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ type }) => {
             <div className="space-y-4">
               <div>
                 <Label>Data selecionada</Label>
-                <Input value={selectedDate} disabled />
+                <Input value={formatDate(selectedDate)} disabled />
               </div>
               <div>
                 <Label>Horários disponíveis</Label>
@@ -178,7 +227,7 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ type }) => {
           ) : (
             <div className="space-y-4">
               <div>
-                <Label>Data: {selectedDate}</Label>
+                <Label>Data: {formatDate(selectedDate)}</Label>
               </div>
               <div className="space-y-3">
                 {dayAppointments.map(appointment => (
@@ -190,7 +239,11 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({ type }) => {
                       </Badge>
                     </div>
                     <div className="flex space-x-2">
-                      <Button size="sm" onClick={() => handleConfirmAppointment(appointment.id)}>
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleConfirmAppointment(appointment.id)}
+                        disabled={appointment.status === "confirmed"}
+                      >
                         <Check className="h-4 w-4" />
                       </Button>
                       <Button size="sm" variant="destructive" onClick={() => handleCancelAppointment(appointment.id)}>
