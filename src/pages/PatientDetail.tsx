@@ -11,6 +11,7 @@ import ElectronicRecordModal from "@/components/ElectronicRecordModal";
 import PatientHistory from "@/components/PatientHistory";
 import PatientEditModal from "@/components/PatientEditModal";
 import DocumentUploadModal from "@/components/DocumentUploadModal";
+import DocumentViewModal from "@/components/DocumentViewModal";
 import InitialAssessmentModal from "@/components/InitialAssessmentModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -33,7 +34,8 @@ import {
   CreditCard,
   Receipt,
   MessageSquare,
-  Check
+  Check,
+  Eye
 } from "lucide-react";
 
 const PatientDetail: React.FC = () => {
@@ -45,10 +47,11 @@ const PatientDetail: React.FC = () => {
   const [isViewingHistory, setIsViewingHistory] = useState(false);
   const [isEditingPatient, setIsEditingPatient] = useState(false);
   const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
+  const [isDocumentViewModalOpen, setIsDocumentViewModalOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
   const [isNewSessionModalOpen, setIsNewSessionModalOpen] = useState(false);
   const [isDeleteDocumentOpen, setIsDeleteDocumentOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [isFinancialModalOpen, setIsFinancialModalOpen] = useState(false);
   const { toast } = useToast();
 
@@ -67,7 +70,7 @@ const PatientDetail: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
   const calculateAge = (birthdate: string) => {
@@ -83,33 +86,10 @@ const PatientDetail: React.FC = () => {
     return age;
   };
 
-  // Mock data para sessões financeiras
-  const financialSessions = [
-    {
-      id: "1",
-      date: "2024-01-15",
-      value: 200,
-      status: "paid",
-      paymentMethod: "PIX",
-      notes: "Sessão individual - 50min"
-    },
-    {
-      id: "2",
-      date: "2024-01-22",
-      value: 200,
-      status: "pending",
-      paymentMethod: "Cartão",
-      notes: "Sessão individual - 50min"
-    },
-    {
-      id: "3",
-      date: "2024-01-29",
-      value: 200,
-      status: "paid",
-      paymentMethod: "Dinheiro",
-      notes: "Sessão individual - 50min"
-    }
-  ];
+  const getGenderLabel = (gender?: string) => {
+    if (!gender) return "Não informado";
+    return gender === "male" ? "Masculino" : "Feminino";
+  };
 
   const handleEditSession = (session: Session) => {
     setEditingSession(session);
@@ -130,6 +110,11 @@ const PatientDetail: React.FC = () => {
   const handleDeleteDocument = (document: any) => {
     setSelectedDocument(document);
     setIsDeleteDocumentOpen(true);
+  };
+
+  const handleViewDocument = (document: any) => {
+    setSelectedDocument(document);
+    setIsDocumentViewModalOpen(true);
   };
 
   const confirmDeleteDocument = () => {
@@ -155,12 +140,47 @@ const PatientDetail: React.FC = () => {
     });
   };
 
+  const handleSendWhatsAppReceipt = (sessionId: string) => {
+    toast({
+      title: "Recibo enviado",
+      description: "Recibo enviado via WhatsApp com sucesso."
+    });
+  };
+
   const handlePrintReceipt = (sessionId: string) => {
     toast({
       title: "Recibo impresso",
       description: "O recibo foi enviado para impressão."
     });
   };
+
+  // Mock data para sessões financeiras
+  const financialSessions = [
+    {
+      id: "1",
+      date: "2024-01-15",
+      value: 200,
+      status: "paid",
+      paymentMethod: "PIX",
+      notes: "Sessão individual - 50min"
+    },
+    {
+      id: "2",
+      date: "2024-01-22",
+      value: 200,
+      status: "pending",
+      paymentMethod: "Cartão",
+      notes: "Sessão individual - 50min"
+    },
+    {
+      id: "3",
+      date: "2024-01-29",
+      value: 200,
+      status: "completed",
+      paymentMethod: "Dinheiro",
+      notes: "Sessão individual - 50min"
+    }
+  ];
 
   const getSortedSessions = () => {
     if (!selectedPatient?.sessions) return [];
@@ -173,6 +193,8 @@ const PatientDetail: React.FC = () => {
         return <Badge className="bg-green-100 text-green-800">Pago</Badge>;
       case "pending":
         return <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
+      case "completed":
+        return <Badge className="bg-blue-100 text-blue-800">Realizado</Badge>;
       case "cancelled":
         return <Badge className="bg-red-100 text-red-800">Cancelado</Badge>;
       default:
@@ -289,12 +311,16 @@ const PatientDetail: React.FC = () => {
                       <p className="font-medium dark:text-white">{calculateAge(selectedPatient.birthdate)} anos</p>
                     </div>
                     <div>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">Data de Nascimento</p>
-                      <p className="font-medium dark:text-white">{formatDate(selectedPatient.birthdate)}</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">Sexo</p>
+                      <p className="font-medium dark:text-white">{getGenderLabel(selectedPatient.gender)}</p>
                     </div>
                     <div>
                       <p className="text-gray-500 dark:text-gray-400 text-sm">Telefone</p>
                       <p className="font-medium dark:text-white">{selectedPatient.phone}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">Data de Nascimento</p>
+                      <p className="font-medium dark:text-white">{formatDate(selectedPatient.birthdate)}</p>
                     </div>
                     <div>
                       <p className="text-gray-500 dark:text-gray-400 text-sm">Paciente desde</p>
@@ -303,10 +329,6 @@ const PatientDetail: React.FC = () => {
                     <div>
                       <p className="text-gray-500 dark:text-gray-400 text-sm">Total de Sessões</p>
                       <p className="font-medium dark:text-white">{selectedPatient.sessions.length}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">Documentos</p>
-                      <p className="font-medium dark:text-white">{selectedPatient.documents.length}</p>
                     </div>
                   </div>
                 </div>
@@ -500,7 +522,15 @@ const PatientDetail: React.FC = () => {
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              className="text-psycho-primary"
+                              className="text-psycho-primary mr-2"
+                              onClick={() => handleViewDocument(document)}
+                            >
+                              <Eye size={14} className="mr-1" /> Visualizar
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-psycho-primary mr-2"
                               onClick={() => handleDownloadDocument(document)}
                             >
                               <Download size={14} className="mr-1" /> Baixar
@@ -585,7 +615,11 @@ const PatientDetail: React.FC = () => {
                                   <Receipt className="h-3 w-3 mr-1" />
                                   Recibo
                                 </Button>
-                                <Button size="sm" variant="outline">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleSendWhatsAppReceipt(session.id)}
+                                >
                                   <MessageSquare className="h-3 w-3 mr-1" />
                                   WhatsApp
                                 </Button>
@@ -640,6 +674,12 @@ const PatientDetail: React.FC = () => {
             isOpen={isDocumentModalOpen}
             onClose={() => setIsDocumentModalOpen(false)}
             patientId={id || ""}
+          />
+
+          <DocumentViewModal
+            isOpen={isDocumentViewModalOpen}
+            onClose={() => setIsDocumentViewModalOpen(false)}
+            document={selectedDocument}
           />
 
           <InitialAssessmentModal

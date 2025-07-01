@@ -1,12 +1,13 @@
+
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { ScheduleEvent } from "@/stores/patientStore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, CalendarDays, User, Plus, Calendar, ArrowRight } from "lucide-react";
-import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Clock, User, Phone, Calendar, Check, X, Video, Plus } from "lucide-react";
+import { ScheduleEvent, usePatientStore } from "@/stores/patientStore";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface ScheduleEventListProps {
   events: ScheduleEvent[];
@@ -15,110 +16,199 @@ interface ScheduleEventListProps {
   onAddClick?: () => void;
 }
 
-const ScheduleEventList: React.FC<ScheduleEventListProps> = ({ 
-  events, 
-  showDate = false, 
+const ScheduleEventList: React.FC<ScheduleEventListProps> = ({
+  events,
+  showDate = false,
   showAddButton = false,
-  onAddClick 
+  onAddClick,
 }) => {
-  const navigate = useNavigate();
+  const { updateScheduleEvent } = usePatientStore();
+  const { toast } = useToast();
 
-  const getStatusColor = (status: ScheduleEvent["status"]) => {
-    switch (status) {
-      case "scheduled":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "confirmed":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "completed":
-        return "bg-indigo-100 text-indigo-800 border-indigo-200";
-      case "cancelled":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+  const handleConfirmEvent = async (eventId: string) => {
+    try {
+      await updateScheduleEvent(eventId, { status: 'confirmed' });
+      toast({
+        title: "Agendamento confirmado",
+        description: "O agendamento foi confirmado com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Falha ao confirmar agendamento.",
+        variant: "destructive",
+      });
     }
   };
 
-  const sortedEvents = [...events].sort((a, b) => 
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
+  const handleCancelEvent = async (eventId: string) => {
+    try {
+      await updateScheduleEvent(eventId, { status: 'cancelled' });
+      toast({
+        title: "Agendamento cancelado",
+        description: "O agendamento foi cancelado.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Falha ao cancelar agendamento.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStartVideoCall = (event: ScheduleEvent) => {
+    // Simular criação de sala de vídeo
+    const roomId = `room-${event.id}-${Date.now()}`;
+    const videoLink = `https://meet.example.com/${roomId}`;
+    
+    // Abrir em nova aba
+    window.open(videoLink, '_blank');
+    
+    toast({
+      title: "Sala criada",
+      description: "Sala de vídeo chamada criada e aberta em nova aba.",
+    });
+  };
+
+  const getStatusBadge = (status: ScheduleEvent['status']) => {
+    switch (status) {
+      case 'scheduled':
+        return <Badge variant="secondary">Agendado</Badge>;
+      case 'confirmed':
+        return <Badge className="bg-green-100 text-green-800">Confirmado</Badge>;
+      case 'completed':
+        return <Badge className="bg-blue-100 text-blue-800">Realizado</Badge>;
+      case 'cancelled':
+        return <Badge variant="destructive">Cancelado</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const formatEventTime = (dateString: string) => {
+    return format(new Date(dateString), "HH:mm", { locale: ptBR });
+  };
+
+  const formatEventDate = (dateString: string) => {
+    return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
+  };
+
+  if (events.length === 0 && showAddButton) {
+    return (
+      <div className="text-center py-12 border border-dashed border-gray-300 rounded-lg bg-white">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+          <Calendar size={24} className="text-gray-500" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-1">Nenhum compromisso para esta data</h3>
+        <p className="text-gray-500 mb-4">
+          Ainda não há compromissos agendados para o dia selecionado.
+        </p>
+        {onAddClick && (
+          <Button onClick={onAddClick}>
+            <Plus size={16} className="mr-1" /> Adicionar Compromisso
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-3">
-      {sortedEvents.length > 0 ? (
-        sortedEvents.map((event) => (
-          <Card 
-            key={event.id} 
-            className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => navigate(`/schedule/${event.id}`)}
-          >
-            <CardContent className="p-4">
-              <div className="flex justify-between items-start">
-                <div className="flex items-start gap-3">
-                  <div className="bg-psycho-muted p-2 rounded-md text-psycho-primary">
-                    <Clock className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="font-medium">
-                      {format(parseISO(event.date), "HH:mm")} ({event.duration} min)
-                    </div>
-                    
-                    <div className="flex items-center mt-1 text-sm text-gray-600">
-                      <User className="h-3.5 w-3.5 mr-1" /> {event.patientName}
-                    </div>
-                    
-                    {showDate && (
-                      <div className="flex items-center mt-1 text-sm text-gray-600">
-                        <CalendarDays className="h-3.5 w-3.5 mr-1" /> 
-                        {format(parseISO(event.date), "d 'de' MMMM 'de' yyyy")}
-                      </div>
-                    )}
-                    
-                    {event.notes && (
-                      <div className="mt-2 text-sm text-gray-600">
-                        {event.notes.length > 60 ? `${event.notes.substring(0, 60)}...` : event.notes}
-                      </div>
-                    )}
-                  </div>
+    <div className="space-y-4">
+      {events.map((event) => (
+        <Card key={event.id} className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center space-x-2">
+                  <User className="h-4 w-4 text-gray-500" />
+                  <span className="font-medium text-gray-900">{event.patientName}</span>
+                  {getStatusBadge(event.status)}
                 </div>
                 
-                <div className="flex flex-col items-end gap-2">
-                  <Badge className={cn("font-normal capitalize", getStatusColor(event.status))}>
-                    {event.status === "scheduled" && "Agendado"}
-                    {event.status === "confirmed" && "Confirmado"}
-                    {event.status === "completed" && "Concluído"}
-                    {event.status === "cancelled" && "Cancelado"}
-                  </Badge>
+                <div className="flex items-center space-x-4 text-sm text-gray-600">
+                  {showDate && (
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="h-4 w-4" />
+                      <span>{formatEventDate(event.date)}</span>
+                    </div>
+                  )}
                   
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-xs group"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/schedule/${event.id}`);
-                    }}
-                  >
-                    Detalhes <ArrowRight size={14} className="ml-1 transition-transform group-hover:translate-x-1" />
-                  </Button>
+                  <div className="flex items-center space-x-1">
+                    <Clock className="h-4 w-4" />
+                    <span>{formatEventTime(event.date)} ({event.duration}min)</span>
+                  </div>
+                  
+                  {event.patientPhone && (
+                    <div className="flex items-center space-x-1">
+                      <Phone className="h-4 w-4" />
+                      <span>{event.patientPhone}</span>
+                    </div>
+                  )}
                 </div>
+                
+                {event.notes && (
+                  <p className="text-sm text-gray-600 mt-2">{event.notes}</p>
+                )}
               </div>
-            </CardContent>
-          </Card>
-        ))
-      ) : showAddButton ? (
-        <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-lg">
-          <CalendarDays className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum compromisso agendado</h3>
-          <p className="text-gray-500 mb-4">Adicione seu primeiro compromisso para esta data</p>
-          <Button onClick={onAddClick}>
-            <Plus className="h-4 w-4 mr-1" /> Adicionar Compromisso
-          </Button>
-        </div>
-      ) : (
-        <div className="text-center py-6 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">Nenhum compromisso agendado</p>
-        </div>
-      )}
+              
+              <div className="flex flex-col sm:flex-row gap-2 mt-4 sm:mt-0 sm:ml-4">
+                {event.status === 'scheduled' && (
+                  <>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleConfirmEvent(event.id)}
+                      className="text-green-600 hover:text-green-700"
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      Confirmar
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleCancelEvent(event.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Cancelar
+                    </Button>
+                  </>
+                )}
+                
+                {event.status === 'confirmed' && (
+                  <>
+                    <Button 
+                      size="sm" 
+                      variant="default"
+                      onClick={() => handleStartVideoCall(event)}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Video className="h-4 w-4 mr-1" />
+                      Iniciar Chamada
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleCancelEvent(event.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Cancelar
+                    </Button>
+                  </>
+                )}
+                
+                {event.status === 'completed' && (
+                  <Badge className="bg-blue-100 text-blue-800">
+                    Sessão Realizada
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };

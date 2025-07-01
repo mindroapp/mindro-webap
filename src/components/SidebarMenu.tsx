@@ -4,11 +4,19 @@ import { BarChart3, Calendar, Menu, Users, Wallet, Settings, MessageCircle, Smar
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 
 const SidebarMenu: React.FC = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   // Mock status do WhatsApp - substituir por dados reais
   const [whatsappConnected, setWhatsappConnected] = useState(false);
+
+  // Mock dados do profissional - substituir por dados reais do store
+  const professionalData = {
+    name: "Dr. João Silva",
+    profession: "Psicólogo",
+    registrationNumber: "CRP 12/34567"
+  };
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
@@ -52,12 +60,31 @@ const SidebarMenu: React.FC = () => {
         )}
       >
         <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
-          <div className="flex items-center justify-center flex-shrink-0 px-4 mb-6">
+          <div className="flex items-center justify-center flex-shrink-0 px-4 mb-4">
             <div className="flex items-center space-x-2">
               <span className="text-3xl font-bold text-gray-900 dark:text-white">
                 mind<span className="text-indigo-600">ro</span>
               </span>
             </div>
+          </div>
+
+          {/* Informações do Profissional */}
+          <div className="px-4 mb-4">
+            <Card className="bg-gray-50 dark:bg-muted/50">
+              <CardContent className="p-3">
+                <div className="text-center">
+                  <h3 className="font-semibold text-sm text-gray-900 dark:text-white">
+                    {professionalData.name}
+                  </h3>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {professionalData.profession}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500">
+                    {professionalData.registrationNumber}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Status WhatsApp */}

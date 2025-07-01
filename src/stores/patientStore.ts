@@ -1,3 +1,4 @@
+
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { createPatientSlice, PatientSlice } from "./slices/patientSlice";
@@ -50,6 +51,7 @@ export interface Patient {
   email: string;
   phone: string;
   birthdate: string;
+  gender?: "male" | "female" | "";
   createdAt: string;
   avatar?: string;
   sessions: Session[];
@@ -110,6 +112,7 @@ export const mockPatients: Patient[] = [
     email: "ana.silva@example.com",
     phone: "(11) 98765-4321",
     birthdate: "1985-06-15",
+    gender: "female",
     createdAt: "2023-01-10T14:30:00Z",
     avatar: "https://i.pravatar.cc/150?img=1",
     sessions: [
@@ -171,6 +174,7 @@ export const mockPatients: Patient[] = [
     email: "carlos.m@example.com",
     phone: "(11) 91234-5678",
     birthdate: "1992-11-23",
+    gender: "male",
     createdAt: "2023-02-05T10:15:00Z",
     avatar: "https://i.pravatar.cc/150?img=11",
     sessions: [
@@ -201,6 +205,7 @@ export const mockPatients: Patient[] = [
     email: "julia.santos@example.com",
     phone: "(11) 99876-5432",
     birthdate: "1988-03-30",
+    gender: "female",
     createdAt: "2023-03-22T09:00:00Z",
     avatar: "https://i.pravatar.cc/150?img=5",
     sessions: [],
