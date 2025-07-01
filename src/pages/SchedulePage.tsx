@@ -83,7 +83,7 @@ const SchedulePage = () => {
                     selected={selectedDate}
                     onSelect={handleDateSelect}
                     className="rounded-md border shadow-sm pointer-events-auto"
-                    locale={ptBR} // Configura o calendário para usar o locale em português
+                    locale={ptBR}
                   />
                 </CardContent>
               </Card>
@@ -135,6 +135,8 @@ const SchedulePage = () => {
             <ScheduleEventList 
               events={scheduleEvents} 
               showDate
+              showPagination
+              showFilters
               onAddClick={() => setIsAddingEvent(true)}
             />
           )}

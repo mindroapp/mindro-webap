@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { usePatientStore } from "@/stores/patientStore";
 import { Session } from "@/stores/patientStore";
@@ -12,6 +12,8 @@ import PatientHistory from "@/components/PatientHistory";
 import PatientEditModal from "@/components/PatientEditModal";
 import DocumentUploadModal from "@/components/DocumentUploadModal";
 import InitialAssessmentModal from "@/components/InitialAssessmentModal";
+import PatientDetailFilters from "@/components/PatientDetailFilters";
+import Pagination from "@/components/Pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -20,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   FileText, 
   Plus, 
@@ -35,6 +38,8 @@ import {
   MessageSquare,
   Check
 } from "lucide-react";
+
+const ITEMS_PER_PAGE = 10;
 
 const PatientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,6 +57,26 @@ const PatientDetail: React.FC = () => {
   const [isFinancialModalOpen, setIsFinancialModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  
+  // Filters and pagination states
+  const [sessionsFilters, setSessionsFilters] = useState({
+    searchTerm: "",
+    sortBy: "date",
+    currentPage: 1
+  });
+  const [documentsFilters, setDocumentsFilters] = useState({
+    searchTerm: "",
+    sortBy: "uploadDate",
+    filterBy: "all",
+    currentPage: 1
+  });
+  const [financialFilters, setFinancialFilters] = useState({
+    searchTerm: "",
+    sortBy: "date",
+    filterBy: "all",
+    currentPage: 1
+  });
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -128,8 +153,6 @@ const PatientDetail: React.FC = () => {
       title: "Pagamento confirmado",
       description: "O status foi atualizado para PAGO e o paciente foi notificado no WhatsApp.",
     });
-    // Simula envio de mensagem para WhatsApp
-    // Aqui você pode integrar com API real futuramente
   };
 
   const handlePrintReceipt = (sessionId: string) => {
@@ -137,11 +160,6 @@ const PatientDetail: React.FC = () => {
       title: "Recibo impresso",
       description: "O recibo foi enviado para impressão."
     });
-  };
-
-  const getSortedSessions = () => {
-    if (!selectedPatient?.sessions) return [];
-    return [...selectedPatient.sessions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
 
   const getStatusBadge = (status: string) => {
@@ -167,6 +185,98 @@ const PatientDetail: React.FC = () => {
     };
     return methods[method] || method;
   };
+
+  // Filtered and sorted data
+  const filteredSessions = useMemo(() => {
+    if (!selectedPatient?.sessions) return [];
+    
+    let filtered = selectedPatient.sessions.filter(session =>
+      session.notes.toLowerCase().includes(sessionsFilters.searchTerm.toLowerCase()) ||
+      (session.diagnosis && session.diagnosis.toLowerCase().includes(sessionsFilters.searchTerm.toLowerCase()))
+    );
+
+    filtered.sort((a, b) => {
+      switch (sessionsFilters.sortBy) {
+        case "date":
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        case "mood":
+          return b.mood - a.mood;
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [selectedPatient?.sessions, sessionsFilters.searchTerm, sessionsFilters.sortBy]);
+
+  const filteredDocuments = useMemo(() => {
+    if (!selectedPatient?.documents) return [];
+    
+    let filtered = selectedPatient.documents.filter(doc => {
+      const matchesSearch = doc.name.toLowerCase().includes(documentsFilters.searchTerm.toLowerCase());
+      const matchesFilter = documentsFilters.filterBy === "all" || doc.type === documentsFilters.filterBy;
+      return matchesSearch && matchesFilter;
+    });
+
+    filtered.sort((a, b) => {
+      switch (documentsFilters.sortBy) {
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "uploadDate":
+          return new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime();
+        case "type":
+          return a.type.localeCompare(b.type);
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [selectedPatient?.documents, documentsFilters.searchTerm, documentsFilters.sortBy, documentsFilters.filterBy]);
+
+  const filteredPayments = useMemo(() => {
+    const patientPayments = payments.filter(p => p.patientId === selectedPatient?.id);
+    
+    let filtered = patientPayments.filter(payment => {
+      const matchesSearch = payment.description.toLowerCase().includes(financialFilters.searchTerm.toLowerCase());
+      const matchesFilter = financialFilters.filterBy === "all" || payment.status === financialFilters.filterBy;
+      return matchesSearch && matchesFilter;
+    });
+
+    filtered.sort((a, b) => {
+      switch (financialFilters.sortBy) {
+        case "date":
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        case "amount":
+          return b.amount - a.amount;
+        case "status":
+          return a.status.localeCompare(b.status);
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [payments, selectedPatient?.id, financialFilters.searchTerm, financialFilters.sortBy, financialFilters.filterBy]);
+
+  // Pagination calculations
+  const sessionsTotalPages = Math.ceil(filteredSessions.length / ITEMS_PER_PAGE);
+  const paginatedSessions = filteredSessions.slice(
+    (sessionsFilters.currentPage - 1) * ITEMS_PER_PAGE,
+    sessionsFilters.currentPage * ITEMS_PER_PAGE
+  );
+
+  const documentsTotalPages = Math.ceil(filteredDocuments.length / ITEMS_PER_PAGE);
+  const paginatedDocuments = filteredDocuments.slice(
+    (documentsFilters.currentPage - 1) * ITEMS_PER_PAGE,
+    documentsFilters.currentPage * ITEMS_PER_PAGE
+  );
+
+  const financialTotalPages = Math.ceil(filteredPayments.length / ITEMS_PER_PAGE);
+  const paginatedPayments = filteredPayments.slice(
+    (financialFilters.currentPage - 1) * ITEMS_PER_PAGE,
+    financialFilters.currentPage * ITEMS_PER_PAGE
+  );
 
   if (isLoading) {
     return (
@@ -294,9 +404,9 @@ const PatientDetail: React.FC = () => {
           <Tabs defaultValue="initial-record">
             <TabsList className="mb-6">
               <TabsTrigger value="initial-record">Avaliação Inicial</TabsTrigger>
-              <TabsTrigger value="sessions">Sessões</TabsTrigger>
-              <TabsTrigger value="documents">Documentos</TabsTrigger>
-              <TabsTrigger value="financial">Financeiro</TabsTrigger>
+              <TabsTrigger value="sessions">Sessões ({filteredSessions.length})</TabsTrigger>
+              <TabsTrigger value="documents">Documentos ({filteredDocuments.length})</TabsTrigger>
+              <TabsTrigger value="financial">Financeiro ({filteredPayments.length})</TabsTrigger>
             </TabsList>
   
             <TabsContent value="initial-record" className="space-y-6">
@@ -386,31 +496,57 @@ const PatientDetail: React.FC = () => {
                   <Plus size={16} className="mr-1" /> Nova Sessão
                 </Button>
               </div>
+
+              <PatientDetailFilters
+                searchTerm={sessionsFilters.searchTerm}
+                onSearchChange={(value) => setSessionsFilters(prev => ({ ...prev, searchTerm: value, currentPage: 1 }))}
+                sortBy={sessionsFilters.sortBy}
+                onSortChange={(value) => setSessionsFilters(prev => ({ ...prev, sortBy: value, currentPage: 1 }))}
+                onClearFilters={() => setSessionsFilters({ searchTerm: "", sortBy: "date", currentPage: 1 })}
+                type="sessions"
+              />
   
-              {selectedPatient.sessions.length === 0 ? (
+              {paginatedSessions.length === 0 ? (
                 <div className="text-center py-12 border border-dashed border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-700">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 mb-4">
                     <Calendar size={24} className="text-gray-500 dark:text-gray-400" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Ainda sem sessões</h3>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
+                    {sessionsFilters.searchTerm ? "Nenhuma sessão encontrada" : "Ainda sem sessões"}
+                  </h3>
                   <p className="text-gray-500 dark:text-gray-400 mb-4">
-                    Nenhum registro de sessão foi criado para este paciente ainda.
+                    {sessionsFilters.searchTerm 
+                      ? "Tente ajustar os filtros de busca."
+                      : "Nenhum registro de sessão foi criado para este paciente ainda."
+                    }
                   </p>
-                  <Button onClick={() => setIsNewSessionModalOpen(true)}>
-                    <Plus size={16} className="mr-1" /> Criar primeira sessão
-                  </Button>
+                  {!sessionsFilters.searchTerm && (
+                    <Button onClick={() => setIsNewSessionModalOpen(true)}>
+                      <Plus size={16} className="mr-1" /> Criar primeira sessão
+                    </Button>
+                  )}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {getSortedSessions().map((session) => (
-                    <SessionCard 
-                      key={session.id} 
-                      session={session} 
-                      onEdit={() => handleEditSession(session)}
-                      onViewDetails={() => handleViewElectronicRecord(session)}
+                <>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {paginatedSessions.map((session) => (
+                      <SessionCard 
+                        key={session.id} 
+                        session={session} 
+                        onEdit={() => handleEditSession(session)}
+                        onViewDetails={() => handleViewElectronicRecord(session)}
+                      />
+                    ))}
+                  </div>
+                  
+                  {sessionsTotalPages > 1 && (
+                    <Pagination
+                      currentPage={sessionsFilters.currentPage}
+                      totalPages={sessionsTotalPages}
+                      onPageChange={(page) => setSessionsFilters(prev => ({ ...prev, currentPage: page }))}
                     />
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </TabsContent>
   
@@ -421,81 +557,101 @@ const PatientDetail: React.FC = () => {
                   <Upload size={16} className="mr-1" /> Enviar Documento
                 </Button>
               </div>
+
+              <PatientDetailFilters
+                searchTerm={documentsFilters.searchTerm}
+                onSearchChange={(value) => setDocumentsFilters(prev => ({ ...prev, searchTerm: value, currentPage: 1 }))}
+                sortBy={documentsFilters.sortBy}
+                onSortChange={(value) => setDocumentsFilters(prev => ({ ...prev, sortBy: value, currentPage: 1 }))}
+                filterBy={documentsFilters.filterBy}
+                onFilterChange={(value) => setDocumentsFilters(prev => ({ ...prev, filterBy: value, currentPage: 1 }))}
+                onClearFilters={() => setDocumentsFilters({ searchTerm: "", sortBy: "uploadDate", filterBy: "all", currentPage: 1 })}
+                type="documents"
+              />
   
-              {selectedPatient.documents.length === 0 ? (
+              {paginatedDocuments.length === 0 ? (
                 <div className="text-center py-12 border border-dashed border-gray-300 rounded-lg bg-white">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
                     <FileText size={24} className="text-gray-500" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">Ainda sem documentos</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    {documentsFilters.searchTerm ? "Nenhum documento encontrado" : "Ainda sem documentos"}
+                  </h3>
                   <p className="text-gray-500 mb-4">
-                    Nenhum documento foi enviado para este paciente ainda.
+                    {documentsFilters.searchTerm 
+                      ? "Tente ajustar os filtros de busca."
+                      : "Nenhum documento foi enviado para este paciente ainda."
+                    }
                   </p>
-                  <Button onClick={() => setIsDocumentModalOpen(true)}>
-                    <Upload size={16} className="mr-1" /> Enviar primeiro documento
-                  </Button>
+                  {!documentsFilters.searchTerm && (
+                    <Button onClick={() => setIsDocumentModalOpen(true)}>
+                      <Upload size={16} className="mr-1" /> Enviar primeiro documento
+                    </Button>
+                  )}
                 </div>
               ) : (
-                <div className="bg-white rounded-md shadow overflow-hidden">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Nome
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Tipo
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Data de Envio
-                        </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Ações
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {selectedPatient.documents.map((document) => (
-                        <tr key={document.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="mr-2">
-                                <FileText size={16} className="text-gray-400" />
+                <>
+                  <div className="bg-white rounded-md shadow overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Data de Envio</TableHead>
+                          <TableHead className="text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedDocuments.map((document) => (
+                          <TableRow key={document.id}>
+                            <TableCell>
+                              <div className="flex items-center">
+                                <div className="mr-2">
+                                  <FileText size={16} className="text-gray-400" />
+                                </div>
+                                <div className="text-sm font-medium text-gray-900">{document.name}</div>
                               </div>
-                              <div className="text-sm font-medium text-gray-900">{document.name}</div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                              {document.type}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(document.uploadDate)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-psycho-primary"
-                              onClick={() => handleDownloadDocument(document)}
-                            >
-                              <Download size={14} className="mr-1" /> Baixar
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-red-500"
-                              onClick={() => handleDeleteDocument(document)}
-                            >
-                              <Trash size={14} className="mr-1" /> Excluir
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                {document.type}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-sm text-gray-500">
+                              {formatDate(document.uploadDate)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-psycho-primary mr-2"
+                                onClick={() => handleDownloadDocument(document)}
+                              >
+                                <Download size={14} className="mr-1" /> Baixar
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-500"
+                                onClick={() => handleDeleteDocument(document)}
+                              >
+                                <Trash size={14} className="mr-1" /> Excluir
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  
+                  {documentsTotalPages > 1 && (
+                    <Pagination
+                      currentPage={documentsFilters.currentPage}
+                      totalPages={documentsTotalPages}
+                      onPageChange={(page) => setDocumentsFilters(prev => ({ ...prev, currentPage: page }))}
+                    />
+                  )}
+                </>
               )}
             </TabsContent>
   
@@ -503,40 +659,51 @@ const PatientDetail: React.FC = () => {
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Financeiro</h2>
               </div>
+
+              <PatientDetailFilters
+                searchTerm={financialFilters.searchTerm}
+                onSearchChange={(value) => setFinancialFilters(prev => ({ ...prev, searchTerm: value, currentPage: 1 }))}
+                sortBy={financialFilters.sortBy}
+                onSortChange={(value) => setFinancialFilters(prev => ({ ...prev, sortBy: value, currentPage: 1 }))}
+                filterBy={financialFilters.filterBy}
+                onFilterChange={(value) => setFinancialFilters(prev => ({ ...prev, filterBy: value, currentPage: 1 }))}
+                onClearFilters={() => setFinancialFilters({ searchTerm: "", sortBy: "date", filterBy: "all", currentPage: 1 })}
+                type="financial"
+              />
               
               <Card>
                 <CardContent className="p-6">
                   <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left pb-3 font-medium">Data da Sessão</th>
-                          <th className="text-left pb-3 font-medium">Valor</th>
-                          <th className="text-left pb-3 font-medium">Status</th>
-                          <th className="text-left pb-3 font-medium">Forma de Pagamento</th>
-                          <th className="text-left pb-3 font-medium">Observações</th>
-                          <th className="text-left pb-3 font-medium">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {payments.filter(p => p.patientId === selectedPatient?.id).map((payment) => (
-                          <tr key={payment.id} className="border-b">
-                            <td className="py-3">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Data da Sessão</TableHead>
+                          <TableHead>Valor</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Forma de Pagamento</TableHead>
+                          <TableHead>Observações</TableHead>
+                          <TableHead>Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedPayments.map((payment) => (
+                          <TableRow key={payment.id}>
+                            <TableCell>
                               {new Date(payment.date).toLocaleDateString('pt-BR')}
-                            </td>
-                            <td className="py-3 font-medium">
+                            </TableCell>
+                            <TableCell className="font-medium">
                               R$ {payment.amount.toFixed(2)}
-                            </td>
-                            <td className="py-3">
+                            </TableCell>
+                            <TableCell>
                               {getStatusBadge(payment.status)}
-                            </td>
-                            <td className="py-3">
+                            </TableCell>
+                            <TableCell>
                               {getPaymentMethodLabel(payment.method)}
-                            </td>
-                            <td className="py-3 text-sm text-gray-600">
+                            </TableCell>
+                            <TableCell className="text-sm text-gray-600">
                               {payment.notes || (payment.sessionId ? `Pagamento referente à sessão ${payment.sessionId}` : "-")}
-                            </td>
-                            <td className="py-3">
+                            </TableCell>
+                            <TableCell>
                               <div className="flex space-x-2">
                                 {payment.status === "pending" ? (
                                   <Button 
@@ -557,15 +724,31 @@ const PatientDetail: React.FC = () => {
                                   Recibo
                                 </Button>
                               </div>
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         ))}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
+                  
+                  {paginatedPayments.length === 0 && (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">
+                        {financialFilters.searchTerm ? "Nenhum registro encontrado com os filtros selecionados." : "Nenhum registro financeiro encontrado."}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {financialTotalPages > 1 && (
+                    <Pagination
+                      currentPage={financialFilters.currentPage}
+                      totalPages={financialTotalPages}
+                      onPageChange={(page) => setFinancialFilters(prev => ({ ...prev, currentPage: page }))}
+                    />
+                  )}
                 </CardContent>
               </Card>
-              {/* Modal de Recibo */}
+              
               <Dialog open={isReceiptModalOpen} onOpenChange={setIsReceiptModalOpen}>
                 <DialogContent className="max-w-lg">
                   <DialogHeader>
@@ -604,7 +787,6 @@ const PatientDetail: React.FC = () => {
             </TabsContent>
           </Tabs>
 
-          {/* Modals */}
           {editingSession && id && (
             <SessionEditModal
               patientId={id}
@@ -659,7 +841,6 @@ const PatientDetail: React.FC = () => {
             />
           )}
 
-          {/* Delete Document Confirmation Modal */}
           <Dialog open={isDeleteDocumentOpen} onOpenChange={setIsDeleteDocumentOpen}>
             <DialogContent>
               <DialogHeader>
