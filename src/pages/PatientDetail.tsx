@@ -679,7 +679,7 @@ const PatientDetail: React.FC = () => {
           <DocumentViewModal
             isOpen={isDocumentViewModalOpen}
             onClose={() => setIsDocumentViewModalOpen(false)}
-            document={selectedDocument}
+            documents={selectedDocument ? [selectedDocument.name] : null}
           />
 
           <InitialAssessmentModal
