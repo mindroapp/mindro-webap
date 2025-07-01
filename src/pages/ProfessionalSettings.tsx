@@ -170,11 +170,26 @@ const ProfessionalSettings: React.FC = () => {
                 )}
 
                 {whatsappConnected && (
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-green-800">
-                      ✅ WhatsApp conectado com sucesso! Você pode agora receber e enviar mensagens automáticas.
-                    </p>
-                  </div>
+                  <>
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-green-800">
+                        ✅ WhatsApp conectado com sucesso! Você pode agora receber e enviar mensagens automáticas.
+                      </p>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      className="mt-4"
+                      onClick={() => {
+                        setWhatsappConnected(false);
+                        toast({
+                          title: "WhatsApp Desconectado",
+                          description: "Sua conta WhatsApp foi desconectada.",
+                        });
+                      }}
+                    >
+                      Desconectar WhatsApp
+                    </Button>
+                  </>
                 )}
               </CardContent>
             </Card>
