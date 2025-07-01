@@ -1,14 +1,16 @@
-
 import { cn } from "@/lib/utils";
-import { BarChart3, Calendar, Menu, Users, Wallet, Settings, MessageCircle, Smartphone } from "lucide-react";
+import { BarChart3, Calendar, Menu, Users, Wallet, Settings, MessageCircle, Smartphone, LogOut } from "lucide-react";
 import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/context/AuthContext";
 
 const SidebarMenu: React.FC = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   // Mock status do WhatsApp - substituir por dados reais
   const [whatsappConnected, setWhatsappConnected] = useState(false);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
@@ -97,6 +99,16 @@ const SidebarMenu: React.FC = () => {
             ))}
           </nav>
         </div>
+        <button
+          className="flex items-center w-full px-6 py-3 text-sm font-medium text-red-600 hover:bg-red-50 border-t border-gray-100 gap-2"
+          onClick={() => {
+            logout();
+            navigate("/login");
+          }}
+        >
+          <LogOut className="h-5 w-5 mr-2" />
+          Sair
+        </button>
       </div>
     </>
   );
