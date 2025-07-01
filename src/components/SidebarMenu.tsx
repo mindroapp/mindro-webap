@@ -10,7 +10,13 @@ const SidebarMenu: React.FC = () => {
   // Mock status do WhatsApp - substituir por dados reais
   const [whatsappConnected, setWhatsappConnected] = useState(false);
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  // Mock profissional (substituir por dados reais do contexto quando disponível)
+  const professionalData = {
+    name: "Dr. João Silva",
+    profession: "Psicólogo",
+    registration: "CRP 12/34567"
+  };
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
@@ -54,13 +60,24 @@ const SidebarMenu: React.FC = () => {
         )}
       >
         <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
-          <div className="flex items-center justify-center flex-shrink-0 px-4 mb-6">
+          <div className="flex items-center justify-center flex-shrink-0 px-4 mb-2">
             <div className="flex items-center space-x-2">
               <span className="text-3xl font-bold text-gray-900 dark:text-white">
                 mind<span className="text-indigo-600">ro</span>
               </span>
             </div>
           </div>
+          {/* Bloco de informações do profissional */}
+          {user?.role !== "admin" && (
+            <div className="px-4 mb-4 text-center">
+              <div className="font-semibold text-gray-900 dark:text-white text-base leading-tight">
+                {professionalData.name}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">
+                {professionalData.profession} / {professionalData.registration}
+              </div>
+            </div>
+          )}
 
           {/* Status WhatsApp */}
           <div className="px-4 mb-4">
