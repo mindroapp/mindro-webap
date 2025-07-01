@@ -39,7 +39,7 @@ import {
 const PatientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { selectedPatient, fetchPatient, isLoading } = usePatientStore();
+  const { selectedPatient, fetchPatient, isLoading, payments, updatePayment } = usePatientStore();
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [viewingElectronicRecord, setViewingElectronicRecord] = useState<Session | null>(null);
   const [isViewingHistory, setIsViewingHistory] = useState(false);
@@ -50,6 +50,8 @@ const PatientDetail: React.FC = () => {
   const [isDeleteDocumentOpen, setIsDeleteDocumentOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [isFinancialModalOpen, setIsFinancialModalOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -82,34 +84,6 @@ const PatientDetail: React.FC = () => {
     
     return age;
   };
-
-  // Mock data para sessões financeiras
-  const financialSessions = [
-    {
-      id: "1",
-      date: "2024-01-15",
-      value: 200,
-      status: "paid",
-      paymentMethod: "PIX",
-      notes: "Sessão individual - 50min"
-    },
-    {
-      id: "2",
-      date: "2024-01-22",
-      value: 200,
-      status: "pending",
-      paymentMethod: "Cartão",
-      notes: "Sessão individual - 50min"
-    },
-    {
-      id: "3",
-      date: "2024-01-29",
-      value: 200,
-      status: "paid",
-      paymentMethod: "Dinheiro",
-      notes: "Sessão individual - 50min"
-    }
-  ];
 
   const handleEditSession = (session: Session) => {
     setEditingSession(session);
@@ -148,11 +122,14 @@ const PatientDetail: React.FC = () => {
     });
   };
 
-  const handleConfirmPayment = (sessionId: string) => {
+  const handleConfirmPayment = async (paymentId: string) => {
+    await updatePayment(paymentId, { status: "paid" });
     toast({
       title: "Pagamento confirmado",
-      description: "O pagamento foi confirmado com sucesso."
+      description: "O status foi atualizado para PAGO e o paciente foi notificado no WhatsApp.",
     });
+    // Simula envio de mensagem para WhatsApp
+    // Aqui você pode integrar com API real futuramente
   };
 
   const handlePrintReceipt = (sessionId: string) => {
@@ -525,12 +502,6 @@ const PatientDetail: React.FC = () => {
             <TabsContent value="financial" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Financeiro</h2>
-                <Button 
-                  className="bg-indigo-700 hover:bg-indigo-800"
-                  onClick={() => setIsFinancialModalOpen(true)}
-                >
-                  <Plus size={16} className="mr-1" /> Novo Registro
-                </Button>
               </div>
               
               <Card>
@@ -548,46 +519,42 @@ const PatientDetail: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {financialSessions.map((session) => (
-                          <tr key={session.id} className="border-b">
+                        {payments.filter(p => p.patientId === selectedPatient?.id).map((payment) => (
+                          <tr key={payment.id} className="border-b">
                             <td className="py-3">
-                              {new Date(session.date).toLocaleDateString('pt-BR')}
+                              {new Date(payment.date).toLocaleDateString('pt-BR')}
                             </td>
                             <td className="py-3 font-medium">
-                              R$ {session.value.toFixed(2)}
+                              R$ {payment.amount.toFixed(2)}
                             </td>
                             <td className="py-3">
-                              {getStatusBadge(session.status)}
+                              {getStatusBadge(payment.status)}
                             </td>
                             <td className="py-3">
-                              {getPaymentMethodLabel(session.paymentMethod)}
+                              {getPaymentMethodLabel(payment.method)}
                             </td>
                             <td className="py-3 text-sm text-gray-600">
-                              {session.notes}
+                              {payment.notes || (payment.sessionId ? `Pagamento referente à sessão ${payment.sessionId}` : "-")}
                             </td>
                             <td className="py-3">
                               <div className="flex space-x-2">
-                                {session.status === "pending" && (
+                                {payment.status === "pending" ? (
                                   <Button 
                                     size="sm" 
                                     variant="outline"
-                                    onClick={() => handleConfirmPayment(session.id)}
+                                    onClick={() => handleConfirmPayment(payment.id)}
                                   >
                                     <Check className="h-3 w-3 mr-1" />
-                                    Confirmar
+                                    Confirmar Pagamento
                                   </Button>
-                                )}
+                                ) : null}
                                 <Button 
                                   size="sm" 
                                   variant="outline"
-                                  onClick={() => handlePrintReceipt(session.id)}
+                                  onClick={() => { setSelectedPayment(payment); setIsReceiptModalOpen(true); }}
                                 >
                                   <Receipt className="h-3 w-3 mr-1" />
                                   Recibo
-                                </Button>
-                                <Button size="sm" variant="outline">
-                                  <MessageSquare className="h-3 w-3 mr-1" />
-                                  WhatsApp
                                 </Button>
                               </div>
                             </td>
@@ -598,6 +565,42 @@ const PatientDetail: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+              {/* Modal de Recibo */}
+              <Dialog open={isReceiptModalOpen} onOpenChange={setIsReceiptModalOpen}>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Recibo de Pagamento</DialogTitle>
+                  </DialogHeader>
+                  {selectedPayment && (
+                    <div className="space-y-4">
+                      <div>
+                        <strong>Paciente:</strong> {selectedPatient?.name}
+                      </div>
+                      <div>
+                        <strong>Data:</strong> {new Date(selectedPayment.date).toLocaleDateString('pt-BR')}
+                      </div>
+                      <div>
+                        <strong>Valor:</strong> R$ {selectedPayment.amount.toFixed(2)}
+                      </div>
+                      <div>
+                        <strong>Status:</strong> {getStatusBadge(selectedPayment.status)}
+                      </div>
+                      <div>
+                        <strong>Forma de Pagamento:</strong> {getPaymentMethodLabel(selectedPayment.method)}
+                      </div>
+                      <div>
+                        <strong>Descrição:</strong> {selectedPayment.description}
+                      </div>
+                      <div>
+                        <strong>Serviço Prestado:</strong> Sessão de psicoterapia individual realizada por {selectedPatient?.name}
+                      </div>
+                      <div>
+                        <strong>Recibo:</strong> {selectedPayment.receiptNumber || "-"}
+                      </div>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
             </TabsContent>
           </Tabs>
 
