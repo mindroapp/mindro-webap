@@ -13,7 +13,7 @@ interface SessionFormModalProps {
 const SessionFormModal: React.FC<SessionFormModalProps> = ({ isOpen, onClose, patientId }) => {
   const { addSession, addPayment } = usePatientStore();
 
-  const handleSubmit = async (data: Partial<Session>) => {
+  const handleSubmit = async (data: Partial<Session> & { sessionValue?: number }) => {
     // Cria a sessão
     const sessionData = { ...data } as Omit<Session, "id">;
     await addSession(patientId, sessionData);
@@ -22,7 +22,7 @@ const SessionFormModal: React.FC<SessionFormModalProps> = ({ isOpen, onClose, pa
     // Cria o pagamento vinculado à sessão
     await addPayment({
       patientId,
-      amount: Number(data.value) || 0,
+      amount: Number(data.sessionValue) || 0,
       date: (data.date as string) || new Date().toISOString(),
       description: "Sessão de terapia",
       method: "pix",

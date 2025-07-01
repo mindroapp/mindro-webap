@@ -24,7 +24,7 @@ const SessionForm: React.FC<SessionFormProps> = ({
   isEdit = false,
   loading = false,
 }) => {
-  const form = useForm<Partial<Session>>({
+  const form = useForm<Partial<Session> & { sessionValue?: number }>({
     defaultValues: {
       mood: initialValues.mood ?? 3,
       notes: initialValues.notes ?? "",
@@ -39,6 +39,7 @@ const SessionForm: React.FC<SessionFormProps> = ({
       treatmentProgress: initialValues.treatmentProgress ?? "",
       privateNotes: initialValues.privateNotes ?? "",
       evolution: initialValues.evolution ?? "",
+      sessionValue: initialValues.sessionValue ?? 0,
     },
   });
 
@@ -62,6 +63,16 @@ const SessionForm: React.FC<SessionFormProps> = ({
                 type="datetime-local"
                 {...form.register("date")}
                 required={!isEdit}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sessionValue">Valor da Sessão (R$)</Label>
+              <Input
+                id="sessionValue"
+                type="number"
+                step="0.01"
+                min="0"
+                {...form.register("sessionValue", { valueAsNumber: true })}
               />
             </div>
             <div className="space-y-2">
