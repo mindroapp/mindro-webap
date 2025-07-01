@@ -1,4 +1,3 @@
-
 import { StateCreator } from "zustand";
 import { Patient, mockPatients, InitialRecord } from "@/stores/patientStore";
 import { apiFetch } from "@/services/api";
@@ -59,25 +58,8 @@ export const createPatientSlice: StateCreator<PatientSlice> = (set) => ({
       return newPatient;
     } catch (error) {
       console.error("Error adding patient:", error);
-      // Simulação para desenvolvimento - remover em produção
-      const mockNewPatient: Patient = {
-        id: `p${Date.now()}`,
-        name: patientData.name,
-        email: patientData.email,
-        phone: patientData.phone,
-        birthdate: patientData.birthdate,
-        gender: patientData.gender,
-        createdAt: new Date().toISOString(),
-        sessions: [],
-        documents: [],
-        avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 20) + 1}`
-      };
-      
-      set(state => ({
-        patients: [...state.patients, mockNewPatient],
-        isLoading: false
-      }));
-      return mockNewPatient;
+      set({ isLoading: false });
+      throw error;
     }
   },
 

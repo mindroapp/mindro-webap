@@ -1,23 +1,27 @@
 
 import React from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Save } from "lucide-react";
 import { usePatientStore } from "@/stores/patientStore";
-import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import InputMask from 'react-input-mask';
 
 const patientFormSchema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
-  email: z.string().email("Email inválido"),
-  phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
-  birthdate: z.string().min(1, "Data de nascimento é obrigatória"),
-  gender: z.enum(["male", "female", ""]).optional(),
+  name: z.string()
+    .nonempty({ message: "O nome é obrigatório" })
+    .regex(/^[A-Za-zÀ-ÿ\s]+$/, { message: "O nome deve conter apenas letras" }),
+  email: z.string().email({ message: "Por favor, insira um endereço de e-mail válido" }),
+  phone: z.string()
+    .min(11, { message: "O telefone deve ter no mínimo 11 caracteres" }),
+  birthdate: z.string().refine((date) => !isNaN(Date.parse(date)), {
+    message: "Por favor, insira uma data válida",
+  }),
 });
 
 type PatientFormValues = z.infer<typeof patientFormSchema>;
@@ -31,11 +35,11 @@ interface PatientFormModalProps {
 const PatientFormModal: React.FC<PatientFormModalProps> = ({
   isOpen,
   onClose,
-  onSuccess,
+  onSuccess
 }) => {
   const { addPatient, isLoading } = usePatientStore();
   const { toast } = useToast();
-
+  
   const form = useForm<PatientFormValues>({
     resolver: zodResolver(patientFormSchema),
     defaultValues: {
@@ -43,32 +47,31 @@ const PatientFormModal: React.FC<PatientFormModalProps> = ({
       email: "",
       phone: "",
       birthdate: "",
-      gender: "",
     },
   });
 
   const onSubmit = async (data: PatientFormValues) => {
     try {
-      await addPatient({
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        birthdate: data.birthdate,
-        gender: data.gender,
+      await addPatient({ 
+        name: data.name, 
+        email: data.email, 
+        phone: data.phone, 
+        birthdate: data.birthdate 
       });
-
+      
       toast({
         title: "Paciente adicionado",
-        description: "O paciente foi adicionado com sucesso.",
+        description: "O paciente foi adicionado com sucesso",
       });
-
+      
       form.reset();
       onClose();
-      onSuccess?.();
+      if (onSuccess) onSuccess();
     } catch (error) {
+      console.error("Erro ao adicionar paciente:", error);
       toast({
         title: "Erro",
-        description: "Falha ao adicionar paciente.",
+        description: "Falha ao adicionar paciente. Por favor, tente novamente.",
         variant: "destructive",
       });
     }
@@ -76,42 +79,42 @@ const PatientFormModal: React.FC<PatientFormModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Novo Paciente</DialogTitle>
+          <DialogTitle>Adicionar Novo Paciente</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome Completo</FormLabel>
-                  <FormControl>
-                    <Input placeholder="João Silva" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome Completo</FormLabel>
+                    <FormControl>
+                      <Input placeholder="João Silva" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="joao@exemplo.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>E-mail</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="joao.silva@exemplo.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="phone"
@@ -121,11 +124,12 @@ const PatientFormModal: React.FC<PatientFormModalProps> = ({
                     <FormControl>
                       <InputMask
                         mask="(99) 9 9999-9999"
+                        maskChar={null}
                         value={field.value}
                         onChange={field.onChange}
                       >
                         {(inputProps: any) => (
-                          <Input {...inputProps} placeholder="(11) 9 9999-9999" />
+                          <Input {...inputProps} placeholder="(85) 9 9285-0222" />
                         )}
                       </InputMask>
                     </FormControl>
@@ -136,48 +140,33 @@ const PatientFormModal: React.FC<PatientFormModalProps> = ({
 
               <FormField
                 control={form.control}
-                name="gender"
+                name="birthdate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Sexo</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecionar" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="">Não informado</SelectItem>
-                        <SelectItem value="male">Masculino</SelectItem>
-                        <SelectItem value="female">Feminino</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Data de Nascimento</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="birthdate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Data de Nascimento</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Salvando..." : "Salvar"}
+                {isLoading ? (
+                  <>
+                    <span className="animate-spin mr-2">⌛</span> Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save size={16} className="mr-2" /> Salvar Paciente
+                  </>
+                )}
               </Button>
             </div>
           </form>
