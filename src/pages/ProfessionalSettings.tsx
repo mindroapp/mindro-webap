@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { QrCode, Upload, Save, Smartphone, User, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import InputMask from 'react-input-mask';
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const ProfessionalSettings: React.FC = () => {
   const { toast } = useToast();
@@ -31,6 +32,9 @@ const ProfessionalSettings: React.FC = () => {
     new: "",
     confirm: ""
   });
+
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleConnectWhatsApp = () => {
     setShowQrCode(true);
@@ -82,9 +86,12 @@ const ProfessionalSettings: React.FC = () => {
 
     toast({
       title: "Senha alterada",
-      description: "Sua senha foi alterada com sucesso!",
+      description: "Sua senha foi alterada com sucesso! Faça login novamente.",
     });
-    
+    setTimeout(() => {
+      logout();
+      navigate("/login");
+    }, 1200);
     setPasswords({ current: "", new: "", confirm: "" });
   };
 
@@ -206,10 +213,10 @@ const ProfessionalSettings: React.FC = () => {
                     <InputMask
                       mask="(99) 9 9999-9999"
                       value={professionalData.phone}
-                      onChange={(e) => setProfessionalData({...professionalData, phone: e.target.value})}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfessionalData({...professionalData, phone: e.target.value})}
                       disabled
                     >
-                      {(inputProps: any) => <Input {...inputProps} id="phone" />}
+                      {(inputProps) => <Input {...inputProps} id="phone" />}
                     </InputMask>
                   </div>
 
