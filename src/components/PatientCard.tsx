@@ -20,25 +20,31 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
       .toUpperCase();
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("pt-BR", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(date);
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "-";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "-";
+      return new Intl.DateTimeFormat("pt-BR", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }).format(date);
+    } catch {
+      return "-";
+    }
   };
 
-  const calculateAge = (birthdate: string) => {
-    const today = new Date();
+  const calculateAge = (birthdate: string | undefined) => {
+    if (!birthdate) return "-";
     const birthDate = new Date(birthdate);
+    if (isNaN(birthDate.getTime())) return "-";
+    const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const m = today.getMonth() - birthDate.getMonth();
-    
     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-    
     return age;
   };
 

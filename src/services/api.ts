@@ -129,7 +129,13 @@ export async function apiFetch<T = unknown>(
   }
   if (endpoint === "/patients" && options.method === "POST") {
     const data = JSON.parse(options.body as string);
-    const newPatient = { ...data, id: `p${Date.now()}`, sessions: [], documents: [] };
+    const newPatient = { 
+      ...data, 
+      id: `p${Date.now()}`, 
+      createdAt: new Date().toISOString(),
+      sessions: [], 
+      documents: [] 
+    };
     patients.push(newPatient);
     return newPatient as T;
   }
