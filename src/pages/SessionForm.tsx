@@ -50,6 +50,7 @@ const SessionForm: React.FC = () => {
       const dateTime = new Date(`${date}T${time}`).toISOString();
 
       await addSession(patientId, {
+        patientId,
         date: dateTime,
         notes,
         mood,

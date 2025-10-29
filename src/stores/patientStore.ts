@@ -15,6 +15,8 @@ export interface Session {
   objectives: string;
   interventions: string;
   nextSteps: string;
+  patientId: string;
+  status?: "Agendada" | "Realizada" | "Cancelada";
   
   // New fields for electronic patient record
   clinicalNotes?: string;
@@ -24,6 +26,7 @@ export interface Session {
   treatmentProgress?: string;
   privateNotes?: string; // Notes only visible to the professional
   evolution?: string;
+  sessionValue?: number;
 }
 
 export interface Document {
@@ -115,6 +118,7 @@ export const mockPatients: Patient[] = [
     sessions: [
       {
         id: "s1",
+        patientId: "p1",
         date: "2023-05-10T14:00:00Z",
         notes: "Patient reported feeling anxious about work deadlines.",
         mood: 3,
@@ -131,6 +135,7 @@ export const mockPatients: Patient[] = [
       },
       {
         id: "s2",
+        patientId: "p1",
         date: "2023-05-17T14:00:00Z",
         notes: "Improvement in anxiety levels. Patient applied suggested techniques.",
         mood: 4,
@@ -176,6 +181,7 @@ export const mockPatients: Patient[] = [
     sessions: [
       {
         id: "s3",
+        patientId: "p2",
         date: "2023-05-12T16:00:00Z",
         notes: "First session. Patient discussed relationship difficulties.",
         mood: 2,

@@ -28,20 +28,53 @@ export async function apiFetch<T = unknown>(
   // --- Auth ---
   if (endpoint === "/auth/login" && options.method === "POST") {
     const { email } = JSON.parse(options.body as string);
-    if (email === "admin@mock.com") {
+    
+    // Admin
+    if (email === "admin@exemplo.com") {
       return {
         accessToken: "mock-access-token-admin",
         refreshToken: "mock-refresh-token-admin",
         user: {
           id: "99",
-          fullName: "Admin Mock",
-          email: "admin@mock.com",
+          fullName: "Administrador",
+          email: "admin@exemplo.com",
           role: "admin",
           isVerified: true
         }
       } as T;
     }
-    // padrão: profissional
+    
+    // Usuário verificado
+    if (email === "joao@exemplo.com") {
+      return {
+        accessToken: "mock-access-token-verified",
+        refreshToken: "mock-refresh-token-verified",
+        user: {
+          id: "1",
+          fullName: "João Silva",
+          email: "joao@exemplo.com",
+          role: "professional",
+          isVerified: true
+        }
+      } as T;
+    }
+    
+    // Usuário não verificado
+    if (email === "maria@exemplo.com") {
+      return {
+        accessToken: "mock-access-token-unverified",
+        refreshToken: "mock-refresh-token-unverified",
+        user: {
+          id: "2",
+          fullName: "Maria Santos",
+          email: "maria@exemplo.com",
+          role: "professional",
+          isVerified: false
+        }
+      } as T;
+    }
+    
+    // padrão: profissional verificado
     return {
       accessToken: "mock-access-token",
       refreshToken: "mock-refresh-token",

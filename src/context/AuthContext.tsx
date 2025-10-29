@@ -7,6 +7,7 @@ interface User {
   name: string;
   email: string;
   role?: "admin" | "professional";
+  isVerified?: boolean;
 }
 
 interface AuthContextType {
@@ -14,6 +15,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isAdmin: boolean;
+  isVerified: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, phone: string) => Promise<void>;
   logout: () => void;
@@ -62,6 +64,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         name: userData.fullName,
         email: userData.email,
         role: userData.role as "admin" | "professional",
+        isVerified: userData.isVerified ?? false,
       };
       if (accessToken) localStorage.setItem("accessToken", accessToken);
       if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
@@ -88,6 +91,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         name: userData.fullName,
         email: userData.email,
         role: userData.role as "admin" | "professional",
+        isVerified: userData.isVerified ?? false,
       };
       if (accessToken) localStorage.setItem("accessToken", accessToken);
       if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
@@ -142,6 +146,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const isAdmin = user?.role === "admin";
+  const isVerified = user?.isVerified ?? false;
 
   return (
     <AuthContext.Provider value={{ 
@@ -149,6 +154,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       isAuthenticated: !!user, 
       isLoading, 
       isAdmin,
+      isVerified,
       login, 
       register, 
       logout, 

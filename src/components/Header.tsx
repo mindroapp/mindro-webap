@@ -14,7 +14,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 
 const Header: React.FC = () => {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, isVerified } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -85,6 +85,11 @@ const Header: React.FC = () => {
                     <p className="text-xs text-amber-600 flex items-center mt-1">
                       <ShieldCheck className="h-3 w-3 mr-1" />
                       Administrador
+                    </p>
+                  )}
+                  {!isAdmin && (
+                    <p className={`text-xs flex items-center mt-1 ${isVerified ? 'text-green-600' : 'text-orange-600'}`}>
+                      {isVerified ? '✓ Verificado' : '⚠ Não verificado'}
                     </p>
                   )}
                 </div>
