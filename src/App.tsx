@@ -70,6 +70,7 @@ const queryClient = new QueryClient({
 });
 
 import ThankYouPage from "./pages/ThankYouPage";
+import PublicBooking from "./pages/PublicBooking";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -100,6 +101,9 @@ const App = () => (
         
         {/* Rota de Video Meeting */}
         <Route path="/meeting" element={<VideoMeeting />} />
+        
+        {/* Rota Pública de Agendamento */}
+        <Route path="/booking/:professionalId" element={<PublicBooking />} />
 
         {/* Redireciona para o dashboard adequado com base no papel do usuário */}
         <Route path="/dashboard" element={<ProtectedRoute><RoleBasedRedirect /></ProtectedRoute>} />

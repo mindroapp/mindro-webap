@@ -4,6 +4,7 @@ import { createPatientSlice, PatientSlice } from "./slices/patientSlice";
 import { createSessionSlice, SessionSlice } from "./slices/sessionSlice";
 import { createDocumentSlice, DocumentSlice } from "./slices/documentSlice";
 import { createScheduleSlice, ScheduleSlice } from "./slices/scheduleSlice";
+import { createAvailabilitySlice, AvailabilitySlice } from "./slices/availabilitySlice";
 import { createFinancialSlice, FinancialSlice, mockPayments, mockPackages } from "./slices/financialSlice";
 
 // Types
@@ -215,7 +216,7 @@ export const mockPatients: Patient[] = [
   }
 ];
 
-export type PatientState = PatientSlice & SessionSlice & DocumentSlice & ScheduleSlice & FinancialSlice;
+export type PatientState = PatientSlice & SessionSlice & DocumentSlice & ScheduleSlice & AvailabilitySlice & FinancialSlice;
 
 export const usePatientStore = create<PatientState>()(
   persist(
@@ -224,13 +225,16 @@ export const usePatientStore = create<PatientState>()(
       ...createSessionSlice(set, get, ...rest),
       ...createDocumentSlice(set, get, ...rest),
       ...createScheduleSlice(set, get, ...rest),
+      ...createAvailabilitySlice(set, get, ...rest),
       ...createFinancialSlice(set, get, ...rest),
       
       // Initialize mock data
       patients: mockPatients,
       scheduleEvents: mockScheduleEvents,
       payments: mockPayments,
-      packages: mockPackages
+      packages: mockPackages,
+      availabilities: [],
+      publicAppointments: []
     }),
     {
       name: "patient-storage",
@@ -238,7 +242,9 @@ export const usePatientStore = create<PatientState>()(
         patients: state.patients,
         scheduleEvents: state.scheduleEvents,
         payments: state.payments,
-        packages: state.packages
+        packages: state.packages,
+        availabilities: state.availabilities,
+        publicAppointments: state.publicAppointments
       }),
     }
   )

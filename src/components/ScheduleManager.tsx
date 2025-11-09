@@ -1,23 +1,24 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ScheduleCalendar from "@/components/ScheduleCalendar";
+import ScheduleAvailability from "@/components/ScheduleAvailability";
+import ScheduleAppointments from "@/components/ScheduleAppointments";
 
 const ScheduleManager: React.FC = () => {
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="schedules">
-        <TabsList>
-          <TabsTrigger value="schedules">Agendas</TabsTrigger>
-          <TabsTrigger value="appointments">Agendamentos</TabsTrigger>
+      <Tabs defaultValue="agendas" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="agendas">Agendas</TabsTrigger>
+          <TabsTrigger value="agendamentos">Agendamentos</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="schedules">
-          <ScheduleCalendar type="schedules" />
+        <TabsContent value="agendas" className="mt-6">
+          <ScheduleAvailability />
         </TabsContent>
 
-        <TabsContent value="appointments">
-          <ScheduleCalendar type="appointments" />
+        <TabsContent value="agendamentos" className="mt-6">
+          <ScheduleAppointments />
         </TabsContent>
       </Tabs>
     </div>
