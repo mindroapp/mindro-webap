@@ -56,9 +56,15 @@ const ScheduleAppointments: React.FC = () => {
   };
 
   const handleStartVideoCall = () => {
-    const randomToken = Math.random().toString(36).substring(2, 15);
-    navigate(`/meeting?token=${randomToken}`);
-    setIsModalOpen(false);
+    if (selectedAppointment) {
+      const patientId = 'patientId' in selectedAppointment ? selectedAppointment.patientId : 'p1';
+      window.open(`/meeting-details?patientId=${patientId}`, '_blank');
+      toast({
+        title: "Chamada iniciada",
+        description: "A chamada de vídeo foi aberta em uma nova aba."
+      });
+      setIsModalOpen(false);
+    }
   };
 
   const handleSendWhatsAppReminder = (phone: string, name: string) => {

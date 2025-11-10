@@ -1,262 +1,255 @@
-import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import React, { useState, useMemo } from "react";
+import { useParams } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon, Clock, User, Phone, Check } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, CheckCircle2, Phone, User as UserIcon } from "lucide-react";
 import { usePatientStore } from "@/stores/patientStore";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const PublicBooking: React.FC = () => {
   const { professionalId } = useParams<{ professionalId: string }>();
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [patientName, setPatientName] = useState("");
   const [patientPhone, setPatientPhone] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [bookingComplete, setBookingComplete] = useState(false);
-  const { availabilities, getAvailabilitiesByProfessional, createPublicAppointment } = usePatientStore();
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  
+  const { getAvailabilitiesByProfessional, createPublicAppointment, publicAppointments } = usePatientStore();
   const { toast } = useToast();
-  const navigate = useNavigate();
 
-  const professionalAvailabilities = professionalId 
-    ? getAvailabilitiesByProfessional(professionalId)
-    : [];
+  const availabilities = professionalId ? getAvailabilitiesByProfessional(professionalId) : [];
+  
+  const today = startOfDay(new Date());
+  
+  const availableDates = useMemo(() => {
+    return availabilities
+      .filter(av => {
+        const avDate = new Date(av.date);
+        return !isBefore(avDate, today) && av.timeSlots.some(slot => {
+          const bookedSlot = publicAppointments.find(
+            apt => apt.availabilityId === av.id && apt.time === slot.time
+          );
+          return slot.available && !bookedSlot;
+        });
+      })
+      .map(av => new Date(av.date));
+  }, [availabilities, publicAppointments, today]);
+  
+  const selectedAvailability = selectedDate 
+    ? availabilities.find(av => av.date === format(selectedDate, "yyyy-MM-dd"))
+    : null;
+    
+  const availableTimeSlots = useMemo(() => {
+    if (!selectedAvailability) return [];
+    
+    return selectedAvailability.timeSlots.filter(slot => {
+      const bookedSlot = publicAppointments.find(
+        apt => apt.availabilityId === selectedAvailability.id && apt.time === slot.time
+      );
+      return slot.available && !bookedSlot;
+    });
+  }, [selectedAvailability, publicAppointments]);
 
-  // Obter datas disponíveis
-  const availableDates = professionalAvailabilities.map(av => new Date(av.date));
+  const professionalInfo = {
+    name: "Dr. João Silva",
+    profession: "Psicólogo",
+    registration: "CRP 12/34567",
+    phone: "(11) 99999-9999"
+  };
 
-  // Obter horários disponíveis para a data selecionada
-  const availableTimeSlotsForDate = selectedDate
-    ? professionalAvailabilities
-        .find(av => av.date === format(selectedDate, "yyyy-MM-dd"))
-        ?.timeSlots.filter(slot => slot.available) || []
-    : [];
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!selectedDate || !selectedTime || !patientName || !patientPhone) {
+  const handleBooking = async () => {
+    if (!selectedDate || !selectedTime || !professionalId || !selectedAvailability) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos.",
+        title: "Erro",
+        description: "Selecione data e horário",
         variant: "destructive"
       });
       return;
     }
 
-    setIsSubmitting(true);
-
     try {
       await createPublicAppointment({
-        availabilityId: professionalAvailabilities.find(
-          av => av.date === format(selectedDate, "yyyy-MM-dd")
-        )?.id || "",
+        availabilityId: selectedAvailability.id,
         date: format(selectedDate, "yyyy-MM-dd"),
         time: selectedTime,
         patientName,
         patientPhone,
-        professionalId: professionalId || ""
+        professionalId
       });
 
-      setBookingComplete(true);
+      setIsSubmitted(true);
       toast({
-        title: "Agendamento realizado!",
-        description: "Seu agendamento foi realizado com sucesso. Aguarde confirmação."
+        title: "Sucesso!",
+        description: "Seu agendamento foi confirmado."
       });
     } catch (error) {
       toast({
         title: "Erro",
-        description: "Erro ao realizar agendamento. Tente novamente.",
+        description: "Não foi possível realizar o agendamento.",
         variant: "destructive"
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  if (bookingComplete) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <Check className="h-6 w-6 text-green-600" />
-            </div>
-            <CardTitle className="text-2xl">Agendamento Confirmado!</CardTitle>
-            <CardDescription>
-              Seu agendamento foi realizado com sucesso
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-4 bg-muted rounded-lg space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Nome:</span>
-                <span className="font-medium">{patientName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Data:</span>
-                <span className="font-medium">
-                  {selectedDate && format(selectedDate, "dd/MM/yyyy")}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Horário:</span>
-                <span className="font-medium">{selectedTime}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Telefone:</span>
-                <span className="font-medium">{patientPhone}</span>
-              </div>
-            </div>
-            <p className="text-sm text-center text-muted-foreground">
-              Você receberá uma confirmação em breve. Aguarde o contato do profissional.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Agende sua Consulta</h1>
-          <p className="text-muted-foreground">
-            Escolha o dia e horário que melhor se adequa à sua agenda
-          </p>
+    <div className="min-h-screen bg-background py-8 px-4">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header com marca e info do profissional */}
+        <div className="text-center space-y-4">
+          <div className="flex items-center justify-center mb-4">
+            <span className="text-4xl font-bold text-foreground">
+              mind<span className="text-primary">ro</span>
+            </span>
+          </div>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+                  <UserIcon className="h-10 w-10 text-primary" />
+                </div>
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold text-foreground">{professionalInfo.name}</h2>
+                  <p className="text-muted-foreground">{professionalInfo.profession} / {professionalInfo.registration}</p>
+                  <div className="flex items-center justify-center gap-2 mt-2 text-sm text-muted-foreground">
+                    <Phone className="h-4 w-4" />
+                    {professionalInfo.phone}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Calendário */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5" />
-                  Selecione a Data
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className="rounded-md border pointer-events-auto w-full"
-                  locale={ptBR}
-                  disabled={(date) => {
-                    const dateStr = format(date, "yyyy-MM-dd");
-                    return !availableDates.some(d => format(d, "yyyy-MM-dd") === dateStr);
-                  }}
-                  modifiers={{
-                    available: availableDates
-                  }}
-                  modifiersClassNames={{
-                    available: "bg-primary/10 font-semibold"
-                  }}
-                />
-                <p className="text-sm text-muted-foreground mt-4">
-                  Datas destacadas estão disponíveis para agendamento
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Horários e Dados */}
-            <div className="space-y-6">
-              {/* Horários */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    Escolha o Horário
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {!selectedDate ? (
-                    <p className="text-center text-muted-foreground py-8">
-                      Selecione uma data primeiro
-                    </p>
-                  ) : availableTimeSlotsForDate.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">
-                      Nenhum horário disponível para esta data
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-3 gap-2">
-                      {availableTimeSlotsForDate.map(slot => (
-                        <Button
-                          key={slot.time}
-                          type="button"
-                          variant={selectedTime === slot.time ? "default" : "outline"}
-                          onClick={() => setSelectedTime(slot.time)}
-                          className="w-full"
-                        >
-                          {slot.time}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Dados do Paciente */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Seus Dados
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome Completo *</Label>
-                    <Input
-                      id="name"
-                      placeholder="Seu nome completo"
-                      value={patientName}
-                      onChange={(e) => setPatientName(e.target.value)}
-                      required
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarIcon className="h-6 w-6" />
+              Escolha a Data
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isSubmitted ? (
+              <div className="text-center py-8 space-y-4">
+                <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">Agendamento Confirmado!</h3>
+                  <p className="text-muted-foreground">
+                    Seu agendamento foi realizado com sucesso para o dia{" "}
+                    {selectedDate && format(selectedDate, "dd/MM/yyyy")} às {selectedTime}.
+                  </p>
+                  <p className="text-muted-foreground mt-2">
+                    Você receberá uma confirmação no WhatsApp.
+                  </p>
+                </div>
+                <Button onClick={() => {
+                  setIsSubmitted(false);
+                  setSelectedDate(undefined);
+                  setSelectedTime("");
+                  setPatientName("");
+                  setPatientPhone("");
+                }}>
+                  Fazer Outro Agendamento
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Calendário */}
+                <div>
+                  <div className="flex justify-center">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => {
+                        setSelectedDate(date);
+                        setSelectedTime("");
+                      }}
+                      locale={ptBR}
+                      disabled={(date) => {
+                        const isBeforeToday = isBefore(date, today);
+                        const hasAvailability = availableDates.some(d => 
+                          format(d, "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
+                        );
+                        return isBeforeToday || !hasAvailability;
+                      }}
+                      className="rounded-md border"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">WhatsApp *</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="(00) 00000-0000"
-                      value={patientPhone}
-                      onChange={(e) => setPatientPhone(e.target.value)}
-                      required
-                    />
-                  </div>
+                </div>
 
-                  {selectedDate && selectedTime && (
-                    <div className="p-4 bg-muted rounded-lg space-y-2 mt-4">
-                      <p className="text-sm font-medium">Resumo do Agendamento:</p>
-                      <div className="space-y-1 text-sm">
-                        <p>📅 {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
-                        <p>🕐 {selectedTime}</p>
+                {/* Horários - só exibe se data selecionada */}
+                {selectedDate && (
+                  <Card className="border-primary/20">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Escolha o Horário</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {availableTimeSlots.length > 0 ? (
+                        <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                          {availableTimeSlots.map(slot => (
+                            <Button
+                              key={slot.time}
+                              variant={selectedTime === slot.time ? "default" : "outline"}
+                              onClick={() => setSelectedTime(slot.time)}
+                              className="w-full"
+                            >
+                              <Clock className="h-4 w-4 mr-2" />
+                              {slot.time}
+                            </Button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-center text-muted-foreground py-4">
+                          Não há horários disponíveis para esta data.
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Formulário - só exibe se data e hora selecionadas */}
+                {selectedDate && selectedTime && (
+                  <Card className="border-primary/20">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Seus Dados</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label htmlFor="name">Nome completo</Label>
+                        <Input
+                          id="name"
+                          value={patientName}
+                          onChange={(e) => setPatientName(e.target.value)}
+                          placeholder="Digite seu nome"
+                        />
                       </div>
-                    </div>
-                  )}
-
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={!selectedDate || !selectedTime || !patientName || !patientPhone || isSubmitting}
-                  >
-                    {isSubmitting ? "Agendando..." : "Confirmar Agendamento"}
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </form>
+                      <div>
+                        <Label htmlFor="phone">WhatsApp</Label>
+                        <Input
+                          id="phone"
+                          value={patientPhone}
+                          onChange={(e) => setPatientPhone(e.target.value)}
+                          placeholder="(00) 00000-0000"
+                        />
+                      </div>
+                      <Button 
+                        onClick={handleBooking}
+                        className="w-full"
+                        disabled={!patientName || !patientPhone}
+                      >
+                        Confirmar Agendamento
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

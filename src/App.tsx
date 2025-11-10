@@ -22,6 +22,7 @@ import SettingsPage from "./pages/SettingsPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ScheduleEventDetail from "./pages/ScheduleEventDetail";
 import VideoMeeting from "./pages/VideoMeeting";
+import VideoMeetingWithDetails from "./pages/VideoMeetingWithDetails";
 import LandingPage from "./pages/LandingPage";
 import SupportTickets from "./pages/SupportTickets";
 import FinancialPage from "./pages/FinancialPage";
@@ -101,6 +102,7 @@ const App = () => (
         
         {/* Rota de Video Meeting */}
         <Route path="/meeting" element={<VideoMeeting />} />
+        <Route path="/meeting-details" element={<ProtectedRoute><VideoMeetingWithDetails /></ProtectedRoute>} />
         
         {/* Rota Pública de Agendamento */}
         <Route path="/booking/:professionalId" element={<PublicBooking />} />

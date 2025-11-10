@@ -26,43 +26,23 @@ const Dashboard: React.FC = () => {
       title: "Total de Pacientes",
       value: "32",
       icon: Users,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50"
     },
     {
       title: "Agendas Abertas (Mês)",
       value: "45",
       icon: Calendar,
-      color: "text-green-600",
-      bgColor: "bg-green-50"
-    },
-    {
-      title: "Agendas Abertas (Hoje)",
-      value: "3",
-      icon: CalendarDays,
-      color: "text-green-600",
-      bgColor: "bg-green-50"
+      subtitle: "3 hoje"
     },
     {
       title: "Agendamentos (Mês)",
       value: "38",
-      icon: Calendar,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50"
-    },
-    {
-      title: "Agendamentos (Hoje)",
-      value: "2",
       icon: CalendarDays,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50"
+      subtitle: "2 hoje"
     },
     {
       title: "Média de Sessões/Paciente",
       value: "4.2",
-      icon: BarChart3,
-      color: "text-indigo-600",
-      bgColor: "bg-indigo-50"
+      icon: TrendingUp,
     }
   ];
 
@@ -78,20 +58,29 @@ const Dashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat, index) => (
-            <Card key={index}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  {stat.title}
-                </CardTitle>
-                <div className={`p-2 rounded-md ${stat.bgColor}`}>
-                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+            <Card key={index} className="border-none shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <stat.icon className="h-6 w-6 text-primary" />
+                  </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stat.value}
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {stat.title}
+                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="text-3xl font-bold text-foreground">
+                      {stat.value}
+                    </h3>
+                    {stat.subtitle && (
+                      <span className="text-xs text-muted-foreground">
+                        {stat.subtitle}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
