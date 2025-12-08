@@ -72,6 +72,7 @@ const queryClient = new QueryClient({
 
 import ThankYouPage from "./pages/ThankYouPage";
 import PublicBooking from "./pages/PublicBooking";
+import TeleconsultationRoom from "./pages/TeleconsultationRoom";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -103,6 +104,7 @@ const App = () => (
         {/* Rota de Video Meeting */}
         <Route path="/meeting" element={<VideoMeeting />} />
         <Route path="/meeting-details" element={<ProtectedRoute><VideoMeetingWithDetails /></ProtectedRoute>} />
+        <Route path="/video-meeting" element={<TeleconsultationRoom />} />
         
         {/* Rota Pública de Agendamento */}
         <Route path="/booking/:professionalId" element={<PublicBooking />} />
