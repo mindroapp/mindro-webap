@@ -8,10 +8,12 @@ import SessionCard from "@/components/SessionCard";
 import SessionEditModal from "@/components/SessionEditModal";
 import SessionFormModal from "@/components/SessionFormModal";
 import ElectronicRecordModal from "@/components/ElectronicRecordModal";
+import ElectronicRecord from "@/components/ElectronicRecord";
 import PatientHistory from "@/components/PatientHistory";
 import PatientEditModal from "@/components/PatientEditModal";
 import DocumentUploadModal from "@/components/DocumentUploadModal";
 import InitialAssessmentModal from "@/components/InitialAssessmentModal";
+import TeleconsultationModal from "@/components/TeleconsultationModal";
 import PatientDetailFilters from "@/components/PatientDetailFilters";
 import Pagination from "@/components/Pagination";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,7 +38,8 @@ import {
   CreditCard,
   Receipt,
   MessageSquare,
-  Check
+  Check,
+  Video
 } from "lucide-react";
 
 const ITEMS_PER_PAGE = 10;
@@ -57,6 +60,7 @@ const PatientDetail: React.FC = () => {
   const [isFinancialModalOpen, setIsFinancialModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [isTeleconsultationOpen, setIsTeleconsultationOpen] = useState(false);
   
   // Filters and pagination states
   const [sessionsFilters, setSessionsFilters] = useState({
@@ -363,8 +367,15 @@ const PatientDetail: React.FC = () => {
                       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{selectedPatient.name}</h2>
                       <p className="text-gray-500 dark:text-gray-400">{selectedPatient.email}</p>
                     </div>
-                    <div className="mt-2 md:mt-0">
-                      <Button variant="outline" size="sm" className="mr-2" onClick={handleEditPatient}>
+                    <div className="mt-2 md:mt-0 flex gap-2">
+                      <Button 
+                        variant="default" 
+                        size="sm" 
+                        onClick={() => setIsTeleconsultationOpen(true)}
+                      >
+                        <Video size={16} className="mr-1" /> Teleconsulta
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleEditPatient}>
                         <Edit size={16} className="mr-1" /> Editar
                       </Button>
                     </div>
@@ -401,13 +412,25 @@ const PatientDetail: React.FC = () => {
             </CardContent>
           </Card>
   
-          <Tabs defaultValue="initial-record">
+          <Tabs defaultValue="prontuario">
             <TabsList className="mb-6">
+              <TabsTrigger value="prontuario">Prontuário</TabsTrigger>
               <TabsTrigger value="initial-record">Avaliação Inicial</TabsTrigger>
               <TabsTrigger value="sessions">Sessões ({filteredSessions.length})</TabsTrigger>
               <TabsTrigger value="documents">Documentos ({filteredDocuments.length})</TabsTrigger>
               <TabsTrigger value="financial">Financeiro ({filteredPayments.length})</TabsTrigger>
             </TabsList>
+
+            {/* Prontuário Eletrônico */}
+            <TabsContent value="prontuario" className="space-y-6">
+              <ElectronicRecord
+                patient={selectedPatient}
+                onNewSession={() => setIsNewSessionModalOpen(true)}
+                onEditSession={handleEditSession}
+                onViewSession={handleViewElectronicRecord}
+                onUploadDocument={() => setIsDocumentModalOpen(true)}
+              />
+            </TabsContent>
   
             <TabsContent value="initial-record" className="space-y-6">
               <div className="flex justify-between items-center">
@@ -838,6 +861,20 @@ const PatientDetail: React.FC = () => {
               isOpen={isNewSessionModalOpen}
               onClose={() => setIsNewSessionModalOpen(false)}
               patientId={id}
+            />
+          )}
+
+          {/* Modal de Teleconsulta */}
+          {selectedPatient && (
+            <TeleconsultationModal
+              isOpen={isTeleconsultationOpen}
+              onClose={() => setIsTeleconsultationOpen(false)}
+              patientId={selectedPatient.id}
+              patientName={selectedPatient.name}
+              patientPhone={selectedPatient.phone}
+              onStartCall={(roomLink) => {
+                window.open(roomLink, '_blank');
+              }}
             />
           )}
 
