@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,16 +8,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   Mic, MicOff, Video, VideoOff, PhoneOff, 
   Volume, VolumeX, User as UserIcon, Save,
-  FileText, Plus, Upload
+  FileText, Plus, Upload, Calendar, Edit,
+  ClipboardList, Lock, Paperclip, Stethoscope,
+  TrendingUp, Download, Trash, Check, CreditCard
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { usePatientStore, Session } from '@/stores/patientStore';
+import { usePatientStore, Session, Patient } from '@/stores/patientStore';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DocumentUploadModal from '@/components/DocumentUploadModal';
+import SessionFormModal from '@/components/SessionFormModal';
+import SessionEditModal from '@/components/SessionEditModal';
 
 const TeleconsultationRoom = () => {
   const [searchParams] = useSearchParams();
@@ -28,7 +33,7 @@ const TeleconsultationRoom = () => {
   const patientId = searchParams.get('patientId') || '';
   const roomId = searchParams.get('room') || '';
   
-  const { patients, addSession, updateSession } = usePatientStore();
+  const { patients, addSession, payments, updatePayment } = usePatientStore();
   const patient = patients.find(p => p.id === patientId);
 
   // Video states
@@ -37,7 +42,13 @@ const TeleconsultationRoom = () => {
   const [audioOn, setAudioOn] = useState(true);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
-  // Session notes states
+  // Modal states
+  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
+  const [isNewSessionModalOpen, setIsNewSessionModalOpen] = useState(false);
+  const [editingSession, setEditingSession] = useState<Session | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Session notes for current teleconsultation
   const [currentNotes, setCurrentNotes] = useState({
     evolution: '',
     privateNotes: '',
@@ -46,8 +57,10 @@ const TeleconsultationRoom = () => {
     annotations: ''
   });
 
-  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  // Patient payments
+  const patientPayments = useMemo(() => {
+    return payments.filter(p => p.patientId === patient?.id);
+  }, [payments, patient?.id]);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -75,7 +88,6 @@ const TeleconsultationRoom = () => {
   }, [toast]);
 
   const handleEndCall = async () => {
-    // Salva a sessão antes de encerrar
     if (patient && (currentNotes.evolution || currentNotes.annotations)) {
       await saveSession();
     }
@@ -118,6 +130,14 @@ const TeleconsultationRoom = () => {
         title: "Sessão salva",
         description: "As anotações foram salvas com sucesso.",
       });
+
+      setCurrentNotes({
+        evolution: '',
+        privateNotes: '',
+        diagnosis: '',
+        therapeuticPlan: '',
+        annotations: ''
+      });
     } catch (error) {
       toast({
         title: "Erro",
@@ -148,6 +168,34 @@ const TeleconsultationRoom = () => {
 
   const toggleAudio = () => setAudioOn(!audioOn);
 
+  const handleConfirmPayment = async (paymentId: string) => {
+    await updatePayment(paymentId, { status: "paid" });
+    toast({
+      title: "Pagamento confirmado",
+      description: "O status foi atualizado para PAGO.",
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "paid":
+        return <Badge className="bg-green-100 text-green-800">Pago</Badge>;
+      case "pending":
+        return <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
+  const getMoodEmoji = (mood: number) => {
+    const emojis = ["😞", "😕", "😐", "🙂", "😊"];
+    return emojis[mood - 1] || "😐";
+  };
+
+  const sortedSessions = patient 
+    ? [...patient.sessions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    : [];
+
   if (!patient) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -166,7 +214,7 @@ const TeleconsultationRoom = () => {
   return (
     <div className="fixed inset-0 w-screen h-screen bg-background flex overflow-hidden">
       {/* Coluna Esquerda - Vídeos */}
-      <div className="w-80 flex flex-col bg-card border-r shrink-0">
+      <div className="w-72 flex flex-col bg-card border-r shrink-0">
         {/* Vídeo Local (Profissional) */}
         <div className="flex-1 relative bg-muted">
           {videoOn ? (
@@ -179,8 +227,8 @@ const TeleconsultationRoom = () => {
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-muted">
-              <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center">
-                <UserIcon className="h-8 w-8 text-primary" />
+              <div className="h-14 w-14 rounded-full bg-primary/20 flex items-center justify-center">
+                <UserIcon className="h-7 w-7 text-primary" />
               </div>
             </div>
           )}
@@ -192,8 +240,8 @@ const TeleconsultationRoom = () => {
         {/* Vídeo Remoto (Paciente) */}
         <div className="flex-1 relative bg-muted border-t">
           <div className="absolute inset-0 flex items-center justify-center bg-muted">
-            <div className="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center">
-              <UserIcon className="h-8 w-8 text-primary" />
+            <div className="h-14 w-14 rounded-full bg-primary/20 flex items-center justify-center">
+              <UserIcon className="h-7 w-7 text-primary" />
             </div>
           </div>
           <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 text-xs rounded">
@@ -202,7 +250,7 @@ const TeleconsultationRoom = () => {
         </div>
 
         {/* Controles */}
-        <div className="p-4 bg-card border-t">
+        <div className="p-3 bg-card border-t">
           <div className="flex justify-center gap-2">
             <Button 
               variant="ghost" 
@@ -210,7 +258,7 @@ const TeleconsultationRoom = () => {
               className={`rounded-full ${micOn ? '' : 'bg-destructive text-destructive-foreground'}`}
               onClick={toggleMic}
             >
-              {micOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+              {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
             </Button>
             <Button 
               variant="ghost" 
@@ -218,7 +266,7 @@ const TeleconsultationRoom = () => {
               className={`rounded-full ${videoOn ? '' : 'bg-destructive text-destructive-foreground'}`}
               onClick={toggleVideo}
             >
-              {videoOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+              {videoOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
             </Button>
             <Button 
               variant="ghost" 
@@ -226,7 +274,7 @@ const TeleconsultationRoom = () => {
               className={`rounded-full ${audioOn ? '' : 'bg-destructive text-destructive-foreground'}`}
               onClick={toggleAudio}
             >
-              {audioOn ? <Volume className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+              {audioOn ? <Volume className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
             </Button>
             <Button 
               variant="destructive" 
@@ -234,13 +282,13 @@ const TeleconsultationRoom = () => {
               className="rounded-full"
               onClick={handleEndCall}
             >
-              <PhoneOff className="h-5 w-5" />
+              <PhoneOff className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Coluna Direita - Painel do Paciente */}
+      {/* Coluna Direita - Painel do Paciente (Mesmas tabs do PatientDetail) */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b bg-card shrink-0">
@@ -267,104 +315,213 @@ const TeleconsultationRoom = () => {
           </div>
         </div>
 
-        {/* Conteúdo com Tabs */}
+        {/* Conteúdo com Tabs - Mesmas do PatientDetail */}
         <ScrollArea className="flex-1">
           <div className="p-6">
             <Tabs defaultValue="prontuario" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-6">
+              <TabsList className="mb-6">
                 <TabsTrigger value="prontuario">Prontuário</TabsTrigger>
-                <TabsTrigger value="historico">Histórico</TabsTrigger>
-                <TabsTrigger value="documentos">Documentos</TabsTrigger>
-                <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+                <TabsTrigger value="initial-record">Avaliação Inicial</TabsTrigger>
+                <TabsTrigger value="sessions">Sessões ({patient.sessions.length})</TabsTrigger>
+                <TabsTrigger value="documents">Documentos ({patient.documents.length})</TabsTrigger>
+                <TabsTrigger value="financial">Financeiro</TabsTrigger>
               </TabsList>
 
-              {/* Prontuário Eletrônico */}
+              {/* Prontuário - Anotações da Sessão Atual */}
               <TabsContent value="prontuario" className="space-y-4">
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <Label>Evolução</Label>
-                    <Textarea 
-                      placeholder="Registre a evolução do paciente nesta sessão..."
-                      value={currentNotes.evolution}
-                      onChange={(e) => setCurrentNotes(prev => ({ ...prev, evolution: e.target.value }))}
-                      rows={4}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Anotações Privadas</Label>
-                    <Textarea 
-                      placeholder="Anotações visíveis apenas para você..."
-                      value={currentNotes.privateNotes}
-                      onChange={(e) => setCurrentNotes(prev => ({ ...prev, privateNotes: e.target.value }))}
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5" />
+                      Registro da Sessão Atual
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Diagnóstico</Label>
-                      <Input 
-                        placeholder="CID-10 ou descrição"
-                        value={currentNotes.diagnosis}
-                        onChange={(e) => setCurrentNotes(prev => ({ ...prev, diagnosis: e.target.value }))}
+                      <Label>Evolução</Label>
+                      <Textarea 
+                        placeholder="Registre a evolução do paciente nesta sessão..."
+                        value={currentNotes.evolution}
+                        onChange={(e) => setCurrentNotes(prev => ({ ...prev, evolution: e.target.value }))}
+                        rows={4}
                       />
                     </div>
+
                     <div className="space-y-2">
-                      <Label>Plano Terapêutico</Label>
-                      <Input 
-                        placeholder="Plano de tratamento"
-                        value={currentNotes.therapeuticPlan}
-                        onChange={(e) => setCurrentNotes(prev => ({ ...prev, therapeuticPlan: e.target.value }))}
+                      <Label className="flex items-center gap-2">
+                        <Lock className="h-3 w-3" />
+                        Anotações Privadas
+                      </Label>
+                      <Textarea 
+                        placeholder="Anotações visíveis apenas para você..."
+                        value={currentNotes.privateNotes}
+                        onChange={(e) => setCurrentNotes(prev => ({ ...prev, privateNotes: e.target.value }))}
+                        rows={3}
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label>Anotações da Sessão</Label>
-                    <Textarea 
-                      placeholder="Anotações gerais sobre a sessão..."
-                      value={currentNotes.annotations}
-                      onChange={(e) => setCurrentNotes(prev => ({ ...prev, annotations: e.target.value }))}
-                      rows={4}
-                    />
-                  </div>
-                </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Stethoscope className="h-3 w-3" />
+                          Diagnóstico
+                        </Label>
+                        <Input 
+                          placeholder="CID-10 ou descrição"
+                          value={currentNotes.diagnosis}
+                          onChange={(e) => setCurrentNotes(prev => ({ ...prev, diagnosis: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <ClipboardList className="h-3 w-3" />
+                          Plano Terapêutico
+                        </Label>
+                        <Input 
+                          placeholder="Plano de tratamento"
+                          value={currentNotes.therapeuticPlan}
+                          onChange={(e) => setCurrentNotes(prev => ({ ...prev, therapeuticPlan: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Anotações da Sessão</Label>
+                      <Textarea 
+                        placeholder="Anotações gerais sobre a sessão..."
+                        value={currentNotes.annotations}
+                        onChange={(e) => setCurrentNotes(prev => ({ ...prev, annotations: e.target.value }))}
+                        rows={4}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Histórico recente de evoluções */}
+                {sortedSessions.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Evoluções Anteriores</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {sortedSessions.slice(0, 3).map((session) => (
+                          <div key={session.id} className="p-3 border rounded-lg">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Calendar className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-sm font-medium">
+                                {format(new Date(session.date), "dd/MM/yyyy")}
+                              </span>
+                              <span>{getMoodEmoji(session.mood)}</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {session.evolution || session.notes || "Sem anotações"}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
-              {/* Histórico de Sessões */}
-              <TabsContent value="historico" className="space-y-4">
-                <div className="space-y-3">
-                  {patient.sessions.length === 0 ? (
+              {/* Avaliação Inicial */}
+              <TabsContent value="initial-record" className="space-y-4">
+                {!patient.initialRecord ? (
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <FileText className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+                      <p className="text-muted-foreground">
+                        Avaliação inicial não registrada
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid gap-4">
                     <Card>
-                      <CardContent className="pt-6 text-center text-muted-foreground">
-                        <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        Nenhuma sessão anterior registrada
+                      <CardContent className="pt-4">
+                        <h3 className="font-medium mb-2">Motivo da Consulta</h3>
+                        <p className="text-muted-foreground">{patient.initialRecord.reasonForConsultation}</p>
                       </CardContent>
                     </Card>
-                  ) : (
-                    patient.sessions.slice(0, 5).map((session) => (
-                      <Card key={session.id}>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <Card>
                         <CardContent className="pt-4">
-                          <div className="flex items-start justify-between mb-2">
-                            <span className="font-medium text-sm">
-                              {format(new Date(session.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                            </span>
-                            {session.status && (
-                              <Badge variant="outline" className="text-xs">
-                                {session.status}
-                              </Badge>
-                            )}
-                          </div>
-                          {session.notes && (
-                            <p className="text-sm text-muted-foreground mb-2">{session.notes}</p>
-                          )}
-                          {session.evolution && (
-                            <div className="mt-2">
-                              <span className="text-xs font-medium text-primary">Evolução:</span>
-                              <p className="text-sm text-muted-foreground">{session.evolution}</p>
+                          <h3 className="font-medium mb-2">Histórico Familiar</h3>
+                          <p className="text-muted-foreground text-sm">{patient.initialRecord.familyHistory}</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="pt-4">
+                          <h3 className="font-medium mb-2">Histórico Médico</h3>
+                          <p className="text-muted-foreground text-sm">{patient.initialRecord.medicalHistory}</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <Card>
+                        <CardContent className="pt-4">
+                          <h3 className="font-medium mb-2">Diagnóstico Inicial</h3>
+                          <p className="text-muted-foreground">{patient.initialRecord.initialDiagnosis}</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="pt-4">
+                          <h3 className="font-medium mb-2">Plano de Tratamento</h3>
+                          <p className="text-muted-foreground">{patient.initialRecord.treatmentPlan}</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Sessões */}
+              <TabsContent value="sessions" className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-medium">Histórico de Sessões</h3>
+                  <Button size="sm" onClick={() => setIsNewSessionModalOpen(true)}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Nova Sessão
+                  </Button>
+                </div>
+
+                {sortedSessions.length === 0 ? (
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <Calendar className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+                      <p className="text-muted-foreground">Nenhuma sessão registrada</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-3">
+                    {sortedSessions.map((session) => (
+                      <Card key={session.id} className="hover:border-primary/30 transition-colors">
+                        <CardContent className="pt-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">
+                                {format(new Date(session.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                              </span>
+                              <span className="text-xl">{getMoodEmoji(session.mood)}</span>
+                              {session.status && (
+                                <Badge variant="outline" className="text-xs">{session.status}</Badge>
+                              )}
                             </div>
-                          )}
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => setEditingSession(session)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <p className="text-muted-foreground text-sm">
+                            {session.evolution || session.notes || "Sem anotações"}
+                          </p>
                           {session.diagnosis && (
                             <div className="mt-2">
                               <span className="text-xs font-medium text-primary">Diagnóstico:</span>
@@ -373,80 +530,148 @@ const TeleconsultationRoom = () => {
                           )}
                         </CardContent>
                       </Card>
-                    ))
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
 
               {/* Documentos */}
-              <TabsContent value="documentos" className="space-y-4">
-                <Button onClick={() => setShowDocumentUpload(true)} size="sm">
-                  <Upload className="h-4 w-4 mr-1" />
-                  Adicionar Documento
-                </Button>
-                
-                <div className="space-y-3">
-                  {patient.documents.length === 0 ? (
-                    <Card>
-                      <CardContent className="pt-6 text-center text-muted-foreground">
-                        <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        Nenhum documento anexado
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    patient.documents.map((doc) => (
-                      <Card key={doc.id} className="cursor-pointer hover:bg-accent">
+              <TabsContent value="documents" className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-medium">Documentos do Paciente</h3>
+                  <Button size="sm" onClick={() => setShowDocumentUpload(true)}>
+                    <Upload className="h-4 w-4 mr-1" />
+                    Adicionar
+                  </Button>
+                </div>
+
+                {patient.documents.length === 0 ? (
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <Paperclip className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+                      <p className="text-muted-foreground">Nenhum documento anexado</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {patient.documents.map((doc) => (
+                      <Card key={doc.id} className="hover:border-primary/30 transition-colors cursor-pointer">
                         <CardContent className="pt-4">
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-primary" />
-                            <div>
-                              <p className="font-medium text-sm">{doc.name}</p>
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <FileText className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">{doc.name}</p>
                               <p className="text-xs text-muted-foreground">
-                                {format(new Date(doc.uploadDate), "dd/MM/yyyy")}
+                                {format(new Date(doc.uploadDate), "dd/MM/yyyy")} • {doc.type.toUpperCase()}
                               </p>
                             </div>
                           </div>
                         </CardContent>
                       </Card>
-                    ))
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
 
               {/* Financeiro */}
-              <TabsContent value="financeiro" className="space-y-4">
+              <TabsContent value="financial" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Resumo Financeiro</CardTitle>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <CreditCard className="h-5 w-5" />
+                      Resumo Financeiro
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4 mb-4">
                       <div>
                         <p className="text-sm text-muted-foreground">Total de Sessões</p>
                         <p className="text-2xl font-bold">{patient.sessions.length}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Documentos</p>
-                        <p className="text-2xl font-bold">{patient.documents.length}</p>
+                        <p className="text-sm text-muted-foreground">Pagamentos</p>
+                        <p className="text-2xl font-bold">{patientPayments.length}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Pendentes</p>
+                        <p className="text-2xl font-bold text-yellow-600">
+                          {patientPayments.filter(p => p.status === 'pending').length}
+                        </p>
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-4">
-                      Para gestão financeira completa, acesse os detalhes do paciente.
-                    </p>
                   </CardContent>
                 </Card>
+
+                {patientPayments.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Últimos Pagamentos</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Descrição</TableHead>
+                            <TableHead>Valor</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {patientPayments.slice(0, 5).map((payment) => (
+                            <TableRow key={payment.id}>
+                              <TableCell className="font-medium">{payment.description}</TableCell>
+                              <TableCell>R$ {payment.amount.toFixed(2)}</TableCell>
+                              <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                              <TableCell>
+                                {payment.status === 'pending' && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost"
+                                    onClick={() => handleConfirmPayment(payment.id)}
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
             </Tabs>
           </div>
         </ScrollArea>
       </div>
 
-      {/* Modal de Upload de Documento */}
+      {/* Modals */}
       <DocumentUploadModal
         isOpen={showDocumentUpload}
         onClose={() => setShowDocumentUpload(false)}
         patientId={patientId}
       />
+
+      {isNewSessionModalOpen && (
+        <SessionFormModal
+          isOpen={isNewSessionModalOpen}
+          onClose={() => setIsNewSessionModalOpen(false)}
+          patientId={patientId}
+        />
+      )}
+
+      {editingSession && (
+        <SessionEditModal
+          isOpen={!!editingSession}
+          onClose={() => setEditingSession(null)}
+          session={editingSession}
+          patientId={patientId}
+        />
+      )}
     </div>
   );
 };
