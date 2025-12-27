@@ -7,13 +7,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Eye, CheckCircle, XCircle, Pause, Play, Search, Edit, FileText } from "lucide-react";
+import { Eye, CheckCircle, XCircle, Pause, Play, Search, Edit, FileText, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import ProfessionalEditModal from "@/components/ProfessionalEditModal";
 import DocumentViewModal from "@/components/DocumentViewModal";
 
-// Mock data atualizado
+// Mock data
 const pendingProfessionals = [
   {
     id: 1,
@@ -75,6 +75,7 @@ const activeProfessionals = [
 
 const ProfessionalsManagement: React.FC = () => {
   const [selectedProfessional, setSelectedProfessional] = useState<any>(null);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
   const [activateDialogOpen, setActivateDialogOpen] = useState(false);
@@ -87,6 +88,7 @@ const ProfessionalsManagement: React.FC = () => {
 
   const handleAcceptProfessional = (id: number) => {
     console.log("Aceitar profissional:", id);
+    setApproveDialogOpen(false);
     toast({
       title: "Profissional aprovado",
       description: "O profissional foi movido para a lista de ativos com sucesso."
@@ -94,11 +96,11 @@ const ProfessionalsManagement: React.FC = () => {
   };
 
   const handleRejectProfessional = (id: number) => {
-    console.log("Rejeitar profissional:", id);
+    console.log("Rejeitar e apagar profissional:", id);
     setRejectDialogOpen(false);
     toast({
-      title: "Profissional rejeitado",
-      description: "A solicitação foi rejeitada e o profissional foi notificado."
+      title: "Solicitação rejeitada",
+      description: "O registro do profissional foi removido do sistema."
     });
   };
 
@@ -148,41 +150,41 @@ const ProfessionalsManagement: React.FC = () => {
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Detalhes do Profissional</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="font-semibold">Nome:</label>
-              <p>{professional?.name}</p>
+              <label className="font-semibold text-sm">Nome:</label>
+              <p className="text-sm">{professional?.name}</p>
             </div>
             <div>
-              <label className="font-semibold">Email:</label>
-              <p>{professional?.email}</p>
+              <label className="font-semibold text-sm">Email:</label>
+              <p className="text-sm">{professional?.email}</p>
             </div>
             <div>
-              <label className="font-semibold">Telefone:</label>
-              <p>{professional?.phone}</p>
+              <label className="font-semibold text-sm">Telefone:</label>
+              <p className="text-sm">{professional?.phone}</p>
             </div>
             <div>
-              <label className="font-semibold">Profissão:</label>
-              <p>{professional?.profession}</p>
+              <label className="font-semibold text-sm">Profissão:</label>
+              <p className="text-sm">{professional?.profession}</p>
             </div>
             <div>
-              <label className="font-semibold">Registro:</label>
-              <p>{professional?.registration}</p>
+              <label className="font-semibold text-sm">Registro:</label>
+              <p className="text-sm">{professional?.registration}</p>
             </div>
             {professional?.requestDate && (
               <div>
-                <label className="font-semibold">Data da Solicitação:</label>
-                <p>{professional.requestDate}</p>
+                <label className="font-semibold text-sm">Data da Solicitação:</label>
+                <p className="text-sm">{professional.requestDate}</p>
               </div>
             )}
             {professional?.status && (
               <div>
-                <label className="font-semibold">Status:</label>
+                <label className="font-semibold text-sm">Status:</label>
                 <Badge variant={professional.status === "Ativo" ? "default" : "destructive"}>
                   {professional.status}
                 </Badge>
@@ -190,7 +192,7 @@ const ProfessionalsManagement: React.FC = () => {
             )}
             {professional?.plan && (
               <div>
-                <label className="font-semibold">Plano:</label>
+                <label className="font-semibold text-sm">Plano:</label>
                 <Badge variant="outline">{professional.plan}</Badge>
               </div>
             )}
@@ -198,7 +200,7 @@ const ProfessionalsManagement: React.FC = () => {
           {professional?.documents && (
             <div>
               <div className="flex items-center justify-between">
-                <label className="font-semibold">Documentos:</label>
+                <label className="font-semibold text-sm">Documentos:</label>
                 <Button
                   variant="outline"
                   size="sm"
@@ -220,22 +222,22 @@ const ProfessionalsManagement: React.FC = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
             Gerenciamento de Profissionais
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-sm md:text-base text-muted-foreground">
             Gerencie solicitações e profissionais ativos na plataforma
           </p>
         </div>
 
         {/* Filtros */}
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-4">
+          <CardContent className="pt-4 md:pt-6">
+            <div className="flex flex-col gap-3 md:flex-row md:gap-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   placeholder="Buscar por nome, profissão ou registro..."
                   value={searchTerm}
@@ -260,88 +262,93 @@ const ProfessionalsManagement: React.FC = () => {
         </Card>
 
         <Tabs defaultValue="requests" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="requests">
+          <TabsList className="w-full md:w-auto">
+            <TabsTrigger value="requests" className="flex-1 md:flex-none">
               Solicitações ({filteredPendingProfessionals.length})
             </TabsTrigger>
-            <TabsTrigger value="active">
+            <TabsTrigger value="active" className="flex-1 md:flex-none">
               Ativos ({filteredActiveProfessionals.length})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="requests">
             <Card>
-              <CardHeader>
-                <CardTitle>Solicitações Pendentes</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Solicitações Pendentes</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Telefone</TableHead>
-                      <TableHead>Profissão</TableHead>
-                      <TableHead>Registro</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPendingProfessionals.map((professional) => (
-                      <TableRow key={professional.id}>
-                        <TableCell className="font-medium">{professional.name}</TableCell>
-                        <TableCell>{professional.email}</TableCell>
-                        <TableCell>{professional.phone}</TableCell>
-                        <TableCell>{professional.profession}</TableCell>
-                        <TableCell>{professional.registration}</TableCell>
-                        <TableCell>{professional.requestDate}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <ViewDetailsDialog
-                              professional={professional}
-                              trigger={
-                                <Button variant="outline" size="sm">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              }
-                            />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-green-600 hover:text-green-700"
-                              onClick={() => handleAcceptProfessional(professional.id)}
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700"
-                              onClick={() => {
-                                setSelectedProfessional(professional);
-                                setRejectDialogOpen(true);
-                              }}
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                <div className="overflow-x-auto -mx-6 px-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[150px]">Nome</TableHead>
+                        <TableHead className="hidden md:table-cell">Email</TableHead>
+                        <TableHead className="hidden lg:table-cell">Telefone</TableHead>
+                        <TableHead>Profissão</TableHead>
+                        <TableHead className="hidden sm:table-cell">Registro</TableHead>
+                        <TableHead className="hidden lg:table-cell">Data</TableHead>
+                        <TableHead>Ações</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPendingProfessionals.map((professional) => (
+                        <TableRow key={professional.id}>
+                          <TableCell className="font-medium">{professional.name}</TableCell>
+                          <TableCell className="hidden md:table-cell">{professional.email}</TableCell>
+                          <TableCell className="hidden lg:table-cell">{professional.phone}</TableCell>
+                          <TableCell>{professional.profession}</TableCell>
+                          <TableCell className="hidden sm:table-cell">{professional.registration}</TableCell>
+                          <TableCell className="hidden lg:table-cell">{professional.requestDate}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1 md:gap-2">
+                              <ViewDetailsDialog
+                                professional={professional}
+                                trigger={
+                                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                }
+                              />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                                onClick={() => {
+                                  setSelectedProfessional(professional);
+                                  setApproveDialogOpen(true);
+                                }}
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                onClick={() => {
+                                  setSelectedProfessional(professional);
+                                  setRejectDialogOpen(true);
+                                }}
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="active">
             <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Profissionais Ativos</CardTitle>
+              <CardHeader className="pb-3">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <CardTitle className="text-lg">Profissionais Ativos</CardTitle>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-48">
+                    <SelectTrigger className="w-full sm:w-48">
                       <SelectValue placeholder="Filtrar por status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -353,155 +360,199 @@ const ProfessionalsManagement: React.FC = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Telefone</TableHead>
-                      <TableHead>Profissão</TableHead>
-                      <TableHead>Plano</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Data de Entrada</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredActiveProfessionals.map((professional) => (
-                      <TableRow key={professional.id}>
-                        <TableCell className="font-medium">{professional.name}</TableCell>
-                        <TableCell>{professional.email}</TableCell>
-                        <TableCell>{professional.phone}</TableCell>
-                        <TableCell>{professional.profession}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{professional.plan}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={professional.status === "Ativo" ? "default" : "destructive"}>
-                            {professional.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{professional.joinDate}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <ViewDetailsDialog
-                              professional={professional}
-                              trigger={
-                                <Button variant="outline" size="sm">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              }
-                            />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-blue-600 hover:text-blue-700"
-                              onClick={() => {
-                                setSelectedProfessional(professional);
-                                setEditModalOpen(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            {professional.status === "Ativo" ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-orange-600 hover:text-orange-700"
-                                onClick={() => {
-                                  setSelectedProfessional(professional);
-                                  setSuspendDialogOpen(true);
-                                }}
-                              >
-                                <Pause className="h-4 w-4" />
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-green-600 hover:text-green-700"
-                                onClick={() => {
-                                  setSelectedProfessional(professional);
-                                  setActivateDialogOpen(true);
-                                }}
-                              >
-                                <Play className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
+                <div className="overflow-x-auto -mx-6 px-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[150px]">Nome</TableHead>
+                        <TableHead className="hidden md:table-cell">Email</TableHead>
+                        <TableHead className="hidden lg:table-cell">Telefone</TableHead>
+                        <TableHead>Profissão</TableHead>
+                        <TableHead className="hidden sm:table-cell">Plano</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="hidden lg:table-cell">Entrada</TableHead>
+                        <TableHead>Ações</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredActiveProfessionals.map((professional) => (
+                        <TableRow key={professional.id}>
+                          <TableCell className="font-medium">{professional.name}</TableCell>
+                          <TableCell className="hidden md:table-cell">{professional.email}</TableCell>
+                          <TableCell className="hidden lg:table-cell">{professional.phone}</TableCell>
+                          <TableCell>{professional.profession}</TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <Badge variant="outline">{professional.plan}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={professional.status === "Ativo" ? "default" : "destructive"}>
+                              {professional.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">{professional.joinDate}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1 md:gap-2">
+                              <ViewDetailsDialog
+                                professional={professional}
+                                trigger={
+                                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                }
+                              />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
+                                onClick={() => {
+                                  setSelectedProfessional(professional);
+                                  setEditModalOpen(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              {professional.status === "Ativo" ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
+                                  onClick={() => {
+                                    setSelectedProfessional(professional);
+                                    setSuspendDialogOpen(true);
+                                  }}
+                                >
+                                  <Pause className="h-4 w-4" />
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                                  onClick={() => {
+                                    setSelectedProfessional(professional);
+                                    setActivateDialogOpen(true);
+                                  }}
+                                >
+                                  <Play className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
 
-        {/* Diálogos de confirmação */}
-        <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-          <DialogContent>
+        {/* Modal de Confirmação de Aprovação */}
+        <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Confirmar Rejeição</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                Confirmar Aprovação
+              </DialogTitle>
               <DialogDescription>
-                Tem certeza que deseja rejeitar a solicitação de {selectedProfessional?.name}?
-                Esta ação não pode ser desfeita.
+                Tem certeza que deseja aprovar o cadastro de <strong>{selectedProfessional?.name}</strong>?
+                O profissional será movido para a lista de ativos e poderá acessar a plataforma.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setApproveDialogOpen(false)} className="w-full sm:w-auto">
                 Cancelar
               </Button>
               <Button
-                variant="destructive"
-                onClick={() => handleRejectProfessional(selectedProfessional?.id)}
+                className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
+                onClick={() => handleAcceptProfessional(selectedProfessional?.id)}
               >
-                Rejeitar
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Aprovar
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        <Dialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
-          <DialogContent>
+        {/* Modal de Confirmação de Rejeição */}
+        <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Confirmar Suspensão</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                Confirmar Rejeição
+              </DialogTitle>
               <DialogDescription>
-                Tem certeza que deseja suspender o cadastro de {selectedProfessional?.name}?
-                O profissional não conseguirá realizar login após a suspensão.
+                Tem certeza que deseja rejeitar a solicitação de <strong>{selectedProfessional?.name}</strong>?
+                Esta ação irá <strong>remover permanentemente</strong> o registro do sistema.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setSuspendDialogOpen(false)}>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setRejectDialogOpen(false)} className="w-full sm:w-auto">
                 Cancelar
               </Button>
               <Button
                 variant="destructive"
+                className="w-full sm:w-auto"
+                onClick={() => handleRejectProfessional(selectedProfessional?.id)}
+              >
+                <XCircle className="h-4 w-4 mr-1" />
+                Rejeitar e Remover
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Suspensão */}
+        <Dialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Pause className="h-5 w-5 text-orange-600" />
+                Confirmar Suspensão
+              </DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja suspender o cadastro de <strong>{selectedProfessional?.name}</strong>?
+                O profissional não conseguirá realizar login após a suspensão.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setSuspendDialogOpen(false)} className="w-full sm:w-auto">
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                className="w-full sm:w-auto"
                 onClick={() => handleSuspendProfessional(selectedProfessional?.id)}
               >
+                <Pause className="h-4 w-4 mr-1" />
                 Suspender
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
+        {/* Modal de Ativação */}
         <Dialog open={activateDialogOpen} onOpenChange={setActivateDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Confirmar Ativação</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <Play className="h-5 w-5 text-green-600" />
+                Confirmar Ativação
+              </DialogTitle>
               <DialogDescription>
-                Tem certeza que deseja reativar o cadastro de {selectedProfessional?.name}?
+                Tem certeza que deseja reativar o cadastro de <strong>{selectedProfessional?.name}</strong>?
                 O profissional poderá realizar login novamente.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setActivateDialogOpen(false)}>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setActivateDialogOpen(false)} className="w-full sm:w-auto">
                 Cancelar
               </Button>
-              <Button
-                onClick={() => handleActivateProfessional(selectedProfessional?.id)}
-              >
+              <Button className="w-full sm:w-auto" onClick={() => handleActivateProfessional(selectedProfessional?.id)}>
+                <Play className="h-4 w-4 mr-1" />
                 Ativar
               </Button>
             </DialogFooter>
