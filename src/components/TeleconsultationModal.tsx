@@ -25,27 +25,34 @@ const TeleconsultationModal: React.FC<TeleconsultationModalProps> = ({
 }) => {
   const { toast } = useToast();
   const [roomLink, setRoomLink] = useState("");
+  const [patientLink, setPatientLink] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
   const generateRoomLink = () => {
     setIsCreating(true);
     // Gera um ID único para a sala
     const roomId = `${patientId}-${Date.now()}`;
-    const link = `${window.location.origin}/video-meeting?room=${roomId}&patientId=${patientId}`;
-    setRoomLink(link);
+    
+    // Link para o paciente (sem role ou com role=patient)
+    const patientUrl = `${window.location.origin}/video-meeting?room=${roomId}&patientId=${patientId}&role=patient`;
+    // Link para o profissional (com role=professional)
+    const professionalUrl = `${window.location.origin}/video-meeting?room=${roomId}&patientId=${patientId}&role=professional`;
+    
+    setPatientLink(patientUrl);
+    setRoomLink(professionalUrl);
     setIsCreating(false);
     
     toast({
       title: "Sala criada!",
-      description: "Link da teleconsulta gerado com sucesso.",
+      description: "Links da teleconsulta gerados com sucesso.",
     });
   };
 
   const copyLink = () => {
-    navigator.clipboard.writeText(roomLink);
+    navigator.clipboard.writeText(patientLink);
     toast({
       title: "Link copiado!",
-      description: "O link foi copiado para a área de transferência.",
+      description: "O link do paciente foi copiado para a área de transferência.",
     });
   };
 
@@ -61,7 +68,7 @@ const TeleconsultationModal: React.FC<TeleconsultationModalProps> = ({
 
     const phone = patientPhone.replace(/\D/g, "");
     const message = encodeURIComponent(
-      `Olá ${patientName}! Sua teleconsulta está pronta. Acesse o link para iniciar: ${roomLink}`
+      `Olá ${patientName}! Sua teleconsulta está pronta. Acesse o link para iniciar: ${patientLink}`
     );
     window.open(`https://wa.me/55${phone}?text=${message}`, "_blank");
   };
@@ -73,9 +80,15 @@ const TeleconsultationModal: React.FC<TeleconsultationModalProps> = ({
     }
   };
 
+  const handleClose = () => {
+    setRoomLink("");
+    setPatientLink("");
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="w-[95vw] max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Video className="h-5 w-5 text-primary" />
@@ -86,7 +99,7 @@ const TeleconsultationModal: React.FC<TeleconsultationModalProps> = ({
         <div className="space-y-6 py-4">
           {!roomLink ? (
             <div className="text-center space-y-4">
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Crie uma sala de vídeo para iniciar a teleconsulta com o paciente.
               </p>
               <Button 
@@ -101,17 +114,20 @@ const TeleconsultationModal: React.FC<TeleconsultationModalProps> = ({
           ) : (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Link da Teleconsulta</Label>
+                <Label className="text-sm">Link para o Paciente</Label>
                 <div className="flex gap-2">
                   <Input 
-                    value={roomLink} 
+                    value={patientLink} 
                     readOnly 
-                    className="text-sm"
+                    className="text-xs"
                   />
-                  <Button variant="outline" size="icon" onClick={copyLink}>
+                  <Button variant="outline" size="icon" onClick={copyLink} className="shrink-0">
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Este link é exclusivo para o paciente acessar a chamada.
+                </p>
               </div>
 
               <div className="flex flex-col gap-2">
