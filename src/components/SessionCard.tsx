@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Session } from "@/stores/patientStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +17,7 @@ const SessionCard: React.FC<SessionCardProps> = ({ session, onEdit, onViewDetail
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat("pt-BR", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -44,98 +43,98 @@ const SessionCard: React.FC<SessionCardProps> = ({ session, onEdit, onViewDetail
   };
 
   return (
-    <Card className={cn("transition-all duration-200", expanded && "border-psycho-primary")}>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-medium">
-            Session on {formatDate(session.date)}
+    <Card className={cn("transition-all duration-200", expanded && "border-primary")}>
+      <CardHeader className="p-3 sm:p-4 pb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <CardTitle className="text-sm sm:text-base font-medium text-foreground">
+            Sessão em {formatDate(session.date)}
           </CardTitle>
-          <div className="flex gap-2">
+          <div className="flex gap-1 sm:gap-2">
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-7 w-7 p-0" 
+              className="h-8 w-8 p-0" 
               onClick={() => setExpanded(!expanded)}
             >
               {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </Button>
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onEdit}>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onEdit}>
               <Edit size={16} />
             </Button>
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onViewDetails}>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onViewDetails}>
               <FileText size={16} />
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="pb-4">
+      <CardContent className="p-3 sm:p-4 pt-0">
         <div className="mb-3">
-          <div className="flex items-center mb-1.5">
-            <span className="text-xl mr-2">{getMoodEmoji(session.mood)}</span>
-            <span className="text-sm text-gray-500">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className="text-lg sm:text-xl">{getMoodEmoji(session.mood)}</span>
+            <span className="text-xs sm:text-sm text-muted-foreground">
               Humor: {getMoodEmoji(session.mood)}
             </span>
             {session.approach && (
-              <Badge variant="outline" className="ml-auto">
+              <Badge variant="outline" className="text-xs">
                 {getApproachLabel(session.approach)}
               </Badge>
             )}
           </div>
-          <p className="text-gray-700">{session.notes}</p>
+          <p className="text-sm text-foreground line-clamp-2">{session.notes}</p>
         </div>
         
-        <div className="space-y-3 mt-4 text-sm">
+        <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
           <div>
-            <h4 className="font-medium text-psycho-primary">Objetivos</h4>
-            <p className="text-gray-600">{session.objectives}</p>
+            <h4 className="font-medium text-primary">Objetivos</h4>
+            <p className="text-muted-foreground line-clamp-2">{session.objectives}</p>
           </div>
           
           <div>
-            <h4 className="font-medium text-psycho-primary">Intervenções</h4>
-            <p className="text-gray-600">{session.interventions}</p>
+            <h4 className="font-medium text-primary">Intervenções</h4>
+            <p className="text-muted-foreground line-clamp-2">{session.interventions}</p>
           </div>
           
           <div>
-            <h4 className="font-medium text-psycho-primary">Próximos Passos</h4>
-            <p className="text-gray-600">{session.nextSteps}</p>
+            <h4 className="font-medium text-primary">Próximos Passos</h4>
+            <p className="text-muted-foreground line-clamp-2">{session.nextSteps}</p>
           </div>
         </div>
         
         {expanded && session.diagnosis && (
-          <div className="mt-6 pt-4 border-t border-dashed">
-            <div className="space-y-4">
+          <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-dashed border-border">
+            <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm">
               {session.diagnosis && (
                 <div>
-                  <h4 className="font-medium text-psycho-primary">Diagnóstico</h4>
-                  <p className="text-gray-600">{session.diagnosis}</p>
+                  <h4 className="font-medium text-primary">Diagnóstico</h4>
+                  <p className="text-muted-foreground">{session.diagnosis}</p>
                 </div>
               )}
               
               {session.clinicalNotes && (
                 <div>
-                  <h4 className="font-medium text-psycho-primary">Anotações Clínicas</h4>
-                  <p className="text-gray-600">{session.clinicalNotes}</p>
+                  <h4 className="font-medium text-primary">Anotações Clínicas</h4>
+                  <p className="text-muted-foreground">{session.clinicalNotes}</p>
                 </div>
               )}
               
               {session.treatmentProgress && (
                 <div>
-                  <h4 className="font-medium text-psycho-primary">Progresso do Tratamento</h4>
-                  <p className="text-gray-600">{session.treatmentProgress}</p>
+                  <h4 className="font-medium text-primary">Progresso do Tratamento</h4>
+                  <p className="text-muted-foreground">{session.treatmentProgress}</p>
                 </div>
               )}
               
               {session.evolution && (
                 <div>
-                  <h4 className="font-medium text-psycho-primary">Evolução</h4>
-                  <p className="text-gray-600">{session.evolution}</p>
+                  <h4 className="font-medium text-primary">Evolução</h4>
+                  <p className="text-muted-foreground">{session.evolution}</p>
                 </div>
               )}
               
               {session.medications && (
                 <div>
-                  <h4 className="font-medium text-psycho-primary">Medicações</h4>
-                  <p className="text-gray-600">{session.medications}</p>
+                  <h4 className="font-medium text-primary">Medicações</h4>
+                  <p className="text-muted-foreground">{session.medications}</p>
                 </div>
               )}
             </div>
