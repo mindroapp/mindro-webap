@@ -1,125 +1,174 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import MarketingLayout from "@/components/layouts/MarketingLayout";
+import { Card, CardContent } from "@/components/ui/card";
+import { Brain, FileText, Video, Wallet, Shield, Headphones } from "lucide-react";
+
+const features = [
+  {
+    title: "Agendamento com IA",
+    description: "Agendamento e confirmação automática por IA integrado diretamente no seu WhatsApp profissional.",
+    link: "/platform/resources",
+    icon: Brain,
+  },
+  {
+    title: "Prontuário Eletrônico",
+    description: "Mantenha todos os registros dos seus pacientes de forma organizada e segura.",
+    link: "/platform/resources",
+    icon: FileText,
+  },
+  {
+    title: "Teleconsulta Integrada",
+    description: "Atendimentos online com a mesma qualidade das consultas presenciais.",
+    link: "/platform/resources",
+    icon: Video,
+  },
+  {
+    title: "Gestão Financeira",
+    description: "Controle de pagamentos, pacotes de sessões e geração de recibos.",
+    link: "/financial",
+    icon: Wallet,
+  },
+  {
+    title: "Segurança Avançada",
+    description: "Seus dados e os de seus pacientes totalmente protegidos e em conformidade com a LGPD.",
+    link: "/platform/security",
+    icon: Shield,
+  },
+  {
+    title: "Suporte Especializado",
+    description: "Equipe pronta para te ajudar em qualquer momento que precisar.",
+    link: "/company/contact",
+    icon: Headphones,
+  },
+];
 
 const LandingPage: React.FC = () => {
   return (
     <MarketingLayout>
-      <div className="container mx-auto py-12 px-4">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-12 py-12">
-          {/* Hero content */}
-          <div className="lg:w-1/2 space-y-6">
-            <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 dark:text-white">
-              Plataforma para <span className="text-indigo-600">Profissionais</span> de Saúde Mental
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-lg">
-              Simplifique a gestão do seu consultório com nossa plataforma completa. 
-              Agendamentos, prontuário eletrônico, teleconsultas e muito mais.
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Especialmente desenvolvido para Psicólogos, Psicanalistas, Terapeutas e Neuropsicólogos.
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              ✅ Agendamento inteligente com IA • ✅ WhatsApp integrado • ✅ Sem burocracia
-            </p>
-          </div>
-          
-          {/* Hero image */}
-          <div className="lg:w-1/2">
-            <img
-              src="https://images.unsplash.com/photo-1573497620053-ea5300f94f21?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80"
-              alt="Profissional de saúde mental usando um notebook"
-              className="rounded-lg shadow-xl max-h-[500px] object-cover w-full"
-            />
+      {/* Hero Section */}
+      <section className="w-full py-8 sm:py-12 md:py-16 lg:py-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center text-center lg:flex-row lg:text-left lg:items-center lg:justify-between gap-8 lg:gap-12">
+            {/* Hero content */}
+            <div className="w-full lg:w-1/2 space-y-4 sm:space-y-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground leading-tight">
+                Plataforma para{" "}
+                <span className="text-primary">Profissionais</span> de Saúde Mental
+              </h1>
+              <p className="text-base sm:text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0">
+                Simplifique a gestão do seu consultório com nossa plataforma completa. 
+                Agendamentos, prontuário eletrônico, teleconsultas e muito mais.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Especialmente desenvolvido para Psicólogos, Psicanalistas, Terapeutas e Neuropsicólogos.
+              </p>
+              <div className="flex flex-wrap justify-center lg:justify-start gap-2 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-1">✅ Agendamento inteligente com IA</span>
+                <span className="inline-flex items-center gap-1">✅ WhatsApp integrado</span>
+                <span className="inline-flex items-center gap-1">✅ Sem burocracia</span>
+              </div>
+              
+              {/* CTA Buttons - Mobile */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 justify-center lg:justify-start">
+                <Link to="/register" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground">
+                    Começar Grátis
+                  </Button>
+                </Link>
+                <Link to="/plans" className="w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10">
+                    Ver Planos
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            
+            {/* Hero image */}
+            <div className="w-full lg:w-1/2 mt-8 lg:mt-0">
+              <img
+                src="https://images.unsplash.com/photo-1573497620053-ea5300f94f21?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80"
+                alt="Profissional de saúde mental usando um notebook"
+                className="rounded-xl shadow-2xl w-full max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] object-cover"
+              />
+            </div>
           </div>
         </div>
-        
-        {/* Features section */}
-        <div className="py-16">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">
+      </section>
+      
+      {/* Features section */}
+      <section className="w-full py-12 sm:py-16 lg:py-20 bg-muted/50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 sm:mb-4">
               Tudo que você precisa em um só lugar
             </h2>
-            <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base px-4">
               Nossa plataforma é completa para que você possa focar no que realmente importa: seus pacientes.
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                title: "🤖 Agendamento com IA",
-                description: "Agendamento e confirmação automática por IA integrado diretamente no seu WhatsApp profissional.",
-                link: "/platform/resources",
-              },
-              {
-                title: "📋 Prontuário Eletrônico",
-                description: "Mantenha todos os registros dos seus pacientes de forma organizada e segura.",
-                link: "/platform/resources",
-              },
-              {
-                title: "💻 Teleconsulta Integrada",
-                description: "Atendimentos online com a mesma qualidade das consultas presenciais.",
-                link: "/platform/resources",
-              },
-              {
-                title: "💰 Gestão Financeira",
-                description: "Controle de pagamentos, pacotes de sessões e geração de recibos.",
-                link: "/financial",
-              },
-              {
-                title: "🔒 Segurança Avançada",
-                description: "Seus dados e os de seus pacientes totalmente protegidos e em conformidade com a LGPD.",
-                link: "/platform/security",
-              },
-              {
-                title: "🎧 Suporte Especializado",
-                description: "Equipe pronta para te ajudar em qualquer momento que precisar.",
-                link: "/company/contact",
-              },
-            ].map((feature, index) => (
-              <Link to={feature.link} key={index} className="group">
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-100 dark:border-gray-700 h-full">
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    {feature.description}
-                  </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            {features.map((feature, index) => {
+              const IconComponent = feature.icon;
+              return (
+                <Link to={feature.link} key={index} className="group">
+                  <Card className="h-full transition-all duration-300 hover:shadow-lg hover:border-primary/50 bg-card">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="p-2 sm:p-3 rounded-lg bg-primary/10 text-primary shrink-0">
+                          <IconComponent className="h-5 w-5 sm:h-6 sm:w-6" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1 sm:mb-2 group-hover:text-primary transition-colors">
+                            {feature.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {feature.description}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+      
+      {/* Call to action */}
+      <section className="w-full py-12 sm:py-16 lg:py-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="p-6 sm:p-8 md:p-12">
+              <div className="text-center space-y-4 sm:space-y-6">
+                <h2 className="text-2xl sm:text-3xl font-bold text-primary">
+                  Comece hoje mesmo
+                </h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base px-4">
+                  Descubra como a mindro pode transformar sua prática profissional com 
+                  7 dias grátis em qualquer plano, sem necessidade de cartão de crédito.
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-4">
+                  <Link to="/plans" className="w-full sm:w-auto">
+                    <Button size="lg" variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10">
+                      Ver Planos
+                    </Button>
+                  </Link>
+                  <Link to="/register" className="w-full sm:w-auto">
+                    <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground">
+                      Cadastrar Grátis
+                    </Button>
+                  </Link>
                 </div>
-              </Link>
-            ))}
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        
-        {/* Call to action */}
-        <div className="bg-indigo-50 dark:bg-gray-800 rounded-xl p-8 md:p-12 my-16">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-indigo-700 dark:text-indigo-400 mb-4">
-              Comece hoje mesmo
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Descubra como a mindro pode transformar sua prática profissional com 
-              7 dias grátis em qualquer plano, sem necessidade de cartão de crédito.
-            </p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/plans">
-              <Button size="lg" variant="outline" className="border-indigo-600 text-indigo-600 hover:bg-indigo-50">
-                Ver Planos
-              </Button>
-            </Link>
-            <Link to="/register">
-              <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                Cadastrar
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+      </section>
     </MarketingLayout>
   );
 };
