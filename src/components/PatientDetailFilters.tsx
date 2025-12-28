@@ -1,9 +1,8 @@
-
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, Filter, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 interface PatientDetailFiltersProps {
   searchTerm: string;
@@ -74,60 +73,62 @@ const PatientDetailFilters: React.FC<PatientDetailFiltersProps> = ({
   const getSearchPlaceholder = () => {
     switch (type) {
       case "sessions":
-        return "Buscar por notas ou diagnóstico...";
+        return "Buscar...";
       case "documents":
-        return "Buscar por nome do documento...";
+        return "Buscar documento...";
       case "financial":
-        return "Buscar por descrição...";
+        return "Buscar...";
       default:
         return "Buscar...";
     }
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 mb-6">
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+    <div className="flex flex-col gap-3 mb-4 sm:mb-6">
+      <div className="relative w-full">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
         <Input
           placeholder={getSearchPlaceholder()}
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10"
+          className="pl-10 text-sm"
         />
       </div>
       
-      <Select value={sortBy} onValueChange={onSortChange}>
-        <SelectTrigger className="w-full md:w-48">
-          <SelectValue placeholder="Ordenar por" />
-        </SelectTrigger>
-        <SelectContent>
-          {getSortOptions().map(option => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      
-      {(type === "documents" || type === "financial") && onFilterChange && (
-        <Select value={filterBy || "all"} onValueChange={onFilterChange}>
-          <SelectTrigger className="w-full md:w-48">
-            <SelectValue placeholder="Filtrar por" />
+      <div className="flex flex-wrap gap-2">
+        <Select value={sortBy} onValueChange={onSortChange}>
+          <SelectTrigger className="flex-1 min-w-[120px] text-sm">
+            <SelectValue placeholder="Ordenar" />
           </SelectTrigger>
           <SelectContent>
-            {getFilterOptions().map(option => (
+            {getSortOptions().map(option => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-      )}
-      
-      <Button variant="outline" onClick={onClearFilters}>
-        <X className="h-4 w-4 mr-2" />
-        Limpar
-      </Button>
+        
+        {(type === "documents" || type === "financial") && onFilterChange && (
+          <Select value={filterBy || "all"} onValueChange={onFilterChange}>
+            <SelectTrigger className="flex-1 min-w-[120px] text-sm">
+              <SelectValue placeholder="Filtrar" />
+            </SelectTrigger>
+            <SelectContent>
+              {getFilterOptions().map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        
+        <Button variant="outline" onClick={onClearFilters} size="sm" className="px-3">
+          <X className="h-4 w-4" />
+          <span className="hidden sm:inline ml-1">Limpar</span>
+        </Button>
+      </div>
     </div>
   );
 };

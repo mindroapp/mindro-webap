@@ -1,6 +1,6 @@
 import React from "react";
 import { usePatientStore, Session } from "@/stores/patientStore";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import SessionForm from "./SessionForm";
 import { useToast } from "@/hooks/use-toast";
 
@@ -34,9 +34,9 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ patientId, session,
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="w-full sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Editar Notas da Sessão</DialogTitle>
+          <DialogTitle className="text-lg">Editar Notas da Sessão</DialogTitle>
         </DialogHeader>
         <SessionForm
           initialValues={session}

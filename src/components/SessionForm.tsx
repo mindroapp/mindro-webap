@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export interface SessionFormProps {
   initialValues?: Partial<Session>;
@@ -48,42 +49,44 @@ const SessionForm: React.FC<SessionFormProps> = ({
   });
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <Tabs defaultValue="basic">
-        <TabsList className="mb-4">
-          <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
-          <TabsTrigger value="clinical">Clínico</TabsTrigger>
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+      <Tabs defaultValue="basic" className="w-full">
+        <TabsList className="mb-4 w-full grid grid-cols-2">
+          <TabsTrigger value="basic" className="text-xs sm:text-sm">Informações Básicas</TabsTrigger>
+          <TabsTrigger value="clinical" className="text-xs sm:text-sm">Clínico</TabsTrigger>
         </TabsList>
-        <TabsContent value="basic" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <TabsContent value="basic" className="space-y-3 sm:space-y-4">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4">
             <div className="space-y-2">
-              <Label htmlFor="date">Data da Sessão</Label>
+              <Label htmlFor="date" className="text-sm">Data da Sessão</Label>
               <Input
                 id="date"
                 type="datetime-local"
                 {...form.register("date")}
                 required={!isEdit}
+                className="w-full"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="sessionValue">Valor da Sessão (R$)</Label>
+              <Label htmlFor="sessionValue" className="text-sm">Valor da Sessão (R$)</Label>
               <Input
                 id="sessionValue"
                 type="number"
                 step="0.01"
                 min="0"
                 {...form.register("sessionValue", { valueAsNumber: true })}
+                className="w-full"
               />
             </div>
             <div className="space-y-2">
-              <Label>Humor</Label>
-              <div className="flex gap-2 items-center">
+              <Label className="text-sm">Humor</Label>
+              <div className="flex gap-1 sm:gap-2 items-center flex-wrap">
                 {[1, 2, 3, 4, 5].map((value) => (
                   <Button
                     key={value}
                     type="button"
                     variant={form.watch("mood") === value ? "default" : "outline"}
-                    className="text-2xl h-10 w-10"
+                    className="text-lg sm:text-2xl h-9 w-9 sm:h-10 sm:w-10 p-0"
                     onClick={() => form.setValue("mood", value)}
                   >
                     {moodEmojis[value - 1]}
@@ -93,65 +96,72 @@ const SessionForm: React.FC<SessionFormProps> = ({
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Notas da Sessão</Label>
-            <Textarea {...form.register("notes")} rows={3} />
+            <Label className="text-sm">Notas da Sessão</Label>
+            <Textarea {...form.register("notes")} rows={3} className="text-sm" />
           </div>
           <div className="space-y-2">
-            <Label>Objetivos</Label>
-            <Textarea {...form.register("objectives")} rows={2} />
+            <Label className="text-sm">Objetivos</Label>
+            <Textarea {...form.register("objectives")} rows={2} className="text-sm" />
           </div>
           <div className="space-y-2">
-            <Label>Intervenções</Label>
-            <Textarea {...form.register("interventions")} rows={2} />
+            <Label className="text-sm">Intervenções</Label>
+            <Textarea {...form.register("interventions")} rows={2} className="text-sm" />
           </div>
           <div className="space-y-2">
-            <Label>Próximos Passos</Label>
-            <Textarea {...form.register("nextSteps")} rows={2} />
+            <Label className="text-sm">Próximos Passos</Label>
+            <Textarea {...form.register("nextSteps")} rows={2} className="text-sm" />
           </div>
         </TabsContent>
-        <TabsContent value="clinical" className="space-y-4">
+        <TabsContent value="clinical" className="space-y-3 sm:space-y-4">
           <div className="space-y-2">
-            <Label>Diagnóstico</Label>
-            <Input {...form.register("diagnosis")} />
+            <Label className="text-sm">Diagnóstico</Label>
+            <Input {...form.register("diagnosis")} className="text-sm" />
           </div>
           <div className="space-y-2">
-            <Label>Anotações Clínicas</Label>
-            <Textarea {...form.register("clinicalNotes")} rows={2} />
+            <Label className="text-sm">Anotações Clínicas</Label>
+            <Textarea {...form.register("clinicalNotes")} rows={2} className="text-sm" />
           </div>
           <div className="space-y-2">
-            <Label>Abordagem</Label>
-            <select {...form.register("approach")} className="w-full border rounded px-2 py-1">
-              <option value="">Selecione</option>
-              <option value="cognitive">TCC</option>
-              <option value="psychoanalysis">Psicanálise</option>
-              <option value="behavioral">Comportamental</option>
-              <option value="humanistic">Humanista</option>
-              <option value="other">Outra</option>
-            </select>
+            <Label className="text-sm">Abordagem</Label>
+            <Select 
+              value={form.watch("approach") || ""} 
+              onValueChange={(value) => form.setValue("approach", value as Session["approach"])}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cognitive">TCC</SelectItem>
+                <SelectItem value="psychoanalysis">Psicanálise</SelectItem>
+                <SelectItem value="behavioral">Comportamental</SelectItem>
+                <SelectItem value="humanistic">Humanista</SelectItem>
+                <SelectItem value="other">Outra</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
-            <Label>Medicações</Label>
-            <Input {...form.register("medications")} />
+            <Label className="text-sm">Medicações</Label>
+            <Input {...form.register("medications")} className="text-sm" />
           </div>
           <div className="space-y-2">
-            <Label>Progresso do Tratamento</Label>
-            <Textarea {...form.register("treatmentProgress")} rows={2} />
+            <Label className="text-sm">Progresso do Tratamento</Label>
+            <Textarea {...form.register("treatmentProgress")} rows={2} className="text-sm" />
           </div>
           <div className="space-y-2">
-            <Label>Notas Privadas</Label>
-            <Textarea {...form.register("privateNotes")} rows={2} />
+            <Label className="text-sm">Notas Privadas</Label>
+            <Textarea {...form.register("privateNotes")} rows={2} className="text-sm" />
           </div>
           <div className="space-y-2">
-            <Label>Evolução</Label>
-            <Textarea {...form.register("evolution")} rows={2} />
+            <Label className="text-sm">Evolução</Label>
+            <Textarea {...form.register("evolution")} rows={2} className="text-sm" />
           </div>
         </TabsContent>
       </Tabs>
-      <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+      <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading} className="w-full sm:w-auto">
           Cancelar
         </Button>
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading} className="w-full sm:w-auto">
           {isEdit ? "Salvar Alterações" : "Salvar"}
         </Button>
       </div>
@@ -159,4 +169,4 @@ const SessionForm: React.FC<SessionFormProps> = ({
   );
 };
 
-export default SessionForm; 
+export default SessionForm;
