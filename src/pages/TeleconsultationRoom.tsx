@@ -10,25 +10,28 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
-  Mic, MicOff, Video, VideoOff, PhoneOff, 
-  Volume, VolumeX, User as UserIcon, Save,
-  FileText, Plus, Upload, Calendar, Edit,
+  User as UserIcon, Save,
+  FileText, Plus, Upload, Calendar, Eye,
   ClipboardList, Stethoscope,
-  TrendingUp, Check, CreditCard, Paperclip
+  TrendingUp, Check, CreditCard, Receipt
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { usePatientStore, Session, Patient } from '@/stores/patientStore';
+import { usePatientStore, Session, Patient, Document } from '@/stores/patientStore';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DocumentUploadModal from '@/components/DocumentUploadModal';
-import SessionFormModal from '@/components/SessionFormModal';
-import SessionEditModal from '@/components/SessionEditModal';
+import { 
+  SessionViewModal, 
+  CallEndedScreen, 
+  DocumentPreviewModal,
+  VideoControls 
+} from '@/components/teleconsultation';
 
 const TeleconsultationRoom = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   
   const patientId = searchParams.get('patientId') || '';
@@ -37,7 +40,7 @@ const TeleconsultationRoom = () => {
   
   const isProfessional = role === 'professional';
   
-  const { patients, addSession, payments, updatePayment } = usePatientStore();
+  const { patients, addSession, payments, updatePayment, generateReceipt } = usePatientStore();
   const patient = patients.find(p => p.id === patientId);
 
   // Video states
@@ -45,12 +48,15 @@ const TeleconsultationRoom = () => {
   const [videoOn, setVideoOn] = useState(true);
   const [audioOn, setAudioOn] = useState(true);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [callEnded, setCallEnded] = useState(false);
 
   // Modal states
   const [showDocumentUpload, setShowDocumentUpload] = useState(false);
-  const [isNewSessionModalOpen, setIsNewSessionModalOpen] = useState(false);
-  const [editingSession, setEditingSession] = useState<Session | null>(null);
+  const [viewingSession, setViewingSession] = useState<Session | null>(null);
+  const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
 
   // Session notes for current teleconsultation
   const [currentNotes, setCurrentNotes] = useState({
@@ -66,24 +72,33 @@ const TeleconsultationRoom = () => {
     return payments.filter(p => p.patientId === patient?.id);
   }, [payments, patient?.id]);
 
+  // Initialize video stream
   useEffect(() => {
     let stream: MediaStream | null = null;
+    
     const setupStream = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: true, 
+          audio: true 
+        });
         setLocalStream(stream);
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+        
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
         }
       } catch (err) {
+        console.error("Error accessing media devices:", err);
         toast({
-          title: "Erro",
-          description: "Não foi possível acessar sua câmera ou microfone.",
+          title: "Erro ao acessar dispositivos",
+          description: "Não foi possível acessar sua câmera ou microfone. Verifique as permissões.",
           variant: "destructive",
         });
       }
     };
+    
     setupStream();
+    
     return () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
@@ -91,21 +106,30 @@ const TeleconsultationRoom = () => {
     };
   }, [toast]);
 
+  // Sync video stream with ref when videoOn changes
+  useEffect(() => {
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream;
+    }
+  }, [localStream, videoOn]);
+
   const handleEndCall = async () => {
-    // Só o profissional pode finalizar
+    // Only professional can end the call
     if (!isProfessional) {
       toast({
         title: "Ação não permitida",
-        description: "Apenas o profissional pode finalizar a teleconsulta.",
+        description: "Aguarde o profissional encerrar a teleconsulta.",
         variant: "destructive",
       });
       return;
     }
 
+    // Save session if there are notes
     if (patient && (currentNotes.evolution || currentNotes.annotations)) {
       await saveSession();
     }
     
+    // Stop all media tracks
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
     }
@@ -190,15 +214,42 @@ const TeleconsultationRoom = () => {
     });
   };
 
+  const handleGenerateReceipt = async (payment: any) => {
+    try {
+      if (!payment.receiptNumber) {
+        await generateReceipt(payment.id);
+      }
+      setSelectedPayment(payment);
+      setIsReceiptModalOpen(true);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o recibo.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "paid":
-        return <Badge className="bg-green-100 text-green-800">Pago</Badge>;
+        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Pago</Badge>;
       case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">Pendente</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
+  };
+
+  const getPaymentMethodLabel = (method: string) => {
+    const methods: Record<string, string> = {
+      pix: "PIX",
+      cash: "Dinheiro",
+      creditCard: "Cartão de Crédito",
+      debitCard: "Cartão de Débito",
+      bankTransfer: "Transferência"
+    };
+    return methods[method] || method;
   };
 
   const getMoodEmoji = (mood: number) => {
@@ -210,89 +261,91 @@ const TeleconsultationRoom = () => {
     ? [...patient.sessions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     : [];
 
-  // Visão do Paciente - Apenas vídeos
+  // Patient View - Show call ended screen
+  if (!isProfessional && callEnded) {
+    return (
+      <CallEndedScreen 
+        onClose={() => navigate('/')}
+      />
+    );
+  }
+
+  // Patient View - Video call interface (Google Meet style)
   if (!isProfessional) {
     return (
       <div className="fixed inset-0 w-screen h-screen bg-background flex flex-col">
-        {/* Header simples */}
-        <div className="p-3 md:p-4 bg-card border-b shrink-0 flex items-center justify-between">
+        {/* Header */}
+        <div className="px-4 py-3 bg-card border-b shrink-0 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm">M</span>
             </div>
-            <span className="font-semibold text-lg">mindro</span>
+            <span className="font-semibold text-lg hidden sm:inline">mindro</span>
           </div>
-          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-200 dark:border-green-700">
             Em atendimento
           </Badge>
         </div>
 
-        {/* Área de Vídeos - Responsivo */}
-        <div className="flex-1 flex flex-col md:flex-row gap-2 md:gap-4 p-2 md:p-4 overflow-hidden">
-          {/* Vídeo Remoto (Profissional) */}
-          <div className="flex-1 relative bg-muted rounded-lg overflow-hidden min-h-[200px]">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="h-16 w-16 md:h-24 md:w-24 rounded-full bg-primary/20 flex items-center justify-center">
-                <UserIcon className="h-8 w-8 md:h-12 md:w-12 text-primary" />
+        {/* Video Area - Google Meet style layout */}
+        <div className="flex-1 relative bg-muted overflow-hidden">
+          {/* Remote Video (Professional) - Main focus */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-full h-full max-w-4xl mx-auto">
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                className="w-full h-full object-cover"
+              />
+              {/* Placeholder when no remote video */}
+              <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-full bg-primary/20 flex items-center justify-center">
+                  <UserIcon className="h-12 w-12 sm:h-16 sm:w-16 text-primary" />
+                </div>
               </div>
-            </div>
-            <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 text-xs rounded">
-              Profissional
+              <div className="absolute top-4 left-4 bg-background/80 backdrop-blur-sm text-foreground px-3 py-1.5 text-sm rounded-lg">
+                Profissional
+              </div>
             </div>
           </div>
 
-          {/* Vídeo Local (Paciente) */}
-          <div className="h-32 md:h-auto md:flex-1 relative bg-muted rounded-lg overflow-hidden">
+          {/* Local Video (Patient) - Picture in Picture style */}
+          <div className="absolute bottom-4 right-4 w-28 h-36 sm:w-40 sm:h-52 rounded-xl overflow-hidden shadow-xl border-2 border-background">
             {videoOn ? (
               <video
-                ref={videoRef}
+                ref={localVideoRef}
                 autoPlay
                 playsInline
                 muted
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="h-12 w-12 md:h-16 md:w-16 rounded-full bg-primary/20 flex items-center justify-center">
-                  <UserIcon className="h-6 w-6 md:h-8 md:w-8 text-primary" />
+              <div className="w-full h-full bg-muted flex items-center justify-center">
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/20 flex items-center justify-center">
+                  <UserIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                 </div>
               </div>
             )}
-            <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 text-xs rounded">
+            <div className="absolute bottom-2 left-2 bg-background/80 backdrop-blur-sm text-foreground px-2 py-0.5 text-xs rounded">
               Você
             </div>
           </div>
         </div>
 
-        {/* Controles de Vídeo */}
-        <div className="p-4 md:p-6 bg-card border-t shrink-0">
-          <div className="flex justify-center gap-3 md:gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={`h-12 w-12 md:h-14 md:w-14 rounded-full ${micOn ? 'bg-muted' : 'bg-destructive text-destructive-foreground'}`}
-              onClick={toggleMic}
-            >
-              {micOn ? <Mic className="h-5 w-5 md:h-6 md:w-6" /> : <MicOff className="h-5 w-5 md:h-6 md:w-6" />}
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={`h-12 w-12 md:h-14 md:w-14 rounded-full ${videoOn ? 'bg-muted' : 'bg-destructive text-destructive-foreground'}`}
-              onClick={toggleVideo}
-            >
-              {videoOn ? <Video className="h-5 w-5 md:h-6 md:w-6" /> : <VideoOff className="h-5 w-5 md:h-6 md:w-6" />}
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={`h-12 w-12 md:h-14 md:w-14 rounded-full ${audioOn ? 'bg-muted' : 'bg-destructive text-destructive-foreground'}`}
-              onClick={toggleAudio}
-            >
-              {audioOn ? <Volume className="h-5 w-5 md:h-6 md:w-6" /> : <VolumeX className="h-5 w-5 md:h-6 md:w-6" />}
-            </Button>
-          </div>
-          <p className="text-center text-xs md:text-sm text-muted-foreground mt-4">
+        {/* Video Controls */}
+        <div className="p-4 sm:p-6 bg-card border-t shrink-0">
+          <VideoControls
+            micOn={micOn}
+            videoOn={videoOn}
+            audioOn={audioOn}
+            onToggleMic={toggleMic}
+            onToggleVideo={toggleVideo}
+            onToggleAudio={toggleAudio}
+            showEndCall={false}
+            size="lg"
+          />
+          <p className="text-center text-xs sm:text-sm text-muted-foreground mt-4">
             Aguardando o profissional encerrar a sessão...
           </p>
         </div>
@@ -300,7 +353,7 @@ const TeleconsultationRoom = () => {
     );
   }
 
-  // Visão do Profissional - Vídeos + Painel do Paciente
+  // Professional View - Patient not found
   if (!patient) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -316,16 +369,36 @@ const TeleconsultationRoom = () => {
     );
   }
 
+  // Professional View - Full interface with patient panel
   return (
-    <div className="fixed inset-0 w-screen h-screen bg-background flex flex-col md:flex-row overflow-hidden">
-      {/* Coluna Esquerda - Vídeos */}
-      <div className="w-full md:w-72 lg:w-80 flex flex-col bg-card md:border-r shrink-0 h-48 md:h-full">
-        <div className="flex md:flex-col flex-1">
-          {/* Vídeo Local (Profissional) */}
-          <div className="flex-1 relative bg-muted">
+    <div className="fixed inset-0 w-screen h-screen bg-background flex flex-col lg:flex-row overflow-hidden">
+      {/* Left Column - Videos (Google Meet style for professional) */}
+      <div className="w-full lg:w-80 xl:w-96 flex flex-col bg-card lg:border-r shrink-0 h-44 sm:h-52 lg:h-full">
+        <div className="flex lg:flex-col flex-1 relative">
+          {/* Remote Video (Patient) - Main focus for professional */}
+          <div className="flex-[2] lg:flex-1 relative bg-muted">
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              className="w-full h-full object-cover"
+            />
+            {/* Placeholder when no remote video */}
+            <div className="absolute inset-0 flex items-center justify-center bg-muted">
+              <div className="h-12 w-12 lg:h-20 lg:w-20 rounded-full bg-primary/20 flex items-center justify-center">
+                <UserIcon className="h-6 w-6 lg:h-10 lg:w-10 text-primary" />
+              </div>
+            </div>
+            <div className="absolute top-2 left-2 bg-background/80 backdrop-blur-sm text-foreground px-2 py-1 text-xs rounded-lg">
+              {patient.name}
+            </div>
+          </div>
+
+          {/* Local Video (Professional) - Smaller */}
+          <div className="flex-1 lg:flex-none lg:h-32 relative bg-muted border-l lg:border-l-0 lg:border-t">
             {videoOn ? (
               <video
-                ref={videoRef}
+                ref={localVideoRef}
                 autoPlay
                 playsInline
                 muted
@@ -333,81 +406,46 @@ const TeleconsultationRoom = () => {
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                <div className="h-10 w-10 md:h-14 md:w-14 rounded-full bg-primary/20 flex items-center justify-center">
-                  <UserIcon className="h-5 w-5 md:h-7 md:w-7 text-primary" />
+                <div className="h-8 w-8 lg:h-10 lg:w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <UserIcon className="h-4 w-4 lg:h-5 lg:w-5 text-primary" />
                 </div>
               </div>
             )}
-            <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 text-xs rounded">
+            <div className="absolute top-2 left-2 bg-background/80 backdrop-blur-sm text-foreground px-2 py-1 text-xs rounded-lg">
               Você
             </div>
           </div>
-
-          {/* Vídeo Remoto (Paciente) */}
-          <div className="flex-1 relative bg-muted border-l md:border-l-0 md:border-t">
-            <div className="absolute inset-0 flex items-center justify-center bg-muted">
-              <div className="h-10 w-10 md:h-14 md:w-14 rounded-full bg-primary/20 flex items-center justify-center">
-                <UserIcon className="h-5 w-5 md:h-7 md:w-7 text-primary" />
-              </div>
-            </div>
-            <div className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 text-xs rounded">
-              {patient.name}
-            </div>
-          </div>
         </div>
 
-        {/* Controles */}
-        <div className="p-2 md:p-3 bg-card border-t">
-          <div className="flex justify-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={`h-9 w-9 md:h-10 md:w-10 rounded-full ${micOn ? '' : 'bg-destructive text-destructive-foreground'}`}
-              onClick={toggleMic}
-            >
-              {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={`h-9 w-9 md:h-10 md:w-10 rounded-full ${videoOn ? '' : 'bg-destructive text-destructive-foreground'}`}
-              onClick={toggleVideo}
-            >
-              {videoOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={`h-9 w-9 md:h-10 md:w-10 rounded-full ${audioOn ? '' : 'bg-destructive text-destructive-foreground'}`}
-              onClick={toggleAudio}
-            >
-              {audioOn ? <Volume className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-            </Button>
-            <Button 
-              variant="destructive" 
-              size="icon" 
-              className="h-9 w-9 md:h-10 md:w-10 rounded-full"
-              onClick={handleEndCall}
-            >
-              <PhoneOff className="h-4 w-4" />
-            </Button>
-          </div>
+        {/* Video Controls */}
+        <div className="p-3 bg-card border-t">
+          <VideoControls
+            micOn={micOn}
+            videoOn={videoOn}
+            audioOn={audioOn}
+            onToggleMic={toggleMic}
+            onToggleVideo={toggleVideo}
+            onToggleAudio={toggleAudio}
+            onEndCall={handleEndCall}
+            showEndCall={true}
+            size="sm"
+          />
         </div>
       </div>
 
-      {/* Coluna Direita - Painel do Paciente */}
+      {/* Right Column - Patient Panel */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="p-3 md:p-4 border-b bg-card shrink-0">
+        <div className="p-3 lg:p-4 border-b bg-card shrink-0">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div className="min-w-0">
-              <h2 className="text-lg md:text-xl font-bold truncate">{patient.name}</h2>
-              <p className="text-xs md:text-sm text-muted-foreground truncate">
+              <h2 className="text-lg lg:text-xl font-bold truncate">{patient.name}</h2>
+              <p className="text-xs lg:text-sm text-muted-foreground truncate">
                 {patient.email} • {patient.phone}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300 text-xs">
+              <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-200 dark:border-green-700 text-xs">
                 Em atendimento
               </Badge>
               <Button 
@@ -422,24 +460,23 @@ const TeleconsultationRoom = () => {
           </div>
         </div>
 
-        {/* Conteúdo com Tabs */}
+        {/* Content with Tabs */}
         <ScrollArea className="flex-1">
-          <div className="p-3 md:p-6">
+          <div className="p-3 lg:p-6">
             <Tabs defaultValue="prontuario" className="w-full">
-              <TabsList className="mb-4 md:mb-6 w-full flex overflow-x-auto">
-                <TabsTrigger value="prontuario" className="flex-1 text-xs md:text-sm">Prontuário</TabsTrigger>
-                <TabsTrigger value="initial-record" className="flex-1 text-xs md:text-sm">Avaliação</TabsTrigger>
-                <TabsTrigger value="sessions" className="flex-1 text-xs md:text-sm">Sessões</TabsTrigger>
-                <TabsTrigger value="documents" className="flex-1 text-xs md:text-sm">Documentos</TabsTrigger>
-                <TabsTrigger value="financial" className="flex-1 text-xs md:text-sm">Financeiro</TabsTrigger>
+              <TabsList className="mb-4 lg:mb-6 w-full grid grid-cols-4">
+                <TabsTrigger value="prontuario" className="text-xs lg:text-sm">Prontuário</TabsTrigger>
+                <TabsTrigger value="initial-record" className="text-xs lg:text-sm">Avaliação</TabsTrigger>
+                <TabsTrigger value="documents" className="text-xs lg:text-sm">Documentos</TabsTrigger>
+                <TabsTrigger value="financial" className="text-xs lg:text-sm">Financeiro</TabsTrigger>
               </TabsList>
 
-              {/* Prontuário - Anotações da Sessão Atual */}
+              {/* Prontuário - Current Session Notes */}
               <TabsContent value="prontuario" className="space-y-4">
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5" />
+                      <TrendingUp className="h-5 w-5 text-primary" />
                       Registro da Sessão Atual
                     </CardTitle>
                   </CardHeader>
@@ -455,7 +492,7 @@ const TeleconsultationRoom = () => {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="flex items-center gap-2 text-sm">
                           <Stethoscope className="h-3 w-3" />
@@ -495,7 +532,7 @@ const TeleconsultationRoom = () => {
                   </CardContent>
                 </Card>
 
-                {/* Histórico recente de evoluções */}
+                {/* Previous evolutions */}
                 {sortedSessions.length > 0 && (
                   <Card>
                     <CardHeader className="pb-3">
@@ -503,16 +540,26 @@ const TeleconsultationRoom = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {sortedSessions.slice(0, 3).map((session) => (
-                          <div key={session.id} className="p-3 border rounded-lg">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Calendar className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-sm font-medium">
-                                {format(new Date(session.date), "dd/MM/yyyy")}
-                              </span>
-                              <span>{getMoodEmoji(session.mood)}</span>
+                        {sortedSessions.slice(0, 5).map((session) => (
+                          <div 
+                            key={session.id} 
+                            className="p-3 border rounded-lg hover:border-primary/30 transition-colors cursor-pointer"
+                            onClick={() => setViewingSession(session)}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-sm font-medium">
+                                  {format(new Date(session.date), "dd/MM/yyyy")}
+                                </span>
+                                <span>{getMoodEmoji(session.mood)}</span>
+                              </div>
+                              <Button variant="ghost" size="sm" className="h-7 px-2">
+                                <Eye className="h-3 w-3 mr-1" />
+                                <span className="text-xs">Detalhes</span>
+                              </Button>
                             </div>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-muted-foreground line-clamp-2">
                               {session.evolution || session.notes || "Sem anotações"}
                             </p>
                           </div>
@@ -523,7 +570,7 @@ const TeleconsultationRoom = () => {
                 )}
               </TabsContent>
 
-              {/* Avaliação Inicial */}
+              {/* Initial Record */}
               <TabsContent value="initial-record" className="space-y-4">
                 {!patient.initialRecord ? (
                   <Card>
@@ -543,7 +590,7 @@ const TeleconsultationRoom = () => {
                       </CardContent>
                     </Card>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Card>
                         <CardContent className="pt-4">
                           <h3 className="font-medium mb-2 text-sm">Histórico Familiar</h3>
@@ -558,7 +605,7 @@ const TeleconsultationRoom = () => {
                       </Card>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Card>
                         <CardContent className="pt-4">
                           <h3 className="font-medium mb-2 text-sm">Diagnóstico Inicial</h3>
@@ -576,70 +623,12 @@ const TeleconsultationRoom = () => {
                 )}
               </TabsContent>
 
-              {/* Sessões */}
-              <TabsContent value="sessions" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-medium text-sm">Histórico de Sessões</h3>
-                  <Button size="sm" onClick={() => setIsNewSessionModalOpen(true)}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Nova Sessão
-                  </Button>
-                </div>
-
-                {sortedSessions.length === 0 ? (
-                  <Card>
-                    <CardContent className="pt-6 text-center">
-                      <Calendar className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-                      <p className="text-muted-foreground text-sm">Nenhuma sessão registrada</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="space-y-3">
-                    {sortedSessions.map((session) => (
-                      <Card key={session.id} className="hover:border-primary/30 transition-colors">
-                        <CardContent className="pt-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Calendar className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-medium text-sm">
-                                {format(new Date(session.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                              </span>
-                              <span className="text-xl">{getMoodEmoji(session.mood)}</span>
-                              {session.status && (
-                                <Badge variant="outline" className="text-xs">{session.status}</Badge>
-                              )}
-                            </div>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8"
-                              onClick={() => setEditingSession(session)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <p className="text-muted-foreground text-sm">
-                            {session.evolution || session.notes || "Sem anotações"}
-                          </p>
-                          {session.diagnosis && (
-                            <div className="mt-2">
-                              <span className="text-xs font-medium text-primary">Diagnóstico:</span>
-                              <p className="text-sm text-muted-foreground">{session.diagnosis}</p>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-
-              {/* Documentos */}
+              {/* Documents */}
               <TabsContent value="documents" className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="font-medium text-sm">Documentos do Paciente</h3>
                   <Button size="sm" onClick={() => setShowDocumentUpload(true)}>
-                    <Upload className="h-4 w-4 mr-1" />
+                    <Plus className="h-4 w-4 mr-1" />
                     Adicionar
                   </Button>
                 </div>
@@ -647,14 +636,27 @@ const TeleconsultationRoom = () => {
                 {patient.documents.length === 0 ? (
                   <Card>
                     <CardContent className="pt-6 text-center">
-                      <Paperclip className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+                      <FileText className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
                       <p className="text-muted-foreground text-sm">Nenhum documento anexado</p>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="mt-3"
+                        onClick={() => setShowDocumentUpload(true)}
+                      >
+                        <Upload className="h-4 w-4 mr-1" />
+                        Enviar documento
+                      </Button>
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {patient.documents.map((doc) => (
-                      <Card key={doc.id} className="hover:border-primary/30 transition-colors cursor-pointer">
+                      <Card 
+                        key={doc.id} 
+                        className="hover:border-primary/30 transition-colors cursor-pointer"
+                        onClick={() => setViewingDocument(doc)}
+                      >
                         <CardContent className="pt-4">
                           <div className="flex items-center gap-3">
                             <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -666,6 +668,9 @@ const TeleconsultationRoom = () => {
                                 {format(new Date(doc.uploadDate), "dd/MM/yyyy")} • {doc.type.toUpperCase()}
                               </p>
                             </div>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
+                              <Eye className="h-4 w-4" />
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -674,28 +679,28 @@ const TeleconsultationRoom = () => {
                 )}
               </TabsContent>
 
-              {/* Financeiro */}
+              {/* Financial */}
               <TabsContent value="financial" className="space-y-4">
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
-                      <CreditCard className="h-5 w-5" />
+                      <CreditCard className="h-5 w-5 text-primary" />
                       Resumo Financeiro
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-3 gap-4 mb-4">
                       <div>
-                        <p className="text-xs md:text-sm text-muted-foreground">Total de Sessões</p>
-                        <p className="text-xl md:text-2xl font-bold">{patient.sessions.length}</p>
+                        <p className="text-xs lg:text-sm text-muted-foreground">Total de Sessões</p>
+                        <p className="text-xl lg:text-2xl font-bold">{patient.sessions.length}</p>
                       </div>
                       <div>
-                        <p className="text-xs md:text-sm text-muted-foreground">Pagamentos</p>
-                        <p className="text-xl md:text-2xl font-bold">{patientPayments.length}</p>
+                        <p className="text-xs lg:text-sm text-muted-foreground">Pagamentos</p>
+                        <p className="text-xl lg:text-2xl font-bold">{patientPayments.length}</p>
                       </div>
                       <div>
-                        <p className="text-xs md:text-sm text-muted-foreground">Pendentes</p>
-                        <p className="text-xl md:text-2xl font-bold text-yellow-600">
+                        <p className="text-xs lg:text-sm text-muted-foreground">Pendentes</p>
+                        <p className="text-xl lg:text-2xl font-bold text-yellow-600">
                           {patientPayments.filter(p => p.status === 'pending').length}
                         </p>
                       </div>
@@ -706,42 +711,71 @@ const TeleconsultationRoom = () => {
                 {patientPayments.length > 0 && (
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-sm">Últimos Pagamentos</CardTitle>
+                      <CardTitle className="text-sm">Histórico de Pagamentos</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="overflow-x-auto -mx-4 md:mx-0">
+                      <div className="overflow-x-auto -mx-4 lg:mx-0">
                         <Table>
                           <TableHeader>
                             <TableRow>
+                              <TableHead className="text-xs">Data</TableHead>
                               <TableHead className="text-xs">Descrição</TableHead>
                               <TableHead className="text-xs">Valor</TableHead>
                               <TableHead className="text-xs">Status</TableHead>
-                              <TableHead className="text-xs"></TableHead>
+                              <TableHead className="text-xs">Ações</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {patientPayments.slice(0, 5).map((payment) => (
+                            {patientPayments.map((payment) => (
                               <TableRow key={payment.id}>
-                                <TableCell className="font-medium text-sm">{payment.description}</TableCell>
-                                <TableCell className="text-sm">R$ {payment.amount.toFixed(2)}</TableCell>
+                                <TableCell className="text-sm">
+                                  {format(new Date(payment.date), "dd/MM/yy")}
+                                </TableCell>
+                                <TableCell className="font-medium text-sm truncate max-w-[100px]">
+                                  {payment.description}
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  R$ {payment.amount.toFixed(2)}
+                                </TableCell>
                                 <TableCell>{getStatusBadge(payment.status)}</TableCell>
                                 <TableCell>
-                                  {payment.status === 'pending' && (
+                                  <div className="flex gap-1">
+                                    {payment.status === 'pending' && (
+                                      <Button 
+                                        size="sm" 
+                                        variant="ghost"
+                                        className="h-7 w-7 p-0"
+                                        onClick={() => handleConfirmPayment(payment.id)}
+                                        title="Confirmar pagamento"
+                                      >
+                                        <Check className="h-3 w-3" />
+                                      </Button>
+                                    )}
                                     <Button 
                                       size="sm" 
                                       variant="ghost"
-                                      className="h-8 w-8 p-0"
-                                      onClick={() => handleConfirmPayment(payment.id)}
+                                      className="h-7 w-7 p-0"
+                                      onClick={() => handleGenerateReceipt(payment)}
+                                      title="Gerar recibo"
                                     >
-                                      <Check className="h-4 w-4" />
+                                      <Receipt className="h-3 w-3" />
                                     </Button>
-                                  )}
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
                         </Table>
                       </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {patientPayments.length === 0 && (
+                  <Card>
+                    <CardContent className="pt-6 text-center">
+                      <CreditCard className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+                      <p className="text-muted-foreground text-sm">Nenhum pagamento registrado</p>
                     </CardContent>
                   </Card>
                 )}
@@ -758,21 +792,46 @@ const TeleconsultationRoom = () => {
         patientId={patientId}
       />
 
-      {isNewSessionModalOpen && (
-        <SessionFormModal
-          isOpen={isNewSessionModalOpen}
-          onClose={() => setIsNewSessionModalOpen(false)}
-          patientId={patientId}
+      {viewingSession && (
+        <SessionViewModal
+          session={viewingSession}
+          isOpen={!!viewingSession}
+          onClose={() => setViewingSession(null)}
         />
       )}
 
-      {editingSession && (
-        <SessionEditModal
-          isOpen={!!editingSession}
-          onClose={() => setEditingSession(null)}
-          session={editingSession}
-          patientId={patientId}
+      {viewingDocument && (
+        <DocumentPreviewModal
+          document={viewingDocument}
+          isOpen={!!viewingDocument}
+          onClose={() => setViewingDocument(null)}
         />
+      )}
+
+      {/* Receipt Modal */}
+      {isReceiptModalOpen && selectedPayment && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="text-lg">Recibo de Pagamento</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div><strong>Paciente:</strong> {patient?.name}</div>
+              <div><strong>Data:</strong> {format(new Date(selectedPayment.date), "dd/MM/yyyy")}</div>
+              <div><strong>Valor:</strong> R$ {selectedPayment.amount.toFixed(2)}</div>
+              <div><strong>Status:</strong> {getStatusBadge(selectedPayment.status)}</div>
+              <div><strong>Forma de Pagamento:</strong> {getPaymentMethodLabel(selectedPayment.method)}</div>
+              <div><strong>Descrição:</strong> {selectedPayment.description}</div>
+              <div><strong>Recibo:</strong> {selectedPayment.receiptNumber || "-"}</div>
+              <Button 
+                className="w-full mt-4" 
+                onClick={() => setIsReceiptModalOpen(false)}
+              >
+                Fechar
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
