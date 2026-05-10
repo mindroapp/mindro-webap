@@ -798,8 +798,8 @@ const PatientDetail: React.FC = () => {
                             </TableCell>
                             <TableCell>
                               <Select value={payment.status} onValueChange={(value) => {
-                                updatePayment(payment.id, { status: value });
-                              }}>
+                                 updatePayment(payment.id, { status: value as typeof payment.status });
+                               }}>
                                 <SelectTrigger className="w-[140px] h-8">
                                   <SelectValue />
                                 </SelectTrigger>
@@ -812,8 +812,8 @@ const PatientDetail: React.FC = () => {
                             </TableCell>
                             <TableCell className="hidden sm:table-cell">
                               <Select value={payment.method} onValueChange={(value) => {
-                                updatePayment(payment.id, { method: value });
-                              }}>
+                                 updatePayment(payment.id, { method: value as typeof payment.method });
+                               }}>
                                 <SelectTrigger className="w-[160px] h-8">
                                   <SelectValue />
                                 </SelectTrigger>
