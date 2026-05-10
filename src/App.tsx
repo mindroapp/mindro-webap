@@ -47,7 +47,6 @@ import ProfessionalsManagement from "./pages/admin/ProfessionalsManagement";
 
 // Novas páginas para profissionais
 import ProfessionalSettings from "./pages/ProfessionalSettings";
-import ProfessionalSupport from "./pages/ProfessionalSupport";
 
 // Componente para redirecionar com base no papel do usuário
 const RoleBasedRedirect = () => {
@@ -130,7 +129,6 @@ const App = () => (
 
         {/* Rotas de Configurações e Suporte para Profissionais */}
         <Route path="/professional-settings" element={<ProtectedRoute><ProfessionalSettings /></ProtectedRoute>} />
-        <Route path="/professional-support" element={<ProtectedRoute><ProfessionalSupport /></ProtectedRoute>} />
 
         {/* Rota de Configurações para qualquer usuário autenticado */}
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

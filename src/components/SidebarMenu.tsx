@@ -29,6 +29,15 @@ const SidebarMenu: React.FC = () => {
     setIsMobileOpen(!isMobileOpen);
   };
 
+  const handleSupportClick = () => {
+    const whatsappNumber = "5585987654321"; // Número de WhatsApp da equipe de suporte
+    const whatsappMessage = "Olá! Gostaria de iniciar um atendimento com a equipe de suporte técnico.";
+    const encodedMessage = encodeURIComponent(whatsappMessage);
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+    window.open(whatsappUrl, "_blank");
+    setIsMobileOpen(false);
+  };
+
   return (
     <>
       {/* Botão do menu móvel - visível apenas no mobile */}
@@ -79,25 +88,42 @@ const SidebarMenu: React.FC = () => {
 
           <nav className="mt-2 flex-1 px-2 space-y-1">
             {navigation.map((item) => (
-              <NavLink
-                key={item.name}
-                to={item.href}
-                className={({ isActive }) =>
-                  cn(
-                    isActive
-                      ? "bg-psycho-muted text-psycho-primary dark:bg-accent dark:text-primary"
-                      : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-muted/80",
+              item.name === "Suporte" ? (
+                <button
+                  key={item.name}
+                  onClick={handleSupportClick}
+                  className={cn(
+                    "w-full text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-muted/80",
                     "group flex items-center px-3 py-2.5 text-sm font-medium rounded-md"
-                  )
-                }
-                onClick={() => setIsMobileOpen(false)}
-              >
-                <item.icon
-                  className="h-5 w-5 flex-shrink-0 mr-3"
-                  aria-hidden="true"
-                />
-                <span>{item.name}</span>
-              </NavLink>
+                  )}
+                >
+                  <item.icon
+                    className="h-5 w-5 flex-shrink-0 mr-3"
+                    aria-hidden="true"
+                  />
+                  <span>{item.name}</span>
+                </button>
+              ) : (
+                <NavLink
+                  key={item.name}
+                  to={item.href}
+                  className={({ isActive }) =>
+                    cn(
+                      isActive
+                        ? "bg-psycho-muted text-psycho-primary dark:bg-accent dark:text-primary"
+                        : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-muted/80",
+                      "group flex items-center px-3 py-2.5 text-sm font-medium rounded-md"
+                    )
+                  }
+                  onClick={() => setIsMobileOpen(false)}
+                >
+                  <item.icon
+                    className="h-5 w-5 flex-shrink-0 mr-3"
+                    aria-hidden="true"
+                  />
+                  <span>{item.name}</span>
+                </NavLink>
+              )
             ))}
           </nav>
         </div>
