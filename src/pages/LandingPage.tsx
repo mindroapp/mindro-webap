@@ -22,10 +22,10 @@ const CARE_IMG =
   "https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=900&q=80";
 const SESSION_IMG =
   "https://images.unsplash.com/photo-1573497620053-ea5300f94f21?auto=format&fit=crop&w=1200&q=80";
-const TECH_IMG =
-  "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80";
 const MIND_IMG =
   "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=1200&q=80";
+const ZEN_IMG =
+  "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80";
 
 const features = [
   { title: "Agenda com IA", icon: Brain, description: "Lembretes e organização automática." },
