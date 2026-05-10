@@ -1,18 +1,30 @@
 import { cn } from "@/lib/utils";
-import { Menu, MessageSquare, BarChart3, HelpCircle, UserCheck, LogOut } from "lucide-react";
+import { Menu, MessageSquare, BarChart3, UserCheck, LogOut, Wifi, WifiOff } from "lucide-react";
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 const AdminSidebarMenu: React.FC = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isWhatsAppConnected, setIsWhatsAppConnected] = useState(() => {
+    return localStorage.getItem("whatsapp_connected") === "true";
+  });
   const navigate = useNavigate();
   const { logout } = useAuth();
+
+  // Atualizar estado quando localStorage muda
+  React.useEffect(() => {
+    const handleStorageChange = () => {
+      setIsWhatsAppConnected(localStorage.getItem("whatsapp_connected") === "true");
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   const navigation = [
     { name: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
     { name: "Profissionais", href: "/admin/professionals", icon: UserCheck },
-    { name: "Suporte", href: "/admin/support", icon: HelpCircle },
     { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageSquare },
   ];
 
@@ -67,16 +79,27 @@ const AdminSidebarMenu: React.FC = () => {
                     isActive
                       ? "bg-psycho-muted text-psycho-primary dark:bg-accent dark:text-primary"
                       : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-muted/80",
-                    "group flex items-center px-3 py-2.5 text-sm font-medium rounded-md"
+                    "group flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-md"
                   )
                 }
                 onClick={() => setIsMobileOpen(false)}
               >
-                <item.icon
-                  className="h-5 w-5 flex-shrink-0 mr-3"
-                  aria-hidden="true"
-                />
-                <span>{item.name}</span>
+                <div className="flex items-center">
+                  <item.icon
+                    className="h-5 w-5 flex-shrink-0 mr-3"
+                    aria-hidden="true"
+                  />
+                  <span>{item.name}</span>
+                </div>
+                {item.name === "WhatsApp" && (
+                  <div className="flex-shrink-0">
+                    {isWhatsAppConnected ? (
+                      <Wifi className="h-4 w-4 text-green-500" title="Conectado" />
+                    ) : (
+                      <WifiOff className="h-4 w-4 text-red-500" title="Desconectado" />
+                    )}
+                  </div>
+                )}
               </NavLink>
             ))}
           </nav>

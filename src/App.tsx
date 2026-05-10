@@ -43,7 +43,6 @@ import CookiesPage from "./pages/CookiesPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ClientsManagement from "./pages/admin/ClientsManagement";
 import WhatsAppConfig from "./pages/admin/WhatsAppConfig";
-import SupportRequests from "./pages/admin/SupportRequests";
 import ProfessionalsManagement from "./pages/admin/ProfessionalsManagement";
 
 // Novas páginas para profissionais
@@ -141,7 +140,6 @@ const App = () => (
         <Route path="/admin/professionals" element={<ProtectedRoute><ProfessionalsManagement /></ProtectedRoute>} />
         <Route path="/admin/clients" element={<ProtectedRoute><ClientsManagement /></ProtectedRoute>} />
         <Route path="/admin/whatsapp" element={<ProtectedRoute><WhatsAppConfig /></ProtectedRoute>} />
-        <Route path="/admin/support" element={<ProtectedRoute><SupportRequests /></ProtectedRoute>} />
         
         {/* Rota 404 */}
         <Route path="*" element={<NotFound />} />

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Send, History, Wifi, WifiOff, Upload, Bold, Italic, Smile, Users, User, Image, FileText, Filter, MessageSquare } from "lucide-react";
+import { MessageCircle, Send, History, Wifi, WifiOff, Upload, Bold, Italic, Smile, Users, User, Image, FileText, Filter, MessageSquare, Calendar, Clock } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -67,7 +67,9 @@ const messageHistory = [
 const WhatsAppConfig: React.FC = () => {
   const [activeTab, setActiveTab] = useState("conexao");
   const [whatsappNumber, setWhatsappNumber] = useState("+55 11 98765-4321");
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(() => {
+    return localStorage.getItem("whatsapp_connected") === "true";
+  });
   const [showQRCode, setShowQRCode] = useState(false);
   const [messageText, setMessageText] = useState("");
   const [messageType, setMessageType] = useState("individual");
@@ -81,12 +83,19 @@ const WhatsAppConfig: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   
+  // Estados para agendamento
+  const [showScheduler, setShowScheduler] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState("");
+  const [scheduledTime, setScheduledTime] = useState("");
+  
+  
   const { toast } = useToast();
 
   const handleConnect = () => {
     setShowQRCode(true);
     setTimeout(() => {
       setIsConnected(true);
+      localStorage.setItem("whatsapp_connected", "true");
       setShowQRCode(false);
       toast({
         title: "WhatsApp conectado",
@@ -97,6 +106,7 @@ const WhatsAppConfig: React.FC = () => {
 
   const handleDisconnect = () => {
     setIsConnected(false);
+    localStorage.setItem("whatsapp_connected", "false");
     toast({
       title: "WhatsApp desconectado",
       description: "Conexão encerrada."
@@ -214,7 +224,7 @@ const WhatsAppConfig: React.FC = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="conexao">
               <Wifi className="h-4 w-4 mr-2" />
               Conexão
@@ -226,10 +236,6 @@ const WhatsAppConfig: React.FC = () => {
             <TabsTrigger value="historico">
               <History className="h-4 w-4 mr-2" />
               Histórico
-            </TabsTrigger>
-            <TabsTrigger value="configuracoes">
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Config
             </TabsTrigger>
           </TabsList>
           
@@ -439,14 +445,88 @@ const WhatsAppConfig: React.FC = () => {
                       )}
                     </div>
 
-                    <Button 
-                      onClick={handleSendMessage} 
-                      disabled={!canSendMessage()}
-                      className="w-full"
-                    >
-                      <Send className="h-4 w-4 mr-2" />
-                      Enviar Mensagem
-                    </Button>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button 
+                        onClick={handleSendMessage} 
+                        disabled={!canSendMessage()}
+                        className="flex-1"
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        Enviar Agora
+                      </Button>
+                      <Button 
+                        onClick={() => setShowScheduler(!showScheduler)}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Agendar Envio
+                      </Button>
+                    </div>
+
+                    {showScheduler && (
+                      <div className="border rounded-lg p-4 bg-blue-50 space-y-3">
+                        <h3 className="font-semibold text-sm">Agendar Envio de Mensagem</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label htmlFor="scheduled-date" className="text-xs">Data</Label>
+                            <Input
+                              id="scheduled-date"
+                              type="date"
+                              value={scheduledDate}
+                              onChange={(e) => setScheduledDate(e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="scheduled-time" className="text-xs">Hora</Label>
+                            <Input
+                              id="scheduled-time"
+                              type="time"
+                              value={scheduledTime}
+                              onChange={(e) => setScheduledTime(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        {scheduledDate && scheduledTime && (
+                          <p className="text-xs text-blue-600">
+                            📅 Mensagem será enviada em {scheduledDate} às {scheduledTime}
+                          </p>
+                        )}
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => {
+                              if (scheduledDate && scheduledTime) {
+                                toast({
+                                  title: "✅ Envio agendado",
+                                  description: `Mensagem será enviada em ${scheduledDate} às ${scheduledTime}`
+                                });
+                                setShowScheduler(false);
+                                setScheduledDate("");
+                                setScheduledTime("");
+                              }
+                            }}
+                            className="flex-1"
+                            size="sm"
+                            disabled={!scheduledDate || !scheduledTime}
+                          >
+                            <Clock className="h-4 w-4 mr-2" />
+                            Confirmar
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              setShowScheduler(false);
+                              setScheduledDate("");
+                              setScheduledTime("");
+                            }}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -558,45 +638,6 @@ const WhatsAppConfig: React.FC = () => {
                       </TableBody>
                     </Table>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="configuracoes" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Configurações Gerais</CardTitle>
-                <CardDescription>
-                  Configure as opções gerais do WhatsApp Business.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="whatsapp-number">Número de WhatsApp</Label>
-                  <Input 
-                    id="whatsapp-number" 
-                    value={whatsappNumber}
-                    onChange={(e) => setWhatsappNumber(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="whatsapp-name">Nome de exibição</Label>
-                  <Input 
-                    id="whatsapp-name" 
-                    defaultValue="Mindro - Psicólogos"
-                  />
-                </div>
-                <div className="flex items-center space-x-2 pt-2">
-                  <Switch id="auto-reply" defaultChecked />
-                  <Label htmlFor="auto-reply">Ativar resposta automática para novas mensagens</Label>
-                </div>
-                <div className="space-y-2 pt-2">
-                  <Label htmlFor="auto-reply-message">Mensagem de resposta automática</Label>
-                  <Textarea 
-                    id="auto-reply-message" 
-                    defaultValue="Olá! Obrigado por entrar em contato com a Mindro. Em breve um de nossos atendentes irá te responder."
-                  />
                 </div>
               </CardContent>
             </Card>

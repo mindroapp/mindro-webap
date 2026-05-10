@@ -9,18 +9,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
-import { LogOut, ShieldCheck, BarChart3, MessageSquare, Home, Calendar, Wallet, HelpCircle, Settings, UserCheck } from "lucide-react";
+import { ShieldCheck, BarChart3, MessageSquare, Home, Calendar, Wallet, HelpCircle, Settings, UserCheck } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
 const Header: React.FC = () => {
-  const { user, logout, isAdmin, isVerified } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+  const { user, isAdmin, isVerified } = useAuth();
 
   const getInitials = (name: string) => {
     return name
@@ -33,7 +27,6 @@ const Header: React.FC = () => {
   const adminLinks = [
     { name: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
     { name: "Profissionais", href: "/admin/professionals", icon: UserCheck },
-    { name: "Suporte", href: "/admin/support", icon: HelpCircle },
     { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageSquare },
   ];
 
@@ -94,12 +87,6 @@ const Header: React.FC = () => {
                   )}
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Sair</span>
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
