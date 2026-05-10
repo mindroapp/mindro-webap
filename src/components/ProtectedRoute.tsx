@@ -22,7 +22,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     const token = getAccessToken();
     if (!token || isLoading) return;
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const parts = token.split('.');
+      if (parts.length !== 3 || !parts[1]) return;
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=')));
       const exp = payload.exp * 1000;
       if (Date.now() >= exp) {
         toast({

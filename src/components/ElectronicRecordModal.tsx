@@ -119,53 +119,51 @@ const ElectronicRecordModal: React.FC<ElectronicRecordModalProps> = ({
               </TabsList>
               
               <TabsContent value="clinical" className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="diagnosis"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Diagnóstico</FormLabel>
+                <FormField
+                  control={form.control}
+                  name="approach"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Abordagem Terapêutica</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
-                          <Textarea {...field} />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma abordagem" />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormDescription>
-                          Inclua código CID se aplicável
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="approach"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Abordagem Terapêutica</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione uma abordagem" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="cognitive">Terapia Cognitivo-Comportamental</SelectItem>
-                            <SelectItem value="psychoanalysis">Psicanálise</SelectItem>
-                            <SelectItem value="behavioral">Comportamental</SelectItem>
-                            <SelectItem value="humanistic">Humanista</SelectItem>
-                            <SelectItem value="other">Outra</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
+                        <SelectContent>
+                          <SelectItem value="cognitive">Terapia Cognitivo-Comportamental</SelectItem>
+                          <SelectItem value="psychoanalysis">Psicanálise</SelectItem>
+                          <SelectItem value="behavioral">Comportamental</SelectItem>
+                          <SelectItem value="humanistic">Humanista</SelectItem>
+                          <SelectItem value="other">Outra</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="diagnosis"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Diagnóstico</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Inclua código CID se aplicável
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="clinicalNotes"
@@ -179,7 +177,7 @@ const ElectronicRecordModal: React.FC<ElectronicRecordModalProps> = ({
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="medications"

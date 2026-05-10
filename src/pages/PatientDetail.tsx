@@ -9,10 +9,9 @@ import SessionEditModal from "@/components/SessionEditModal";
 import SessionFormModal from "@/components/SessionFormModal";
 import ElectronicRecordModal from "@/components/ElectronicRecordModal";
 import PatientEditModal from "@/components/PatientEditModal";
-import DocumentUploadModal from "@/components/DocumentUploadModal";
 import InitialAssessmentModal from "@/components/InitialAssessmentModal";
 import TeleconsultationModal from "@/components/TeleconsultationModal";
-import PatientDetailFilters from "@/components/PatientDetailFilters";
+import SessionTimeline from "@/components/SessionTimeline";
 import Pagination from "@/components/Pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,56 +21,97 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { 
-  FileText, 
-  Plus, 
-  ArrowLeft, 
-  Calendar, 
-  Edit, 
-  Upload, 
-  Trash, 
+import {
+  FileText,
+  Plus,
+  ArrowLeft,
+  Calendar,
+  Edit,
+  Upload,
+  Trash,
   Download,
   CreditCard,
   Receipt,
   Check,
-  Video
+  Video,
+  FileDown,
+  X
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { Label } from "@/components/ui/label";
 
 const ITEMS_PER_PAGE = 10;
+
+const crc16ccitt = (str: string): string => {
+  let crc = 0xFFFF;
+  for (let i = 0; i < str.length; i++) {
+    crc ^= str.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
+    }
+  }
+  return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+};
+
+const buildPixPayload = (key: string, holderName: string, amount: number): string => {
+  const f = (id: string, val: string) => `${id}${String(val.length).padStart(2, '0')}${val}`;
+  const info = f('00', 'BR.GOV.BCB.PIX') + f('01', key);
+  const name = (holderName || 'PROFISSIONAL').slice(0, 25);
+  const body =
+    f('00', '01') + f('26', info) + f('52', '0000') + f('53', '986') +
+    f('54', amount.toFixed(2)) + f('58', 'BR') +
+    f('59', name) + f('60', 'BRASIL') +
+    f('62', f('05', '***')) + '6304';
+  return body + crc16ccitt(body);
+};
+
+const defaultPixConfig = {
+  pixKeyType: 'Chave aleatória',
+  pixKey: '',
+  observation: '',
+};
 
 const PatientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { selectedPatient, fetchPatient, isLoading, payments, updatePayment } = usePatientStore();
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [viewingElectronicRecord, setViewingElectronicRecord] = useState<Session | null>(null);
   const [isEditingPatient, setIsEditingPatient] = useState(false);
-  const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
   const [isNewSessionModalOpen, setIsNewSessionModalOpen] = useState(false);
-  const [isDeleteDocumentOpen, setIsDeleteDocumentOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [isTeleconsultationOpen, setIsTeleconsultationOpen] = useState(false);
+  const [selectedPaymentIds, setSelectedPaymentIds] = useState<Set<string>>(new Set());
+  const [isReportPdfModalOpen, setIsReportPdfModalOpen] = useState(false);
+  const [isPixConfigOpen, setIsPixConfigOpen] = useState(false);
+  const [pixConfig, setPixConfig] = useState<typeof defaultPixConfig>(() => {
+    try {
+      const saved = localStorage.getItem('mindro_pix_config');
+      return saved ? JSON.parse(saved) : { ...defaultPixConfig };
+    } catch { return { ...defaultPixConfig }; }
+  });
+  
+  // Session filters
+  const [sessionsFilters, setSessionsFilters] = useState({
+    dateStart: "",
+    dateEnd: "",
+    approach: "all",
+    mood: "all"
+  });
   
   // Filters and pagination states
-  const [sessionsFilters, setSessionsFilters] = useState({
-    searchTerm: "",
-    sortBy: "date",
-    currentPage: 1
-  });
-  const [documentsFilters, setDocumentsFilters] = useState({
-    searchTerm: "",
-    sortBy: "uploadDate",
-    filterBy: "all",
-    currentPage: 1
-  });
   const [financialFilters, setFinancialFilters] = useState({
-    searchTerm: "",
-    sortBy: "date",
-    filterBy: "all",
+    dateStart: "",
+    dateEnd: "",
+    status: "all",
+    method: "all",
     currentPage: 1
   });
 
@@ -120,26 +160,7 @@ const PatientDetail: React.FC = () => {
     setIsEditingPatient(true);
   };
 
-  const handleDeleteDocument = (document: any) => {
-    setSelectedDocument(document);
-    setIsDeleteDocumentOpen(true);
-  };
 
-  const confirmDeleteDocument = () => {
-    toast({
-      title: "Documento excluído",
-      description: "O documento foi excluído com sucesso."
-    });
-    setIsDeleteDocumentOpen(false);
-    setSelectedDocument(null);
-  };
-
-  const handleDownloadDocument = (document: any) => {
-    toast({
-      title: "Download iniciado",
-      description: `Download do documento ${document.name} iniciado.`
-    });
-  };
 
   const handleConfirmPayment = async (paymentId: string) => {
     await updatePayment(paymentId, { status: "paid" });
@@ -162,6 +183,17 @@ const PatientDetail: React.FC = () => {
     }
   };
 
+  const getPaymentStatusLabel = (status: string) => {
+    const labels: Record<string, string> = { paid: "Pago", pending: "Pendente", cancelled: "Cancelado", partial: "Parcial" };
+    return labels[status] || status;
+  };
+
+  const handleConfirmPdfGeneration = () => {
+    localStorage.setItem('mindro_pix_config', JSON.stringify(pixConfig));
+    setIsPixConfigOpen(false);
+    generatePdfReport();
+  };
+
   const getPaymentMethodLabel = (method: string) => {
     const methods: Record<string, string> = {
       pix: "PIX",
@@ -173,97 +205,212 @@ const PatientDetail: React.FC = () => {
     return methods[method] || method;
   };
 
-  // Filtered and sorted data
+  const getApproachLabel = (approach?: string) => {
+    switch (approach) {
+      case "cognitive": return "TCC";
+      case "psychoanalysis": return "Psicanálise";
+      case "behavioral": return "Comportamental";
+      case "humanistic": return "Humanista";
+      case "other": return "Outra";
+      default: return "Não definida";
+    }
+  };
+
   const filteredSessions = useMemo(() => {
     if (!selectedPatient?.sessions) return [];
     
-    let filtered = selectedPatient.sessions.filter(session =>
-      session.notes.toLowerCase().includes(sessionsFilters.searchTerm.toLowerCase()) ||
-      (session.diagnosis && session.diagnosis.toLowerCase().includes(sessionsFilters.searchTerm.toLowerCase()))
-    );
+    return selectedPatient.sessions.filter(session => {
+      const sessionDate = new Date(session.date);
+      const startDate = sessionsFilters.dateStart ? new Date(sessionsFilters.dateStart) : null;
+      const endDate = sessionsFilters.dateEnd ? new Date(sessionsFilters.dateEnd) : null;
+      
+      const matchesDateRange = (
+        (!startDate || sessionDate >= startDate) &&
+        (!endDate || sessionDate <= endDate)
+      );
+      const matchesApproach = sessionsFilters.approach === "all" || session.approach === sessionsFilters.approach;
+      const matchesMood = sessionsFilters.mood === "all" || session.mood === parseInt(sessionsFilters.mood);
+      
+      return matchesDateRange && matchesApproach && matchesMood;
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [selectedPatient?.sessions, sessionsFilters]);
 
-    filtered.sort((a, b) => {
-      switch (sessionsFilters.sortBy) {
-        case "date":
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
-        case "mood":
-          return b.mood - a.mood;
-        default:
-          return 0;
-      }
-    });
+  const handleTogglePaymentSelection = (paymentId: string) => {
+    const newSelected = new Set(selectedPaymentIds);
+    if (newSelected.has(paymentId)) {
+      newSelected.delete(paymentId);
+    } else {
+      newSelected.add(paymentId);
+    }
+    setSelectedPaymentIds(newSelected);
+  };
 
-    return filtered;
-  }, [selectedPatient?.sessions, sessionsFilters.searchTerm, sessionsFilters.sortBy]);
+  const generatePdfReport = () => {
+    const paymentsForReport = selectedPaymentIds.size > 0
+      ? filteredPayments.filter(p => selectedPaymentIds.has(p.id))
+      : filteredPayments;
 
-  const filteredDocuments = useMemo(() => {
-    if (!selectedPatient?.documents) return [];
-    
-    let filtered = selectedPatient.documents.filter(doc => {
-      const matchesSearch = doc.name.toLowerCase().includes(documentsFilters.searchTerm.toLowerCase());
-      const matchesFilter = documentsFilters.filterBy === "all" || doc.type === documentsFilters.filterBy;
-      return matchesSearch && matchesFilter;
-    });
+    if (paymentsForReport.length === 0) {
+      toast({
+        title: "Nenhum registro encontrado",
+        description: "Não há sessões para gerar o relatório com os filtros atuais.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    filtered.sort((a, b) => {
-      switch (documentsFilters.sortBy) {
-        case "name":
-          return a.name.localeCompare(b.name);
-        case "uploadDate":
-          return new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime();
-        case "type":
-          return a.type.localeCompare(b.type);
-        default:
-          return 0;
-      }
-    });
+    const pendingAmount = paymentsForReport
+      .filter(p => p.status === "pending")
+      .reduce((sum, p) => sum + p.amount, 0);
 
-    return filtered;
-  }, [selectedPatient?.documents, documentsFilters.searchTerm, documentsFilters.sortBy, documentsFilters.filterBy]);
+    const holderName = (pixConfig.observation || '').split('\n')[0].trim() || 'PROFISSIONAL';
+    const pixPayload = pixConfig.pixKey
+      ? buildPixPayload(pixConfig.pixKey, holderName, pendingAmount > 0 ? pendingAmount : paymentsForReport.reduce((s, p) => s + p.amount, 0))
+      : null;
+    const qrUrl = pixPayload
+      ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(pixPayload)}`
+      : null;
+
+    const totalAPagar = pendingAmount > 0 ? pendingAmount : paymentsForReport.reduce((s, p) => s + p.amount, 0);
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cobrança – ${selectedPatient?.name}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#111;background:#fff;font-size:13px;line-height:1.5}
+    .wrap{max-width:720px;margin:0 auto;padding:40px 32px}
+    .top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:16px;margin-bottom:24px}
+    .brand{font-size:26px;font-weight:800;letter-spacing:-1px;color:#2563eb}
+    .meta{text-align:right;font-size:12px;color:#555}
+    .meta b{display:block;font-size:14px;color:#111;margin-bottom:2px}
+    .patient{margin-bottom:24px}
+    .patient p{font-size:14px}
+    .patient .name{font-size:18px;font-weight:700;margin-bottom:2px}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px}
+    th{background:#f3f4f6;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;text-align:left;border-bottom:2px solid #d1d5db;color:#374151}
+    td{padding:8px 10px;border-bottom:1px solid #e5e7eb;color:#374151}
+    tr:last-child td{border-bottom:none}
+    .val{text-align:right;font-weight:600}
+    .total-box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:14px 16px;margin-bottom:24px}
+    .total-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:#374151}
+    .total-row.big{font-size:15px;font-weight:700;color:#111;border-top:1px solid #d1d5db;margin-top:6px;padding-top:10px}
+    .pix{display:flex;gap:24px;align-items:center;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:20px;margin-bottom:24px}
+    .pix-text h3{font-size:13px;font-weight:700;color:#6d28d9;margin-bottom:8px}
+    .pix-text p{margin-bottom:4px;color:#374151}
+    .pix-text .key{font-size:14px;font-weight:700;color:#111;word-break:break-all;margin-top:6px}
+    .pix-text .amount{font-size:16px;font-weight:800;color:#6d28d9;margin-top:10px}
+    .pix-text .obs{white-space:pre-line;font-size:12px;color:#6b7280;margin-top:8px;border-top:1px solid #e9d5ff;padding-top:8px}
+    .qr{flex-shrink:0;text-align:center}
+    .qr img{border-radius:6px;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+    .qr span{display:block;font-size:10px;color:#9ca3af;margin-top:4px}
+    .foot{text-align:center;font-size:11px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:14px}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.wrap{padding:20px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">mindro</div>
+    <div class="meta"><b>Relatório de Cobrança</b>${new Date().toLocaleDateString('pt-BR')}</div>
+  </div>
+
+  <div class="patient">
+    <p class="name">${selectedPatient?.name}</p>
+    <p style="color:#555">Paciente</p>
+  </div>
+
+  <table>
+    <thead><tr><th>Data</th><th>Descrição</th><th style="text-align:right">Valor</th></tr></thead>
+    <tbody>
+      ${paymentsForReport.map(p => `
+        <tr>
+          <td style="white-space:nowrap">${new Date(p.date).toLocaleDateString('pt-BR')}</td>
+          <td>${p.description || 'Sessão de psicoterapia'}</td>
+          <td class="val">R$ ${p.amount.toFixed(2)}</td>
+        </tr>`).join('')}
+    </tbody>
+  </table>
+
+  <div class="total-box">
+    <div class="total-row"><span>Sessões incluídas</span><span>${paymentsForReport.length}</span></div>
+    <div class="total-row big"><span>Total a pagar</span><span>R$ ${totalAPagar.toFixed(2)}</span></div>
+  </div>
+
+  ${pixConfig.pixKey ? `
+  <div class="pix">
+    <div class="pix-text" style="flex:1">
+      <h3>Pagamento via PIX</h3>
+      <p><b>Tipo:</b> ${pixConfig.pixKeyType}</p>
+      <p class="key">${pixConfig.pixKey}</p>
+      <p class="amount">R$ ${totalAPagar.toFixed(2)}</p>
+      ${pixConfig.observation ? `<p class="obs">${pixConfig.observation}</p>` : ''}
+    </div>
+    ${qrUrl ? `<div class="qr"><img src="${qrUrl}" width="160" height="160" alt="QR PIX"><span>Escaneie para pagar</span></div>` : ''}
+  </div>` : ''}
+
+  <div class="foot">Mindro · Plataforma de Gestão Clínica</div>
+</div>
+<script>
+  var imgs = document.images;
+  var loaded = 0;
+  function tryPrint() { loaded++; if (loaded >= imgs.length) window.print(); }
+  if (imgs.length === 0) { window.print(); }
+  else { for (var i = 0; i < imgs.length; i++) { imgs[i].onload = tryPrint; imgs[i].onerror = tryPrint; } }
+</script>
+</body>
+</html>`;
+
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;border:none;';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(html);
+      doc.close();
+    }
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      setTimeout(() => document.body.removeChild(iframe), 3000);
+    }, 400);
+  };
+
+
 
   const filteredPayments = useMemo(() => {
     const patientPayments = payments.filter(p => p.patientId === selectedPatient?.id);
     
     let filtered = patientPayments.filter(payment => {
-      const matchesSearch = payment.description.toLowerCase().includes(financialFilters.searchTerm.toLowerCase());
-      const matchesFilter = financialFilters.filterBy === "all" || payment.status === financialFilters.filterBy;
-      return matchesSearch && matchesFilter;
+      const paymentDate = new Date(payment.date);
+      const startDate = financialFilters.dateStart ? new Date(financialFilters.dateStart) : null;
+      const endDate = financialFilters.dateEnd ? new Date(financialFilters.dateEnd) : null;
+      
+      const matchesDateRange = (
+        (!startDate || paymentDate >= startDate) &&
+        (!endDate || paymentDate <= endDate)
+      );
+      const matchesStatus = financialFilters.status === "all" || payment.status === financialFilters.status;
+      const matchesMethod = financialFilters.method === "all" || payment.method === financialFilters.method;
+      
+      return matchesDateRange && matchesStatus && matchesMethod;
     });
 
-    filtered.sort((a, b) => {
-      switch (financialFilters.sortBy) {
-        case "date":
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
-        case "amount":
-          return b.amount - a.amount;
-        case "status":
-          return a.status.localeCompare(b.status);
-        default:
-          return 0;
-      }
-    });
+    filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return filtered;
-  }, [payments, selectedPatient?.id, financialFilters.searchTerm, financialFilters.sortBy, financialFilters.filterBy]);
+  }, [payments, selectedPatient?.id, financialFilters]);
 
-  // Pagination calculations
-  const sessionsTotalPages = Math.ceil(filteredSessions.length / ITEMS_PER_PAGE);
-  const paginatedSessions = filteredSessions.slice(
-    (sessionsFilters.currentPage - 1) * ITEMS_PER_PAGE,
-    sessionsFilters.currentPage * ITEMS_PER_PAGE
-  );
 
-  const documentsTotalPages = Math.ceil(filteredDocuments.length / ITEMS_PER_PAGE);
-  const paginatedDocuments = filteredDocuments.slice(
-    (documentsFilters.currentPage - 1) * ITEMS_PER_PAGE,
-    documentsFilters.currentPage * ITEMS_PER_PAGE
-  );
 
   const financialTotalPages = Math.ceil(filteredPayments.length / ITEMS_PER_PAGE);
-  const paginatedPayments = filteredPayments.slice(
+  const paginatedPayments = useMemo(() => filteredPayments.slice(
     (financialFilters.currentPage - 1) * ITEMS_PER_PAGE,
     financialFilters.currentPage * ITEMS_PER_PAGE
-  );
+  ), [filteredPayments, financialFilters.currentPage]);
 
   if (isLoading) {
     return (
@@ -330,62 +477,42 @@ const PatientDetail: React.FC = () => {
           </div>
   
           <Card className="mb-6">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex flex-col md:flex-row">
-                <div className="md:mr-6 mb-4 md:mb-0 flex justify-center md:justify-start">
-                  <Avatar className="h-20 w-20 md:h-24 md:w-24">
-                    <AvatarImage src={selectedPatient.avatar} alt={selectedPatient.name} />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xl md:text-2xl">
-                      {getInitials(selectedPatient.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-                <div className="flex-1">
-                  <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-4">
-                    <div className="text-center md:text-left">
-                      <h2 className="text-xl md:text-2xl font-bold mb-1">{selectedPatient.name}</h2>
-                      <p className="text-muted-foreground text-sm">{selectedPatient.email}</p>
-                    </div>
-                    <div className="mt-3 md:mt-0 flex justify-center md:justify-end gap-2">
-                      <Button 
-                        variant="default" 
-                        size="sm" 
-                        onClick={() => setIsTeleconsultationOpen(true)}
-                      >
-                        <Video size={16} className="mr-1" /> <span className="hidden sm:inline">Teleconsulta</span>
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={handleEditPatient}>
-                        <Edit size={16} className="mr-1" /> <span className="hidden sm:inline">Editar</span>
-                      </Button>
-                    </div>
-                  </div>
-  
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mt-4">
-                    <div>
-                      <p className="text-muted-foreground text-xs md:text-sm">Idade</p>
-                      <p className="font-medium text-sm md:text-base">{calculateAge(selectedPatient.birthdate)} anos</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground text-xs md:text-sm">Data de Nascimento</p>
-                      <p className="font-medium text-sm md:text-base">{formatDate(selectedPatient.birthdate)}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground text-xs md:text-sm">Telefone</p>
-                      <p className="font-medium text-sm md:text-base">{selectedPatient.phone}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground text-xs md:text-sm">Paciente desde</p>
-                      <p className="font-medium text-sm md:text-base">{formatDate(selectedPatient.createdAt)}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground text-xs md:text-sm">Total de Sessões</p>
-                      <p className="font-medium text-sm md:text-base">{selectedPatient.sessions.length}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground text-xs md:text-sm">Documentos</p>
-                      <p className="font-medium text-sm md:text-base">{selectedPatient.documents.length}</p>
+            <CardContent className="p-3 md:p-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-12 w-12 flex-shrink-0">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-lg font-semibold">
+                    {getInitials(selectedPatient.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-6">
+                  <div className="flex-1">
+                    <h2 className="text-lg md:text-xl font-bold">{selectedPatient.name}</h2>
+                    <div className="flex flex-wrap gap-4 mt-2 text-xs md:text-sm">
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">Idade:</span>
+                        <span className="font-medium">{calculateAge(selectedPatient.birthdate)} anos</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">Nascimento:</span>
+                        <span className="font-medium">{formatDate(selectedPatient.birthdate)}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">Telefone:</span>
+                        <span className="font-medium">{selectedPatient.phone}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">Desde:</span>
+                        <span className="font-medium">{formatDate(selectedPatient.createdAt)}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">Sessões:</span>
+                        <span className="font-medium">{selectedPatient.sessions.length}</span>
+                      </div>
                     </div>
                   </div>
+                  <Button variant="outline" size="sm" onClick={handleEditPatient} className="flex-shrink-0">
+                    <Edit size={16} className="mr-1" /> <span className="hidden sm:inline">Editar</span>
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -394,8 +521,7 @@ const PatientDetail: React.FC = () => {
           <Tabs defaultValue="initial-record">
             <TabsList className="mb-6 w-full flex overflow-x-auto">
               <TabsTrigger value="initial-record" className="flex-1 text-xs md:text-sm">Avaliação Inicial</TabsTrigger>
-              <TabsTrigger value="sessions" className="flex-1 text-xs md:text-sm">Sessões ({filteredSessions.length})</TabsTrigger>
-              <TabsTrigger value="documents" className="flex-1 text-xs md:text-sm">Documentos ({filteredDocuments.length})</TabsTrigger>
+            <TabsTrigger value="sessions" className="flex-1 text-xs md:text-sm">Sessões ({selectedPatient.sessions.length})</TabsTrigger>
               <TabsTrigger value="financial" className="flex-1 text-xs md:text-sm">Financeiro ({filteredPayments.length})</TabsTrigger>
             </TabsList>
 
@@ -422,59 +548,55 @@ const PatientDetail: React.FC = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="grid gap-4 md:gap-6">
-                  <Card>
-                    <CardContent className="p-4 md:p-6">
-                      <h3 className="text-lg font-medium mb-3">Motivo da Consulta</h3>
-                      <p className="text-muted-foreground">{selectedPatient.initialRecord.reasonForConsultation}</p>
-                    </CardContent>
-                  </Card>
-  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                    <Card>
-                      <CardContent className="p-4 md:p-6">
-                        <h3 className="text-lg font-medium mb-3">Histórico Familiar</h3>
-                        <p className="text-muted-foreground">{selectedPatient.initialRecord.familyHistory}</p>
-                      </CardContent>
-                    </Card>
-  
-                    <Card>
-                      <CardContent className="p-4 md:p-6">
-                        <h3 className="text-lg font-medium mb-3">Histórico Médico</h3>
-                        <p className="text-muted-foreground">{selectedPatient.initialRecord.medicalHistory}</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-  
-                  <Card>
-                    <CardContent className="p-4 md:p-6">
-                      <h3 className="text-lg font-medium mb-3">Tratamento Anterior</h3>
-                      <p className="text-muted-foreground">{selectedPatient.initialRecord.previousTreatment}</p>
-                    </CardContent>
-                  </Card>
-  
-                  <Card>
-                    <CardContent className="p-4 md:p-6">
-                      <h3 className="text-lg font-medium mb-3">Exame do Estado Mental</h3>
-                      <p className="text-muted-foreground">{selectedPatient.initialRecord.mentalStatusExam}</p>
-                    </CardContent>
-                  </Card>
-  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                    <Card>
-                      <CardContent className="p-4 md:p-6">
-                        <h3 className="text-lg font-medium mb-3">Diagnóstico Inicial</h3>
-                        <p className="text-muted-foreground">{selectedPatient.initialRecord.initialDiagnosis}</p>
-                      </CardContent>
-                    </Card>
-  
-                    <Card>
-                      <CardContent className="p-4 md:p-6">
-                        <h3 className="text-lg font-medium mb-3">Plano de Tratamento</h3>
-                        <p className="text-muted-foreground">{selectedPatient.initialRecord.treatmentPlan}</p>
-                      </CardContent>
-                    </Card>
-                  </div>
+                <div className="space-y-4">
+                  {selectedPatient.initialRecord.reasonForConsultation && (
+                    <div className="border-l-4 border-primary pl-4">
+                      <h3 className="text-sm font-semibold text-primary mb-2">Motivo da Consulta</h3>
+                      <p className="text-sm text-foreground">{selectedPatient.initialRecord.reasonForConsultation}</p>
+                    </div>
+                  )}
+
+                  {selectedPatient.initialRecord.familyHistory && (
+                    <div className="border-l-4 border-primary pl-4">
+                      <h3 className="text-sm font-semibold text-primary mb-2">Histórico Familiar</h3>
+                      <p className="text-sm text-foreground">{selectedPatient.initialRecord.familyHistory}</p>
+                    </div>
+                  )}
+
+                  {selectedPatient.initialRecord.medicalHistory && (
+                    <div className="border-l-4 border-primary pl-4">
+                      <h3 className="text-sm font-semibold text-primary mb-2">Histórico Médico</h3>
+                      <p className="text-sm text-foreground">{selectedPatient.initialRecord.medicalHistory}</p>
+                    </div>
+                  )}
+
+                  {selectedPatient.initialRecord.previousTreatment && (
+                    <div className="border-l-4 border-primary pl-4">
+                      <h3 className="text-sm font-semibold text-primary mb-2">Tratamento Anterior</h3>
+                      <p className="text-sm text-foreground">{selectedPatient.initialRecord.previousTreatment}</p>
+                    </div>
+                  )}
+
+                  {selectedPatient.initialRecord.mentalStatusExam && (
+                    <div className="border-l-4 border-primary pl-4">
+                      <h3 className="text-sm font-semibold text-primary mb-2">Exame do Estado Mental</h3>
+                      <p className="text-sm text-foreground">{selectedPatient.initialRecord.mentalStatusExam}</p>
+                    </div>
+                  )}
+
+                  {selectedPatient.initialRecord.initialDiagnosis && (
+                    <div className="border-l-4 border-primary pl-4">
+                      <h3 className="text-sm font-semibold text-primary mb-2">Diagnóstico Inicial</h3>
+                      <p className="text-sm text-foreground">{selectedPatient.initialRecord.initialDiagnosis}</p>
+                    </div>
+                  )}
+
+                  {selectedPatient.initialRecord.treatmentPlan && (
+                    <div className="border-l-4 border-primary pl-4">
+                      <h3 className="text-sm font-semibold text-primary mb-2">Plano de Tratamento</h3>
+                      <p className="text-sm text-foreground">{selectedPatient.initialRecord.treatmentPlan}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </TabsContent>
@@ -487,183 +609,163 @@ const PatientDetail: React.FC = () => {
                 </Button>
               </div>
 
-              <PatientDetailFilters
-                searchTerm={sessionsFilters.searchTerm}
-                onSearchChange={(value) => setSessionsFilters(prev => ({ ...prev, searchTerm: value, currentPage: 1 }))}
-                sortBy={sessionsFilters.sortBy}
-                onSortChange={(value) => setSessionsFilters(prev => ({ ...prev, sortBy: value, currentPage: 1 }))}
-                onClearFilters={() => setSessionsFilters({ searchTerm: "", sortBy: "date", currentPage: 1 })}
-                type="sessions"
-              />
+              <div className="flex flex-col gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Data Início</label>
+                    <Input
+                      type="date"
+                      value={sessionsFilters.dateStart}
+                      onChange={(e) => setSessionsFilters(prev => ({ ...prev, dateStart: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Data Fim</label>
+                    <Input
+                      type="date"
+                      value={sessionsFilters.dateEnd}
+                      onChange={(e) => setSessionsFilters(prev => ({ ...prev, dateEnd: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Abordagem</label>
+                    <Select value={sessionsFilters.approach} onValueChange={(value) => setSessionsFilters(prev => ({ ...prev, approach: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas as abordagens</SelectItem>
+                        <SelectItem value="cognitive">TCC</SelectItem>
+                        <SelectItem value="psychoanalysis">Psicanálise</SelectItem>
+                        <SelectItem value="behavioral">Comportamental</SelectItem>
+                        <SelectItem value="humanistic">Humanista</SelectItem>
+                        <SelectItem value="other">Outra</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2 flex flex-col">
+                    <label className="text-sm font-medium">Humor</label>
+                    <div className="flex gap-2 items-center flex-wrap">
+                      <Select value={sessionsFilters.mood} onValueChange={(value) => setSessionsFilters(prev => ({ ...prev, mood: value }))}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos</SelectItem>
+                          <SelectItem value="1">😞</SelectItem>
+                          <SelectItem value="2">😕</SelectItem>
+                          <SelectItem value="3">😐</SelectItem>
+                          <SelectItem value="4">🙂</SelectItem>
+                          <SelectItem value="5">😊</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="px-3"
+                        onClick={() => setSessionsFilters({ dateStart: "", dateEnd: "", approach: "all", mood: "all" })}
+                      >
+                        <X size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
   
-              {paginatedSessions.length === 0 ? (
+              {filteredSessions.length === 0 ? (
                 <div className="text-center py-12 border border-dashed border-border rounded-lg bg-card">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
                     <Calendar size={24} className="text-muted-foreground" />
                   </div>
-                  <h3 className="text-lg font-medium mb-1">
-                    {sessionsFilters.searchTerm ? "Nenhuma sessão encontrada" : "Ainda sem sessões"}
-                  </h3>
+                  <h3 className="text-lg font-medium mb-1">Nenhuma sessão encontrada</h3>
                   <p className="text-muted-foreground mb-4">
-                    {sessionsFilters.searchTerm 
-                      ? "Tente ajustar os filtros de busca."
-                      : "Nenhum registro de sessão foi criado para este paciente ainda."
-                    }
+                    Tente ajustar os filtros de busca.
                   </p>
-                  {!sessionsFilters.searchTerm && (
-                    <Button onClick={() => setIsNewSessionModalOpen(true)}>
-                      <Plus size={16} className="mr-1" /> Criar primeira sessão
-                    </Button>
-                  )}
+                  <Button onClick={() => setIsNewSessionModalOpen(true)}>
+                    <Plus size={16} className="mr-1" /> Criar sessão
+                  </Button>
                 </div>
               ) : (
-                <>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-                    {paginatedSessions.map((session) => (
-                      <SessionCard 
-                        key={session.id} 
-                        session={session} 
-                        onEdit={() => handleEditSession(session)}
-                        onViewDetails={() => handleViewElectronicRecord(session)}
-                      />
-                    ))}
-                  </div>
-                  
-                  {sessionsTotalPages > 1 && (
-                    <Pagination
-                      currentPage={sessionsFilters.currentPage}
-                      totalPages={sessionsTotalPages}
-                      onPageChange={(page) => setSessionsFilters(prev => ({ ...prev, currentPage: page }))}
-                    />
-                  )}
-                </>
+                <SessionTimeline
+                  sessions={filteredSessions}
+                  onEdit={handleEditSession}
+                  onViewDetails={handleViewElectronicRecord}
+                />
               )}
             </TabsContent>
   
-            <TabsContent value="documents" className="space-y-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <h2 className="text-lg md:text-xl font-semibold">Documentos</h2>
-                <Button onClick={() => setIsDocumentModalOpen(true)} size="sm">
-                  <Upload size={16} className="mr-1" /> Enviar Documento
-                </Button>
-              </div>
 
-              <PatientDetailFilters
-                searchTerm={documentsFilters.searchTerm}
-                onSearchChange={(value) => setDocumentsFilters(prev => ({ ...prev, searchTerm: value, currentPage: 1 }))}
-                sortBy={documentsFilters.sortBy}
-                onSortChange={(value) => setDocumentsFilters(prev => ({ ...prev, sortBy: value, currentPage: 1 }))}
-                filterBy={documentsFilters.filterBy}
-                onFilterChange={(value) => setDocumentsFilters(prev => ({ ...prev, filterBy: value, currentPage: 1 }))}
-                onClearFilters={() => setDocumentsFilters({ searchTerm: "", sortBy: "uploadDate", filterBy: "all", currentPage: 1 })}
-                type="documents"
-              />
-  
-              {paginatedDocuments.length === 0 ? (
-                <div className="text-center py-12 border border-dashed border-border rounded-lg bg-card">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-                    <FileText size={24} className="text-muted-foreground" />
-                  </div>
-                  <h3 className="text-lg font-medium mb-1">
-                    {documentsFilters.searchTerm ? "Nenhum documento encontrado" : "Ainda sem documentos"}
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    {documentsFilters.searchTerm 
-                      ? "Tente ajustar os filtros de busca."
-                      : "Nenhum documento foi enviado para este paciente ainda."
-                    }
-                  </p>
-                  {!documentsFilters.searchTerm && (
-                    <Button onClick={() => setIsDocumentModalOpen(true)}>
-                      <Upload size={16} className="mr-1" /> Enviar primeiro documento
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <>
-                  <div className="bg-card rounded-md shadow overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="min-w-[150px]">Nome</TableHead>
-                            <TableHead>Tipo</TableHead>
-                            <TableHead className="hidden sm:table-cell">Data de Envio</TableHead>
-                            <TableHead className="text-right">Ações</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {paginatedDocuments.map((document) => (
-                            <TableRow key={document.id}>
-                              <TableCell>
-                                <div className="flex items-center">
-                                  <div className="mr-2">
-                                    <FileText size={16} className="text-muted-foreground" />
-                                  </div>
-                                  <div className="text-sm font-medium truncate max-w-[150px] md:max-w-none">{document.name}</div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-muted">
-                                  {document.type}
-                                </span>
-                              </TableCell>
-                              <TableCell className="text-sm text-muted-foreground hidden sm:table-cell">
-                                {formatDate(document.uploadDate)}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-1">
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => handleDownloadDocument(document)}
-                                  >
-                                    <Download size={14} />
-                                  </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-8 w-8 p-0 text-destructive"
-                                    onClick={() => handleDeleteDocument(document)}
-                                  >
-                                    <Trash size={14} />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                  
-                  {documentsTotalPages > 1 && (
-                    <Pagination
-                      currentPage={documentsFilters.currentPage}
-                      totalPages={documentsTotalPages}
-                      onPageChange={(page) => setDocumentsFilters(prev => ({ ...prev, currentPage: page }))}
-                    />
-                  )}
-                </>
-              )}
-            </TabsContent>
-  
             <TabsContent value="financial" className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <h2 className="text-lg md:text-xl font-semibold">Financeiro</h2>
+                <div className="flex gap-2">
+                  <Button onClick={() => setIsPixConfigOpen(true)} size="sm" variant="outline">
+                    <FileDown size={16} className="mr-1" />
+                    <span className="hidden sm:inline">Exportar Relatório</span>
+                  </Button>
+                </div>
               </div>
 
-              <PatientDetailFilters
-                searchTerm={financialFilters.searchTerm}
-                onSearchChange={(value) => setFinancialFilters(prev => ({ ...prev, searchTerm: value, currentPage: 1 }))}
-                sortBy={financialFilters.sortBy}
-                onSortChange={(value) => setFinancialFilters(prev => ({ ...prev, sortBy: value, currentPage: 1 }))}
-                filterBy={financialFilters.filterBy}
-                onFilterChange={(value) => setFinancialFilters(prev => ({ ...prev, filterBy: value, currentPage: 1 }))}
-                onClearFilters={() => setFinancialFilters({ searchTerm: "", sortBy: "date", filterBy: "all", currentPage: 1 })}
-                type="financial"
-              />
+              <div className="flex flex-col gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Data Início</label>
+                    <Input
+                      type="date"
+                      value={financialFilters.dateStart}
+                      onChange={(e) => setFinancialFilters(prev => ({ ...prev, dateStart: e.target.value, currentPage: 1 }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Data Fim</label>
+                    <Input
+                      type="date"
+                      value={financialFilters.dateEnd}
+                      onChange={(e) => setFinancialFilters(prev => ({ ...prev, dateEnd: e.target.value, currentPage: 1 }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Status</label>
+                    <Select value={financialFilters.status} onValueChange={(value) => setFinancialFilters(prev => ({ ...prev, status: value, currentPage: 1 }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os status</SelectItem>
+                        <SelectItem value="paid">Pago</SelectItem>
+                        <SelectItem value="pending">Pendente</SelectItem>
+                        <SelectItem value="cancelled">Cancelado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2 flex flex-col">
+                    <label className="text-sm font-medium">Forma de Pagamento</label>
+                    <div className="flex gap-2">
+                      <Select value={financialFilters.method} onValueChange={(value) => setFinancialFilters(prev => ({ ...prev, method: value, currentPage: 1 }))}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos os métodos</SelectItem>
+                          <SelectItem value="pix">PIX</SelectItem>
+                          <SelectItem value="cash">Dinheiro</SelectItem>
+                          <SelectItem value="creditCard">Cartão de Crédito</SelectItem>
+                          <SelectItem value="debitCard">Cartão de Débito</SelectItem>
+                          <SelectItem value="bankTransfer">Transferência</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="px-3"
+                        onClick={() => setFinancialFilters({ dateStart: "", dateEnd: "", status: "all", method: "all", currentPage: 1 })}
+                      >
+                        <X size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
               
               <Card>
                 <CardContent className="p-4 md:p-6">
@@ -671,17 +773,23 @@ const PatientDetail: React.FC = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead className="w-8"></TableHead>
                           <TableHead>Data</TableHead>
                           <TableHead>Valor</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead className="hidden sm:table-cell">Pagamento</TableHead>
-                          <TableHead className="hidden md:table-cell">Observações</TableHead>
                           <TableHead>Ações</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {paginatedPayments.map((payment) => (
                           <TableRow key={payment.id}>
+                            <TableCell>
+                              <Checkbox 
+                                checked={selectedPaymentIds.has(payment.id)}
+                                onCheckedChange={() => handleTogglePaymentSelection(payment.id)}
+                              />
+                            </TableCell>
                             <TableCell className="text-sm">
                               {new Date(payment.date).toLocaleDateString('pt-BR')}
                             </TableCell>
@@ -689,35 +797,45 @@ const PatientDetail: React.FC = () => {
                               R$ {payment.amount.toFixed(2)}
                             </TableCell>
                             <TableCell>
-                              {getStatusBadge(payment.status)}
+                              <Select value={payment.status} onValueChange={(value) => {
+                                updatePayment(payment.id, { status: value });
+                              }}>
+                                <SelectTrigger className="w-[140px] h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="paid">Pago</SelectItem>
+                                  <SelectItem value="pending">Pendente</SelectItem>
+                                  <SelectItem value="cancelled">Cancelado</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </TableCell>
-                            <TableCell className="hidden sm:table-cell text-sm">
-                              {getPaymentMethodLabel(payment.method)}
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground hidden md:table-cell max-w-[150px] truncate">
-                              {payment.notes || (payment.sessionId ? `Sessão ${payment.sessionId}` : "-")}
+                            <TableCell className="hidden sm:table-cell">
+                              <Select value={payment.method} onValueChange={(value) => {
+                                updatePayment(payment.id, { method: value });
+                              }}>
+                                <SelectTrigger className="w-[160px] h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pix">PIX</SelectItem>
+                                  <SelectItem value="cash">Dinheiro</SelectItem>
+                                  <SelectItem value="creditCard">Cartão de Crédito</SelectItem>
+                                  <SelectItem value="debitCard">Cartão de Débito</SelectItem>
+                                  <SelectItem value="bankTransfer">Transferência</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </TableCell>
                             <TableCell>
-                              <div className="flex gap-1">
-                                {payment.status === "pending" ? (
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => handleConfirmPayment(payment.id)}
-                                  >
-                                    <Check className="h-3 w-3" />
-                                  </Button>
-                                ) : null}
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  className="h-8 w-8 p-0"
-                                  onClick={() => { setSelectedPayment(payment); setIsReceiptModalOpen(true); }}
-                                >
-                                  <Receipt className="h-3 w-3" />
-                                </Button>
-                              </div>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="h-8 px-3"
+                                onClick={() => { setSelectedPayment(payment); setIsReceiptModalOpen(true); }}
+                              >
+                                <Receipt className="h-3 w-3 mr-1" />
+                                <span className="hidden sm:inline text-xs">Recibo</span>
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -728,7 +846,7 @@ const PatientDetail: React.FC = () => {
                   {paginatedPayments.length === 0 && (
                     <div className="text-center py-8">
                       <p className="text-muted-foreground">
-                        {financialFilters.searchTerm ? "Nenhum registro encontrado com os filtros selecionados." : "Nenhum registro financeiro encontrado."}
+                        Nenhum registro financeiro encontrado com os filtros selecionados.
                       </p>
                     </div>
                   )}
@@ -781,6 +899,62 @@ const PatientDetail: React.FC = () => {
             </TabsContent>
           </Tabs>
 
+          <InitialAssessmentModal
+            isOpen={isAssessmentModalOpen}
+            onClose={() => setIsAssessmentModalOpen(false)}
+            patientId={id || ""}
+            initialRecord={selectedPatient.initialRecord}
+          />
+
+          <Dialog open={isPixConfigOpen} onOpenChange={setIsPixConfigOpen}>
+            <DialogContent className="sm:max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Dados do relatório</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Tipo de chave PIX</Label>
+                  <Select value={pixConfig.pixKeyType} onValueChange={(v) => setPixConfig(p => ({ ...p, pixKeyType: v }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CPF">CPF</SelectItem>
+                      <SelectItem value="CNPJ">CNPJ</SelectItem>
+                      <SelectItem value="E-mail">E-mail</SelectItem>
+                      <SelectItem value="Telefone">Telefone</SelectItem>
+                      <SelectItem value="Chave aleatória">Chave aleatória</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Chave PIX</Label>
+                  <Input
+                    value={pixConfig.pixKey}
+                    onChange={(e) => setPixConfig(p => ({ ...p, pixKey: e.target.value }))}
+                    placeholder="Sua chave PIX"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Observação</Label>
+                  <textarea
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+                    rows={3}
+                    value={pixConfig.observation}
+                    onChange={(e) => setPixConfig(p => ({ ...p, observation: e.target.value }))}
+                    placeholder="Ex: João Silva · Nubank · Conta corrente"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setIsPixConfigOpen(false)}>Cancelar</Button>
+                <Button onClick={handleConfirmPdfGeneration}>
+                  <FileDown size={16} className="mr-1" /> Exportar Relatório
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           {editingSession && id && (
             <SessionEditModal
               patientId={id}
@@ -807,18 +981,6 @@ const PatientDetail: React.FC = () => {
             />
           )}
 
-          <DocumentUploadModal
-            isOpen={isDocumentModalOpen}
-            onClose={() => setIsDocumentModalOpen(false)}
-            patientId={id || ""}
-          />
-
-          <InitialAssessmentModal
-            isOpen={isAssessmentModalOpen}
-            onClose={() => setIsAssessmentModalOpen(false)}
-            patientId={id || ""}
-          />
-
           {id && (
             <SessionFormModal
               isOpen={isNewSessionModalOpen}
@@ -842,23 +1004,6 @@ const PatientDetail: React.FC = () => {
               }}
             />
           )}
-
-          <Dialog open={isDeleteDocumentOpen} onOpenChange={setIsDeleteDocumentOpen}>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Confirmar Exclusão</DialogTitle>
-              </DialogHeader>
-              <p>Tem certeza que deseja excluir o documento "{selectedDocument?.name}"? Esta ação não pode ser desfeita.</p>
-              <div className="flex flex-col sm:flex-row justify-end gap-2 mt-4">
-                <Button variant="outline" onClick={() => setIsDeleteDocumentOpen(false)} className="w-full sm:w-auto">
-                  Cancelar
-                </Button>
-                <Button variant="destructive" onClick={confirmDeleteDocument} className="w-full sm:w-auto">
-                  Excluir
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </main>
       </div>
     </div>

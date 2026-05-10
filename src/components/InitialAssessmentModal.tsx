@@ -1,36 +1,48 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { usePatientStore } from "@/stores/patientStore";
+import { InitialRecord } from "@/stores/patientStore";
 
 interface InitialAssessmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   patientId: string;
+  initialRecord?: InitialRecord;
 }
+
+const emptyRecord: InitialRecord = {
+  reasonForConsultation: "",
+  familyHistory: "",
+  medicalHistory: "",
+  previousTreatment: "",
+  mentalStatusExam: "",
+  initialDiagnosis: "",
+  treatmentPlan: ""
+};
 
 const InitialAssessmentModal: React.FC<InitialAssessmentModalProps> = ({
   isOpen,
   onClose,
-  patientId
+  patientId,
+  initialRecord
 }) => {
-  const [assessmentData, setAssessmentData] = useState({
-    reasonForConsultation: "",
-    familyHistory: "",
-    medicalHistory: "",
-    previousTreatment: "",
-    mentalStatusExam: "",
-    initialDiagnosis: "",
-    treatmentPlan: ""
-  });
+  const [assessmentData, setAssessmentData] = useState<InitialRecord>(initialRecord || emptyRecord);
+  const [isSaving, setIsSaving] = useState(false);
+  const { addInitialAssessment } = usePatientStore();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    setAssessmentData(initialRecord || emptyRecord);
+  }, [initialRecord, isOpen]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!assessmentData.reasonForConsultation) {
       toast({
         title: "Campo obrigatório",
@@ -40,12 +52,23 @@ const InitialAssessmentModal: React.FC<InitialAssessmentModalProps> = ({
       return;
     }
 
-    toast({
-      title: "Avaliação salva",
-      description: "A avaliação inicial foi salva com sucesso!"
-    });
-
-    onClose();
+    setIsSaving(true);
+    try {
+      await addInitialAssessment(patientId, assessmentData);
+      toast({
+        title: "Avaliação salva",
+        description: "A avaliação inicial foi salva com sucesso!"
+      });
+      onClose();
+    } catch {
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar a avaliação.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -144,12 +167,12 @@ const InitialAssessmentModal: React.FC<InitialAssessmentModalProps> = ({
           </div>
 
           <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button type="submit" className="w-full sm:w-auto">
+            <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
               <Save className="h-4 w-4 mr-2" />
-              Salvar Avaliação
+              {isSaving ? "Salvando..." : "Salvar Avaliação"}
             </Button>
           </div>
         </form>
