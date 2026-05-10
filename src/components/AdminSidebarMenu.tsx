@@ -94,9 +94,9 @@ const AdminSidebarMenu: React.FC = () => {
                 {item.name === "WhatsApp" && (
                   <div className="flex-shrink-0">
                     {isWhatsAppConnected ? (
-                      <Wifi className="h-4 w-4 text-green-500" title="Conectado" />
+                      <Wifi className="h-4 w-4 text-green-500" aria-label="Conectado" />
                     ) : (
-                      <WifiOff className="h-4 w-4 text-red-500" title="Desconectado" />
+                      <WifiOff className="h-4 w-4 text-red-500" aria-label="Desconectado" />
                     )}
                   </div>
                 )}
