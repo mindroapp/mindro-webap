@@ -56,15 +56,15 @@ const LandingPage: React.FC = () => {
             {/* Hero content */}
             <div className="w-full lg:w-1/2 space-y-4 sm:space-y-6">
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground leading-tight">
-                Plataforma para{" "}
-                <span className="text-primary">Profissionais</span> de Saúde Mental
+                A plataforma completa para{" "}
+                <span className="text-primary">profissionais de saúde mental</span> e cuidado integral
               </h1>
               <p className="text-base sm:text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0">
-                Transforme seu consultório com a plataforma mindro. 
-                Descubra a eficiência do atendimento personalizado e veja sua agenda multiplicar.
+                Psicólogos, psiquiatras, terapeutas, fonoaudiólogos, nutricionistas e toda a equipe
+                multidisciplinar em um só lugar. Tecnologia pensada para o cuidado humano.
               </p>
               <p className="text-sm text-muted-foreground">
-                Pensado e desenvolvido por profissionais de saúde mental para profissionais de saúde mental.
+                Desenvolvida com profissionais de saúde mental, para profissionais que cuidam de pessoas.
               </p>
               
               {/* CTA Buttons - Mobile */}
