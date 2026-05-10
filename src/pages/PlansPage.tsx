@@ -9,258 +9,172 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CheckCircle, X } from "lucide-react";
+import { CheckCircle, Sparkles } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import MarketingLayout from "@/components/layouts/MarketingLayout";
 
-// Função utilitária para calcular o preço anual com desconto global
-const GLOBAL_ANNUAL_DISCOUNT = 0.15; // 15%
-function calculatePriceAnnually(priceMonthly: number, discount: number = GLOBAL_ANNUAL_DISCOUNT): number {
-  return +(priceMonthly * (1 - discount));
-}
+const MONTHLY_PRICE = 49.9;
+const ANNUAL_INSTALLMENT = 45.75;
+const ANNUAL_TOTAL = 549.0;
+const MONTHLY_YEAR_TOTAL = MONTHLY_PRICE * 12;
+const SAVINGS = MONTHLY_YEAR_TOTAL - ANNUAL_TOTAL;
+
+const features = [
+  "Dashboard analítico",
+  "Agendamentos ilimitados com link personalizado",
+  "Lembretes automáticos via WhatsApp Mindro",
+  "Prontuário eletrônico",
+  "Controle de pacotes e recibos",
+];
 
 const PlansPage: React.FC = () => {
   const [billingAnnually, setBillingAnnually] = useState(true);
   const navigate = useNavigate();
 
-  const plans = [
-    {
-      name: "Essencial",
-      description: "Para profissionais iniciantes",
-      priceMonthly: 97,
-      // priceAnnually será calculado dinamicamente
-      features: [
-        "20 agendamentos por mês",
-        "Lembretes automáticos",
-        "Até 30 pacientes ativos",
-        "5 teleconsultas/mês",
-        "Chat seguro até 5 pacientes",
-        "Recibos simples",
-        "Criptografia padrão",
-        "Suporte por email",
-      ],
-      limitations: [],
-      buttonText: "Escolher Plano",
-      buttonVariant: "default",
-      popular: false,
-      color: "green",
-    },
-    {
-      name: "Profissional",
-      description: "Para profissionais estabelecidos",
-      priceMonthly: 189,
-      // priceAnnually será calculado dinamicamente
-      features: [
-        "Agendamento ilimitado",
-        "Lembretes automáticos",
-        "Prontuário eletrônico ilimitado",
-        "20 teleconsultas/mês em HD",
-        "Chat seguro até 30 pacientes",
-        "Controle de pacotes e recibos personalizados",
-        "Segurança avançada com backups",
-        "Suporte por email + chat",
-        "7 dias grátis",
-      ],
-      limitations: [],
-      buttonText: "Escolher Plano",
-      buttonVariant: "default",
-      popular: true,
-      color: "yellow",
-    },
-    {
-      name: "Premium",
-      description: "Para clínicas e profissionais avançados",
-      priceMonthly: 299,
-      // priceAnnually será calculado dinamicamente
-      features: [
-        "Agendamento ilimitado + personalização",
-        "Prontuário ilimitado + backups",
-        "Teleconsulta ilimitada com prioridade",
-        "Chat ilimitado com notificações em tempo real",
-        "Relatórios avançados + integrações",
-        "Criptografia + LGPD + HIPAA",
-        "Suporte prioritário (email, chat, onboarding)",
-        "Acesso a novidades beta",
-        "7 dias grátis",
-      ],
-      limitations: [],
-      buttonText: "Escolher Plano",
-      buttonVariant: "default",
-      popular: false,
-      color: "blue",
-    }
-  ];
-
   const handlePlanSelection = () => {
     navigate("/register");
   };
 
-  const getCardStyle = (color: string, popular: boolean) => {
-    const baseStyle = "flex flex-col transition-all duration-200 hover:shadow-lg";
-    
-    if (popular) {
-      return `${baseStyle} border-yellow-400 shadow-lg relative scale-105`;
-    }
-    
-    switch (color) {
-      case "green":
-        return `${baseStyle} border-green-200 hover:border-green-400`;
-      case "yellow":
-        return `${baseStyle} border-yellow-200 hover:border-yellow-400`;
-      case "blue":
-        return `${baseStyle} border-blue-200 hover:border-blue-400`;
-      default:
-        return baseStyle;
-    }
-  };
-
-  const getIconColor = (color: string) => {
-    switch (color) {
-      case "green":
-        return "text-green-600";
-      case "yellow":
-        return "text-yellow-600";
-      case "blue":
-        return "text-blue-600";
-      default:
-        return "text-green-600";
-    }
-  };
-
-  const getPriceColor = (color: string) => {
-    switch (color) {
-      case "green":
-        return "text-green-700";
-      case "yellow":
-        return "text-yellow-700";
-      case "blue":
-        return "text-blue-700";
-      default:
-        return "text-green-700";
-    }
-  };
-
   return (
     <MarketingLayout>
-      <div className="container mx-auto py-12 px-4 max-w-6xl">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4 text-indigo-700">🧠 Planos da Plataforma para Profissionais de Saúde Mental</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Escolha o plano ideal para sua prática. Com a nossa plataforma, você cuida dos seus pacientes — nós cuidamos do resto.
+      <div className="container mx-auto py-10 sm:py-16 px-4 max-w-3xl">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-3 sm:mb-4 text-foreground">
+            Plano Mindro
+          </h1>
+          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+            Tudo o que você precisa para gerenciar seu consultório em um só lugar.
+            Escolha entre mensal ou anual.
           </p>
 
-          <div className="flex items-center justify-center mt-8 space-x-3">
-            <Label htmlFor="billing-toggle" className={billingAnnually ? "text-gray-500" : "font-medium"}>
-              Pagamento Mensal
+          <div className="flex items-center justify-center mt-6 sm:mt-8 space-x-3">
+            <Label
+              htmlFor="billing-toggle"
+              className={!billingAnnually ? "font-medium" : "text-muted-foreground"}
+            >
+              Mensal
             </Label>
             <Switch
               id="billing-toggle"
               checked={billingAnnually}
               onCheckedChange={setBillingAnnually}
             />
-            <div className="flex flex-col items-start">
-              <Label htmlFor="billing-toggle" className={billingAnnually ? "font-medium" : "text-gray-500"}>
-                Pagamento Anual
+            <div className="flex items-center gap-2">
+              <Label
+                htmlFor="billing-toggle"
+                className={billingAnnually ? "font-medium" : "text-muted-foreground"}
+              >
+                Anual
               </Label>
-              <span className="text-xs text-green-600">💸 Economia de 15%</span>
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                1 mês grátis
+              </Badge>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {plans.map((plan, index) => (
-            <Card 
-              key={index} 
-              className={getCardStyle(plan.color, plan.popular)}
-            >
-              {plan.popular && (
-                <div className="absolute top-0 right-0 bg-yellow-500 text-white px-3 py-1 rounded-bl-lg rounded-tr-lg text-sm font-medium">
-                  🏆 Popular
-                </div>
-              )}
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <div className={`w-4 h-4 rounded-full ${
-                    plan.color === 'green' ? 'bg-green-500' : 
-                    plan.color === 'yellow' ? 'bg-yellow-500' : 'bg-blue-500'
-                  }`}></div>
-                  <CardTitle className="text-xl">{plan.name}</CardTitle>
-                </div>
-                <CardDescription>{plan.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <div className="mb-6">
-                  <p className={`text-4xl font-bold ${getPriceColor(plan.color)}`}>
-                    R$ {billingAnnually ? calculatePriceAnnually(plan.priceMonthly).toFixed(2) : plan.priceMonthly}
-                    <span className="text-base font-normal text-gray-500">/mês</span>
-                  </p>
-                  {billingAnnually && (
-                    <p className="text-sm text-gray-500">
-                      Faturado anualmente como R$ {(calculatePriceAnnually(plan.priceMonthly) * 12).toFixed(2)}
+        <Card className="relative border-primary/30 shadow-xl overflow-hidden">
+          {billingAnnually && (
+            <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-4 py-1.5 rounded-bl-lg text-xs sm:text-sm font-semibold flex items-center gap-1">
+              <Sparkles className="h-3.5 w-3.5" />
+              MAIS POPULAR
+            </div>
+          )}
+
+          <CardHeader className="pt-8">
+            <CardTitle className="text-2xl">
+              {billingAnnually ? "Plano Anual Profissional" : "Plano Essencial"}
+            </CardTitle>
+            <CardDescription>
+              {billingAnnually
+                ? "Pague 11 meses e use por 12"
+                : "Sem fidelidade. Cancele quando quiser."}
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            <div className="mb-6">
+              {billingAnnually ? (
+                <>
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <p className="text-4xl sm:text-5xl font-bold text-primary">
+                      12x R$ {ANNUAL_INSTALLMENT.toFixed(2).replace(".", ",")}
                     </p>
-                  )}
-                </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    ou R$ {ANNUAL_TOTAL.toFixed(2).replace(".", ",")} à vista
+                  </p>
+                  <div className="mt-3 space-y-1 text-sm">
+                    <p className="text-foreground">
+                      🔥 Ganhe <strong>1 mês grátis</strong>
+                    </p>
+                    <p className="text-muted-foreground">
+                      Economize R$ {SAVINGS.toFixed(2).replace(".", ",")} por ano
+                      em relação ao mensal
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-baseline gap-1">
+                    <p className="text-4xl sm:text-5xl font-bold text-foreground">
+                      R$ {MONTHLY_PRICE.toFixed(2).replace(".", ",")}
+                    </p>
+                    <span className="text-base text-muted-foreground">/mês</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Cobrança mensal recorrente
+                  </p>
+                </>
+              )}
+            </div>
 
-                <div className="space-y-3">
-                  {plan.features.map((feature, featureIndex) => (
-                    <div key={featureIndex} className="flex items-start">
-                      <CheckCircle className={`h-5 w-5 ${getIconColor(plan.color)} mr-2 flex-shrink-0 mt-0.5`} />
-                      <span className="text-gray-700">{feature}</span>
-                    </div>
-                  ))}
+            <div className="space-y-3">
+              {features.map((feature, i) => (
+                <div key={i} className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-primary mr-3 flex-shrink-0 mt-0.5" />
+                  <span className="text-foreground text-sm sm:text-base">{feature}</span>
                 </div>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  onClick={handlePlanSelection}
-                  className={`w-full ${
-                    plan.buttonVariant === "default" 
-                      ? plan.color === 'green' 
-                        ? "bg-green-600 hover:bg-green-700" 
-                        : plan.color === 'yellow'
-                        ? "bg-yellow-600 hover:bg-yellow-700"
-                        : "bg-blue-600 hover:bg-blue-700"
-                      : ""
-                  }`}
-                  variant={plan.buttonVariant as "default" | "outline"}
-                >
-                  {plan.buttonText}
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+              ))}
+            </div>
+          </CardContent>
 
-        <div className="mt-16 bg-indigo-50 p-8 rounded-xl">
-          <h2 className="text-2xl font-bold mb-6 text-center text-indigo-700">🎁 Bônus e Condições</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-              <div className="text-2xl mb-2">✅</div>
-              <h3 className="font-medium text-indigo-700 mb-2">7 dias grátis</h3>
-              <p className="text-gray-600 text-sm">No plano Profissional e Premium</p>
-            </div>
-            
-            <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-              <div className="text-2xl mb-2">💸</div>
-              <h3 className="font-medium text-indigo-700 mb-2">15% de desconto</h3>
-              <p className="text-gray-600 text-sm">No pagamento anual</p>
-            </div>
-            
-            <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-              <div className="text-2xl mb-2">🔁</div>
-              <h3 className="font-medium text-indigo-700 mb-2">Flexibilidade total</h3>
-              <p className="text-gray-600 text-sm">Mude de plano quando quiser</p>
-            </div>
-          </div>
-          
-          <div className="text-center">
-            <p className="text-gray-600 mb-4">
-              Comece agora com 7 dias grátis e descubra como podemos transformar sua prática profissional.
+          <CardFooter className="flex-col gap-3">
+            <Button
+              onClick={handlePlanSelection}
+              size="lg"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              {billingAnnually ? "Assinar anual" : "Começar agora"}
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              Acesso completo à plataforma · Suporte incluso
             </p>
+          </CardFooter>
+        </Card>
+
+        {billingAnnually && (
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <p className="text-2xl font-bold text-primary">R$ 549</p>
+              <p className="text-xs text-muted-foreground mt-1">Total no anual</p>
+            </div>
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <p className="text-2xl font-bold text-muted-foreground line-through">
+                R$ {MONTHLY_YEAR_TOTAL.toFixed(2).replace(".", ",")}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">12x no mensal</p>
+            </div>
+            <div className="p-4 bg-primary/10 rounded-lg">
+              <p className="text-2xl font-bold text-primary">
+                R$ {SAVINGS.toFixed(2).replace(".", ",")}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">Economia por ano</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </MarketingLayout>
   );
