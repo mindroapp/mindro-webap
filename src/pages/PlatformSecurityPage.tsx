@@ -1,20 +1,16 @@
-
 import React from "react";
-import { 
-  Shield, 
-  Lock, 
-  KeyRound, 
-  Server, 
+import {
+  Shield,
+  Lock,
+  KeyRound,
+  Server,
   FileCheck,
-  AlertCircle
+  AlertCircle,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
   AccordionContent,
@@ -24,141 +20,97 @@ import {
 import { useNavigate } from "react-router-dom";
 import MarketingLayout from "@/components/layouts/MarketingLayout";
 
+const items = [
+  { title: "Criptografia ponta a ponta", description: "Dados em trânsito e em repouso.", icon: Lock },
+  { title: "2FA", description: "Autenticação em dois fatores.", icon: KeyRound },
+  { title: "Backup diário", description: "Retenção de 30 dias.", icon: Server },
+  { title: "LGPD", description: "Total conformidade.", icon: FileCheck },
+  { title: "Auditoria", description: "Monitoramento de acessos.", icon: AlertCircle },
+  { title: "Certificações", description: "Padrões internacionais.", icon: Shield },
+];
+
 const PlatformSecurityPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const securityFeatures = [
-    {
-      title: "Criptografia de ponta a ponta",
-      description: "Todos os dados são criptografados tanto em trânsito quanto em repouso.",
-      icon: Lock,
-    },
-    {
-      title: "Autenticação de dois fatores",
-      description: "Proteção adicional para acesso à sua conta.",
-      icon: KeyRound,
-    },
-    {
-      title: "Backup diário automático",
-      description: "Seus dados são automaticamente salvos em backup diariamente.",
-      icon: Server,
-    },
-    {
-      title: "Conformidade com LGPD",
-      description: "Plataforma totalmente aderente à Lei Geral de Proteção de Dados.",
-      icon: FileCheck,
-    },
-    {
-      title: "Auditoria de acessos",
-      description: "Monitoramento constante de todos os acessos à plataforma.",
-      icon: AlertCircle,
-    },
-    {
-      title: "Certificações de segurança",
-      description: "Seguimos os mais rigorosos padrões internacionais de segurança.",
-      icon: Shield,
-    }
-  ];
-
   return (
     <MarketingLayout>
-      <div className="container mx-auto py-12 px-4 max-w-6xl">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4 text-indigo-700">Segurança e Privacidade</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Entendemos a sensibilidade dos dados de saúde mental. Nossa plataforma 
-            foi desenvolvida priorizando a segurança e confidencialidade dos dados 
-            dos seus pacientes.
+      <div className="container mx-auto py-10 sm:py-14 px-4 max-w-5xl">
+        <div className="text-center mb-8 sm:mb-12">
+          <Badge variant="secondary" className="mb-3">Segurança</Badge>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
+            Seus dados protegidos.
+          </h1>
+          <p className="text-muted-foreground text-sm sm:text-base max-w-xl mx-auto">
+            Plataforma desenhada com a sensibilidade da saúde mental em mente.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          {securityFeatures.map((feature, index) => (
-            <Card key={index} className="border-2 border-gray-100 hover:border-indigo-200 transition-all">
-              <CardHeader>
-                <div className="bg-indigo-100 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                  <feature.icon className="h-6 w-6 text-indigo-700" />
-                </div>
-                <CardTitle>{feature.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">{feature.description}</p>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-10 sm:mb-14">
+          {items.map((it) => {
+            const Icon = it.icon;
+            return (
+              <Card key={it.title} className="hover:border-primary/40 hover:shadow-sm transition-all">
+                <CardContent className="p-4 sm:p-5 space-y-3">
+                  <div className="inline-flex p-2 rounded-lg bg-primary/10 text-primary">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-semibold">{it.title}</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">{it.description}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
-        <div className="bg-indigo-50 p-8 rounded-xl">
-          <h2 className="text-2xl font-bold mb-6 text-indigo-700">Perguntas Frequentes sobre Segurança</h2>
-          
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="item-1">
-              <AccordionTrigger className="text-left">
-                Como meus dados são protegidos?
-              </AccordionTrigger>
-              <AccordionContent>
-                Utilizamos criptografia AES-256 para todos os dados armazenados e protocolo SSL/TLS 
-                para transmissão de dados. Além disso, implementamos políticas rigorosas de acesso, 
-                com autenticação multifator e monitoramento contínuo.
-              </AccordionContent>
-            </AccordionItem>
+        <Card className="bg-muted/40 border-0">
+          <CardContent className="p-5 sm:p-8">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4">Perguntas frequentes</h2>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="i1">
+                <AccordionTrigger className="text-left text-sm sm:text-base">
+                  Como meus dados são protegidos?
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-muted-foreground">
+                  Criptografia AES-256 em repouso e SSL/TLS em trânsito, com 2FA e monitoramento contínuo.
+                </AccordionContent>
+              </AccordionItem>
 
-            <AccordionItem value="item-2">
-              <AccordionTrigger className="text-left">
-                A plataforma está em conformidade com a LGPD?
-              </AccordionTrigger>
-              <AccordionContent>
-                Sim, nossa plataforma foi desenvolvida seguindo todos os princípios e 
-                requisitos da Lei Geral de Proteção de Dados. Oferecemos ferramentas para 
-                que você possa atender às solicitações de seus pacientes relacionadas aos 
-                direitos garantidos pela lei.
-              </AccordionContent>
-            </AccordionItem>
+              <AccordionItem value="i2">
+                <AccordionTrigger className="text-left text-sm sm:text-base">
+                  Estão em conformidade com a LGPD?
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-muted-foreground">
+                  Sim. Oferecemos ferramentas para atender aos direitos garantidos pela lei.
+                </AccordionContent>
+              </AccordionItem>
 
-            <AccordionItem value="item-3">
-              <AccordionTrigger className="text-left">
-                O que acontece se meu dispositivo for roubado?
-              </AccordionTrigger>
-              <AccordionContent>
-                Você pode desativar imediatamente seu acesso à plataforma através de 
-                qualquer outro dispositivo ou entrando em contato com nosso suporte. 
-                As sessões ativas são automaticamente encerradas após um período de 
-                inatividade e exigem autenticação para novo acesso.
-              </AccordionContent>
-            </AccordionItem>
+              <AccordionItem value="i3">
+                <AccordionTrigger className="text-left text-sm sm:text-base">
+                  E se meu dispositivo for roubado?
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-muted-foreground">
+                  Você pode encerrar sessões remotamente. Sessões expiram por inatividade.
+                </AccordionContent>
+              </AccordionItem>
 
-            <AccordionItem value="item-4">
-              <AccordionTrigger className="text-left">
-                Como são feitos os backups dos dados?
-              </AccordionTrigger>
-              <AccordionContent>
-                Realizamos backups automáticos diários, com retenção de 30 dias. 
-                Todos os backups são criptografados e armazenados em servidores 
-                redundantes localizados em diferentes regiões geográficas.
-              </AccordionContent>
-            </AccordionItem>
+              <AccordionItem value="i4">
+                <AccordionTrigger className="text-left text-sm sm:text-base">
+                  Vocês compartilham dados com terceiros?
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-muted-foreground">
+                  Não para fins comerciais. Apenas serviços operacionais essenciais (pagamentos, notificações).
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </CardContent>
+        </Card>
 
-            <AccordionItem value="item-5">
-              <AccordionTrigger className="text-left">
-                Vocês compartilham dados com terceiros?
-              </AccordionTrigger>
-              <AccordionContent>
-                Não compartilhamos dados de pacientes ou profissionais com terceiros 
-                para fins de marketing ou comerciais. Em casos específicos e sempre com 
-                consentimento prévio, podemos utilizar serviços de terceiros para processamento 
-                de pagamentos ou envio de notificações.
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-
-          <div className="mt-10 text-center">
-            <Button 
-              className="bg-indigo-700 hover:bg-indigo-800 text-white px-8 py-6 text-lg rounded-lg"
-              onClick={() => navigate("/plans")}
-            >
-              Experimente com Segurança
-            </Button>
-          </div>
+        <div className="mt-10 text-center">
+          <Button onClick={() => navigate("/plans")} size="lg" className="gap-2">
+            Experimentar com segurança <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </MarketingLayout>
