@@ -131,7 +131,7 @@ const PublicBooking: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background py-4 sm:py-8 px-4">
-      <div className="max-w-md mx-auto space-y-4 sm:space-y-6">
+      <div className="max-w-lg mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <span className="text-3xl font-bold text-foreground">
@@ -202,7 +202,7 @@ const PublicBooking: React.FC = () => {
                   modifiersClassNames={{
                     available: "!bg-green-100 dark:!bg-green-900/30 !text-green-700 dark:!text-green-400 font-semibold"
                   }}
-                  className="w-full p-0 [&_.rdp-months]:w-full [&_.rdp-month]:w-full [&_table]:w-full [&_.rdp-head_row]:flex [&_.rdp-head_row]:w-full [&_.rdp-head_cell]:flex-1 [&_.rdp-head_cell]:text-sm [&_.rdp-row]:flex [&_.rdp-row]:w-full [&_.rdp-cell]:flex-1 [&_.rdp-cell]:h-12 sm:[&_.rdp-cell]:h-14 [&_.rdp-cell]:p-0 [&_button.rdp-day]:w-full [&_button.rdp-day]:h-full [&_button.rdp-day]:text-base [&_button.rdp-day]:rounded-md [&_.rdp-caption_label]:text-base [&_.rdp-caption_label]:font-semibold"
+                  className="w-full p-0"
                 />
                 <div className="flex items-center justify-center gap-2 mt-3 text-xs text-muted-foreground">
                   <span className="inline-block w-3 h-3 rounded-sm bg-green-100 dark:bg-green-900/30 border border-green-500/30" />
