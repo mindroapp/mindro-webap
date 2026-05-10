@@ -22,15 +22,11 @@ const CARE_IMG =
   "https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=900&q=80";
 const SESSION_IMG =
   "https://images.unsplash.com/photo-1573497620053-ea5300f94f21?auto=format&fit=crop&w=1200&q=80";
-const MIND_IMG =
-  "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=1200&q=80";
-const ZEN_IMG =
-  "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80";
+
 
 const features = [
   { title: "Agenda com IA", icon: Brain, description: "Lembretes e organização automática." },
   { title: "Prontuário", icon: FileText, description: "Registros clínicos seguros." },
-  { title: "Teleconsulta", icon: Video, description: "Atendimento online integrado." },
   { title: "Financeiro", icon: Wallet, description: "Recibos e pacotes em um clique." },
   { title: "LGPD", icon: Shield, description: "Dados criptografados e auditados." },
   { title: "Suporte humano", icon: Headphones, description: "Time real ao seu lado." },
@@ -44,21 +40,17 @@ const LandingPage: React.FC = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-14 items-center">
             <div className="space-y-5 text-center lg:text-left">
-              <Badge variant="secondary" className="gap-1.5">
-                <Sparkles className="h-3 w-3" />
-                Plataforma multiprofissional
-              </Badge>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
-                Cuidar de pessoas <span className="text-primary">sem burocracia</span>.
+                Mais eficiência<br /><span className="text-primary">Mais pacientes</span>
               </h1>
               <p className="text-base sm:text-lg text-muted-foreground max-w-md mx-auto lg:mx-0">
-                Agenda, prontuário, teleconsulta e financeiro em um só lugar.
+                Agenda inteligente, confirmações via WhatsApp, prontuário e financeiro integrados.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 pt-2 justify-center lg:justify-start">
                 <Link to="/register" className="w-full sm:w-auto">
                   <Button size="lg" className="w-full sm:w-auto gap-2">
-                    Começar grátis <ArrowRight className="h-4 w-4" />
+                    Começar agora <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
                 <Link to="/plans" className="w-full sm:w-auto">
@@ -66,12 +58,6 @@ const LandingPage: React.FC = () => {
                     Ver planos
                   </Button>
                 </Link>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-2 pt-2 text-xs sm:text-sm text-muted-foreground">
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-primary" /> Sem cartão</span>
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-primary" /> LGPD</span>
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-primary" /> Cancele quando quiser</span>
               </div>
             </div>
 
@@ -97,25 +83,12 @@ const LandingPage: React.FC = () => {
       <section className="w-full pt-16 sm:pt-20 lg:pt-24 pb-12 sm:pb-16 bg-muted/40">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center max-w-6xl mx-auto">
-            {/* Mosaico de imagens — saúde mental, sessões, bem-estar */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 h-[320px] sm:h-[420px] lg:h-[480px] order-last lg:order-first">
+            <div className="w-full h-[220px] sm:h-[280px] lg:h-[320px] order-last lg:order-first">
               <img
                 src={SESSION_IMG}
                 alt="Sessão de atendimento"
                 loading="lazy"
-                className="col-span-1 row-span-2 h-full w-full object-cover rounded-2xl shadow-lg"
-              />
-              <img
-                src={MIND_IMG}
-                alt="Bem-estar e saúde mental"
-                loading="lazy"
-                className="col-span-1 row-span-1 h-full w-full object-cover rounded-2xl shadow-md"
-              />
-              <img
-                src={ZEN_IMG}
-                alt="Momento de calma e reflexão"
-                loading="lazy"
-                className="col-span-1 row-span-1 h-full w-full object-cover rounded-2xl shadow-md"
+                className="h-full w-full object-cover rounded-2xl shadow-lg"
               />
             </div>
 

@@ -51,9 +51,6 @@ const MarketingLayout: React.FC<MarketingLayoutProps> = ({ children }) => {
             <Link to="/company/contact" className={navLinkClass("/company/contact")}>
               Contato
             </Link>
-            <Link to="/plans" className={navLinkClass("/plans")}>
-              Planos
-            </Link>
 
             <div className="flex items-center space-x-2">
               <Link to="/login">
@@ -148,11 +145,6 @@ const MarketingLayout: React.FC<MarketingLayoutProps> = ({ children }) => {
             <div>
               <h3 className="text-sm font-semibold text-foreground mb-3 sm:mb-4">Plataforma</h3>
               <ul className="space-y-2 text-sm">
-                <li>
-                  <Link to="/platform/resources" className="text-muted-foreground hover:text-primary transition-colors">
-                    Recursos
-                  </Link>
-                </li>
                 <li>
                   <Link to="/platform/security" className="text-muted-foreground hover:text-primary transition-colors">
                     Segurança
