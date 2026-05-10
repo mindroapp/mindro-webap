@@ -157,11 +157,7 @@ const MarketingLayout: React.FC<MarketingLayoutProps> = ({ children }) => {
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
-
-            <Link to="/plans">
-              <Button variant="link" className="text-foreground hover:text-primary">Planos</Button>
-            </Link>
-
+            
             <div className="flex items-center space-x-2">
               <Link to="/login">
                 <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">Entrar</Button>

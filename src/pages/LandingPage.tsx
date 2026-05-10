@@ -151,34 +151,8 @@ const LandingPage: React.FC = () => {
                   );
                 })}
               </ul>
-
-              <div className="mt-8">
-                <Link to="/platform/resources">
-                  <Button variant="outline" className="gap-2">
-                    Ver todos os recursos <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="w-full py-10 sm:py-14">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="bg-primary text-primary-foreground border-0">
-            <CardContent className="p-6 sm:p-10 text-center space-y-4">
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                Comece hoje. Sem cartão.
-              </h2>
-              <Link to="/register" className="inline-block">
-                <Button size="lg" variant="secondary" className="gap-2">
-                  Criar conta grátis <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
         </div>
       </section>
     </MarketingLayout>
