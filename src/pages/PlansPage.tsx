@@ -39,14 +39,11 @@ const PlansPage: React.FC = () => {
 
   return (
     <MarketingLayout>
-      <div className="container mx-auto py-10 sm:py-16 px-4 max-w-3xl">
-        <div className="text-center mb-8 sm:mb-12">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3 sm:mb-4 text-foreground">
-            Plano Mindro
-          </h1>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Tudo o que você precisa para gerenciar seu consultório em um só lugar.
-            Escolha entre mensal ou anual.
+      <div className="container mx-auto py-12 px-4 max-w-6xl">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4 text-indigo-700">🧠 Planos da Plataforma para Profissionais de Saúde Mental</h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Com a nossa plataforma, você cuida dos seus pacientes — nós cuidamos do resto.
           </p>
 
           <div className="flex items-center justify-center mt-6 sm:mt-8 space-x-3">
@@ -154,27 +151,6 @@ const PlansPage: React.FC = () => {
             </p>
           </CardFooter>
         </Card>
-
-        {billingAnnually && (
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-            <div className="p-4 bg-muted/50 rounded-lg">
-              <p className="text-2xl font-bold text-primary">R$ 549</p>
-              <p className="text-xs text-muted-foreground mt-1">Total no anual</p>
-            </div>
-            <div className="p-4 bg-muted/50 rounded-lg">
-              <p className="text-2xl font-bold text-muted-foreground line-through">
-                R$ {MONTHLY_YEAR_TOTAL.toFixed(2).replace(".", ",")}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">12x no mensal</p>
-            </div>
-            <div className="p-4 bg-primary/10 rounded-lg">
-              <p className="text-2xl font-bold text-primary">
-                R$ {SAVINGS.toFixed(2).replace(".", ",")}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Economia por ano</p>
-            </div>
-          </div>
-        )}
       </div>
     </MarketingLayout>
   );

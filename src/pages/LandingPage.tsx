@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import MarketingLayout from "@/components/layouts/MarketingLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Brain, FileText, Video, Wallet, Shield, Headphones } from "lucide-react";
@@ -63,6 +64,20 @@ const LandingPage: React.FC = () => {
               <p className="text-sm text-muted-foreground">
                 Pensado e desenvolvido por profissionais de saúde mental para profissionais de saúde mental.
               </p>
+              
+              {/* CTA Buttons - Mobile */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 justify-center lg:justify-start">
+                <Link to="/register" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground">
+                    Começar agora
+                  </Button>
+                </Link>
+                <Link to="/plans" className="w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10">
+                    Ver Planos
+                  </Button>
+                </Link>
+              </div>
             </div>
             
             {/* Hero image */}

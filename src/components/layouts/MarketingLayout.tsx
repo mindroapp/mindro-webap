@@ -166,9 +166,6 @@ const MarketingLayout: React.FC<MarketingLayoutProps> = ({ children }) => {
               <Link to="/login">
                 <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">Entrar</Button>
               </Link>
-              <Link to="/register">
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Registrar</Button>
-              </Link>
             </div>
 
             <button 
@@ -263,11 +260,6 @@ const MarketingLayout: React.FC<MarketingLayoutProps> = ({ children }) => {
                 <Link to="/login" onClick={closeMenu}>
                   <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
                     Entrar
-                  </Button>
-                </Link>
-                <Link to="/register" onClick={closeMenu}>
-                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                    Registrar
                   </Button>
                 </Link>
               </div>
