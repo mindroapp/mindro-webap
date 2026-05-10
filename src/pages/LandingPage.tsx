@@ -93,7 +93,77 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </section>
-      
+
+      {/* Profissões atendidas */}
+      <section className="w-full py-12 sm:py-16 lg:py-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-12 max-w-3xl mx-auto">
+            <Badge variant="secondary" className="mb-3">Plataforma multiprofissional</Badge>
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 sm:mb-4">
+              Feita para toda a equipe de saúde mental
+            </h2>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              Da clínica individual ao consultório multidisciplinar — a mindro acolhe profissionais
+              dos principais conselhos do Brasil e também áreas complementares de cuidado.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto">
+            <Card className="bg-card">
+              <CardContent className="p-5 sm:p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-2 w-2 rounded-full bg-primary" />
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground">
+                    Profissões principais
+                  </h3>
+                </div>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                  {PROFESSIONS.filter((p) => p.group === "principal").map((p) => (
+                    <li
+                      key={p.value}
+                      className="flex items-start gap-2 text-sm text-muted-foreground"
+                    >
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <span>{p.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card">
+              <CardContent className="p-5 sm:p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-2 w-2 rounded-full bg-secondary-foreground/40" />
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground">
+                    Profissões complementares
+                  </h3>
+                </div>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                  {PROFESSIONS.filter((p) => p.group === "complementar").map((p) => (
+                    <li
+                      key={p.value}
+                      className="flex items-start gap-2 text-sm text-muted-foreground"
+                    >
+                      <CheckCircle2 className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                      <span>{p.label}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs text-muted-foreground mt-4">
+                  Áreas de apoio integradas ao cuidado em saúde mental.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <p className="text-center text-xs text-muted-foreground mt-6 max-w-2xl mx-auto">
+            Cadastros validados pelos principais conselhos do Brasil — CRP, CRM, CREFITO, CRFa,
+            CRESS, COREN, CRN — garantindo segurança e confiança para você e seus pacientes.
+          </p>
+        </div>
+      </section>
+
       {/* Features section */}
       <section className="w-full py-12 sm:py-16 lg:py-20 bg-muted/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
