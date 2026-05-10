@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import MarketingLayout from "@/components/layouts/MarketingLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { Brain, FileText, Video, Wallet, Shield, Headphones } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Brain, FileText, Video, Wallet, Shield, Headphones, CheckCircle2 } from "lucide-react";
+import { PROFESSIONS } from "@/lib/professions";
 
 const features = [
   {
