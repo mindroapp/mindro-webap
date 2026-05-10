@@ -1,22 +1,9 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
-import { Moon, Sun, Menu, X, ChevronDown } from "lucide-react";
+import { Moon, Sun, Menu, X } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 
 interface MarketingLayoutProps {
   children: React.ReactNode;

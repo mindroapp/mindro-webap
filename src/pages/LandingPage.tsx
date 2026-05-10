@@ -97,31 +97,25 @@ const LandingPage: React.FC = () => {
       <section className="w-full pt-16 sm:pt-20 lg:pt-24 pb-12 sm:pb-16 bg-muted/40">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center max-w-6xl mx-auto">
-            {/* Mosaico de imagens — saúde mental, sessões, tecnologia */}
-            <div className="grid grid-cols-6 grid-rows-6 gap-3 sm:gap-4 h-[360px] sm:h-[460px] lg:h-[520px] order-last lg:order-first">
+            {/* Mosaico de imagens — saúde mental, sessões, bem-estar */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 h-[320px] sm:h-[420px] lg:h-[480px] order-last lg:order-first">
               <img
                 src={SESSION_IMG}
                 alt="Sessão de atendimento"
                 loading="lazy"
-                className="col-span-4 row-span-4 h-full w-full object-cover rounded-2xl shadow-lg"
+                className="col-span-1 row-span-2 h-full w-full object-cover rounded-2xl shadow-lg"
               />
               <img
                 src={MIND_IMG}
                 alt="Bem-estar e saúde mental"
                 loading="lazy"
-                className="col-span-2 row-span-3 h-full w-full object-cover rounded-2xl shadow-md"
+                className="col-span-1 row-span-1 h-full w-full object-cover rounded-2xl shadow-md"
               />
               <img
-                src={TECH_IMG}
-                alt="Tecnologia como aliada"
+                src={ZEN_IMG}
+                alt="Momento de calma e reflexão"
                 loading="lazy"
-                className="col-span-2 row-span-3 h-full w-full object-cover rounded-2xl shadow-md"
-              />
-              <img
-                src={CARE_IMG}
-                alt="Cuidado próximo"
-                loading="lazy"
-                className="col-span-4 row-span-2 h-full w-full object-cover rounded-2xl shadow-md"
+                className="col-span-1 row-span-1 h-full w-full object-cover rounded-2xl shadow-md"
               />
             </div>
 
