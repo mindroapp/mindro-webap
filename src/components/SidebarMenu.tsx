@@ -7,8 +7,6 @@ import { useAuth } from "@/context/AuthContext";
 
 const SidebarMenu: React.FC = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  // Mock status do WhatsApp - substituir por dados reais
-  const [whatsappConnected, setWhatsappConnected] = useState(false);
   const navigate = useNavigate();
   const { logout, user } = useAuth();
   // Mock profissional (substituir por dados reais do contexto quando disponível)
@@ -20,8 +18,8 @@ const SidebarMenu: React.FC = () => {
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-    { name: "Pacientes", href: "/patients", icon: Users },
     { name: "Agendamentos", href: "/schedule", icon: Calendar },
+    { name: "Pacientes", href: "/patients", icon: Users },
     { name: "Financeiro", href: "/financial", icon: Wallet },
     { name: "Configurações", href: "/professional-settings", icon: Settings },
     { name: "Suporte", href: "/professional-support", icon: MessageCircle },
@@ -78,19 +76,6 @@ const SidebarMenu: React.FC = () => {
               </div>
             </div>
           )}
-
-          {/* Status WhatsApp */}
-          <div className="px-4 mb-4">
-            <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-muted/50 rounded-md">
-              <Smartphone className="h-4 w-4" />
-              <span className="text-sm font-medium">WhatsApp</span>
-              {whatsappConnected ? (
-                <Badge variant="default" className="bg-green-500 text-xs">Conectado</Badge>
-              ) : (
-                <Badge variant="secondary" className="text-xs">Desconectado</Badge>
-              )}
-            </div>
-          </div>
 
           <nav className="mt-2 flex-1 px-2 space-y-1">
             {navigation.map((item) => (

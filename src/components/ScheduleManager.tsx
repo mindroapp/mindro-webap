@@ -12,6 +12,16 @@ const ScheduleManager: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Estado para configurações da página pública
+  const [publicPageConfig, setPublicPageConfig] = React.useState({
+    pageName: "Consultório Dr. João Silva",
+    address: "",
+    bio: "",
+    instagram: "",
+    color: "#0066FF",
+    logo: null as string | null
+  });
+
   const copyPublicLink = () => {
     const link = `${window.location.origin}/booking/${user?.email}`;
     navigator.clipboard.writeText(link);
@@ -24,6 +34,28 @@ const ScheduleManager: React.FC = () => {
   const openPublicLink = () => {
     const link = `${window.location.origin}/booking/${user?.email}`;
     window.open(link, '_blank');
+  };
+
+  const handleSaveConfig = () => {
+    // Salvar configurações (será integrado com store depois)
+    toast({
+      title: "Configurações salvas",
+      description: "Suas configurações foram atualizadas com sucesso."
+    });
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPublicPageConfig(prev => ({
+          ...prev,
+          logo: reader.result as string
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -54,9 +86,10 @@ const ScheduleManager: React.FC = () => {
 
       {/* Tabs de Gestão */}
       <Tabs defaultValue="agendas" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="agendas">Agendas</TabsTrigger>
           <TabsTrigger value="agendamentos">Agendamentos</TabsTrigger>
+          <TabsTrigger value="configuracoes">Configurações</TabsTrigger>
         </TabsList>
 
         <TabsContent value="agendas" className="mt-6">
@@ -65,6 +98,113 @@ const ScheduleManager: React.FC = () => {
 
         <TabsContent value="agendamentos" className="mt-6">
           <ScheduleAppointmentsView />
+        </TabsContent>
+
+        <TabsContent value="configuracoes" className="mt-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Configurações da Página Pública</h3>
+                  <div className="space-y-4">
+                    {/* Nome da Página */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Nome da Página</label>
+                      <input 
+                        type="text" 
+                        value={publicPageConfig.pageName}
+                        onChange={(e) => setPublicPageConfig(prev => ({ ...prev, pageName: e.target.value }))}
+                        placeholder="Ex: Consultório Dr. João Silva"
+                        className="w-full px-3 py-2 border rounded-md text-sm"
+                      />
+                    </div>
+
+                    {/* Logo */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Logo</label>
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground">Recomendado: 200x200px</p>
+                      {publicPageConfig.logo && (
+                        <img src={publicPageConfig.logo} alt="Preview" className="mt-2 h-20 w-20 rounded-lg object-cover" />
+                      )}
+                    </div>
+
+                    {/* Endereço */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Endereço</label>
+                      <input 
+                        type="text" 
+                        value={publicPageConfig.address}
+                        onChange={(e) => setPublicPageConfig(prev => ({ ...prev, address: e.target.value }))}
+                        placeholder="Rua, número, cidade..."
+                        className="w-full px-3 py-2 border rounded-md text-sm"
+                      />
+                    </div>
+
+                    {/* Bio */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Bio</label>
+                      <textarea 
+                        value={publicPageConfig.bio}
+                        onChange={(e) => setPublicPageConfig(prev => ({ ...prev, bio: e.target.value }))}
+                        placeholder="Conte sobre você, sua experiência..."
+                        rows={4}
+                        className="w-full px-3 py-2 border rounded-md text-sm"
+                      />
+                    </div>
+
+                    {/* Instagram */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Instagram</label>
+                      <input 
+                        type="text" 
+                        value={publicPageConfig.instagram}
+                        onChange={(e) => setPublicPageConfig(prev => ({ ...prev, instagram: e.target.value }))}
+                        placeholder="@seu_usuario"
+                        className="w-full px-3 py-2 border rounded-md text-sm"
+                      />
+                    </div>
+
+                    {/* Paleta de Cores */}
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium">Cor da Página</label>
+                      <div className="flex gap-3">
+                        {[
+                          { name: 'Azul', value: '#0066FF' },
+                          { name: 'Verde', value: '#00B366' },
+                          { name: 'Roxo', value: '#9933FF' },
+                          { name: 'Rosa', value: '#FF1493' },
+                          { name: 'Laranja', value: '#FF8C00' }
+                        ].map(color => (
+                          <button
+                            key={color.value}
+                            onClick={() => setPublicPageConfig(prev => ({ ...prev, color: color.value }))}
+                            className={`w-12 h-12 rounded-lg border-2 transition-all cursor-pointer ${
+                              publicPageConfig.color === color.value 
+                                ? 'border-gray-800 ring-2 ring-offset-2 ring-gray-400' 
+                                : 'border-gray-300 hover:border-gray-500'
+                            }`}
+                            style={{ backgroundColor: color.value }}
+                            title={color.name}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Botão Salvar */}
+                    <Button onClick={handleSaveConfig} className="w-full mt-6">
+                      Salvar Configurações
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

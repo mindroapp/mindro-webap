@@ -29,7 +29,9 @@ export interface AvailabilitySlice {
   publicAppointments: PublicAppointment[];
   addAvailability: (availability: Omit<Availability, "id">) => Promise<void>;
   deleteAvailability: (id: string) => Promise<void>;
+  removeTimeSlot: (availabilityId: string, slotTime: string) => Promise<void>;
   createPublicAppointment: (appointment: Omit<PublicAppointment, "id" | "createdAt" | "status">) => Promise<void>;
+  deletePublicAppointment: (id: string) => Promise<void>;
   getAvailabilitiesByProfessional: (professionalId: string) => Availability[];
   getPublicAppointmentsByProfessional: (professionalId: string) => PublicAppointment[];
 }
@@ -64,6 +66,21 @@ export const createAvailabilitySlice: StateCreator<
     }));
   },
 
+  removeTimeSlot: async (availabilityId, slotTime) => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    set(state => ({
+      availabilities: state.availabilities.map(av => 
+        av.id === availabilityId 
+          ? {
+              ...av,
+              timeSlots: av.timeSlots.filter(slot => slot.time !== slotTime)
+            }
+          : av
+      ),
+    }));
+  },
+
   createPublicAppointment: async (appointmentData) => {
     await new Promise(resolve => setTimeout(resolve, 500));
     
@@ -76,6 +93,14 @@ export const createAvailabilitySlice: StateCreator<
     
     set(state => ({
       publicAppointments: [...state.publicAppointments, newAppointment],
+    }));
+  },
+
+  deletePublicAppointment: async (id) => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    set(state => ({
+      publicAppointments: state.publicAppointments.filter(apt => apt.id !== id),
     }));
   },
 

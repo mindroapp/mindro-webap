@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User, Phone, Video, MessageSquare, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +24,12 @@ const ScheduleAppointmentsView: React.FC = () => {
 
   const today = startOfDay(new Date());
   const professionalAppointments = user ? getPublicAppointmentsByProfessional(user.email) : [];
+
+  // Inicializar selectedDate com a data atual ao carregar
+  useEffect(() => {
+    setSelectedDate(today);
+    setCurrentDate(today);
+  }, []);
 
   // Stats
   const stats = useMemo(() => {

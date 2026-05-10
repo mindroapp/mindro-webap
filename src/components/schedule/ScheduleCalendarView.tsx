@@ -12,7 +12,7 @@ import ScheduleForm from "./ScheduleForm";
 
 const ScheduleCalendarView: React.FC = () => {
   const { user } = useAuth();
-  const { getAvailabilitiesByProfessional, deleteAvailability, publicAppointments } = usePatientStore();
+  const { getAvailabilitiesByProfessional, deleteAvailability, removeTimeSlot, deletePublicAppointment, publicAppointments } = usePatientStore();
   const { toast } = useToast();
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -140,6 +140,35 @@ const ScheduleCalendarView: React.FC = () => {
       toast({
         title: "Erro",
         description: "Erro ao excluir agenda.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteTimeSlot = async (availabilityId: string, slotTime: string) => {
+    try {
+      // Primeiro, delete o agendamento associado a este horário (se houver)
+      const appointmentToDelete = publicAppointments.find(
+        apt => apt.availabilityId === availabilityId && apt.time === slotTime
+      );
+      
+      if (appointmentToDelete) {
+        await deletePublicAppointment(appointmentToDelete.id);
+      }
+
+      // Depois, remova o slot da agenda
+      await removeTimeSlot(availabilityId, slotTime);
+      
+      toast({
+        title: "Horário removido",
+        description: "O horário foi removido da agenda com sucesso."
+      });
+      
+      setConfirmModal({ open: false, type: null });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao remover horário.",
         variant: "destructive"
       });
     }
@@ -421,9 +450,25 @@ const ScheduleCalendarView: React.FC = () => {
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-semibold text-sm sm:text-base">{slot.time}</span>
-                      <Badge variant={isBooked ? "destructive" : "default"} className="text-xs">
-                        {isBooked ? 'Ocupado' : 'Livre'}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={isBooked ? "destructive" : "default"} className="text-xs">
+                          {isBooked ? 'Ocupado' : 'Livre'}
+                        </Badge>
+                        {!isPastDate && (
+                          <button
+                            onClick={() => setConfirmModal({ 
+                              open: true, 
+                              type: 'slot', 
+                              availabilityId: selectedAvailability.id,
+                              slotTime: slot.time 
+                            })}
+                            className="p-1 hover:bg-destructive/10 rounded text-destructive/60 hover:text-destructive transition-colors"
+                            title="Excluir horário"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                     {isBooked && appointment && (
                       <p className="text-xs text-muted-foreground truncate">
@@ -443,11 +488,16 @@ const ScheduleCalendarView: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <Card className="max-w-md w-full">
             <CardHeader>
-              <CardTitle>Confirmar Exclusão</CardTitle>
+              <CardTitle>
+                {confirmModal.type === 'slot' ? 'Confirmar Exclusão de Horário' : 'Confirmar Exclusão'}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                Tem certeza que deseja excluir esta agenda? Esta ação não pode ser desfeita.
+                {confirmModal.type === 'slot' 
+                  ? `Tem certeza que deseja excluir o horário ${confirmModal.slotTime}? Se houver um agendamento para este horário, ele também será removido.`
+                  : 'Tem certeza que deseja excluir esta agenda? Esta ação não pode ser desfeita.'
+                }
               </p>
               <div className="flex gap-3">
                 <Button
@@ -460,10 +510,11 @@ const ScheduleCalendarView: React.FC = () => {
                 <Button
                   variant="destructive"
                   onClick={() => {
-                    if (confirmModal.availabilityId) {
+                    if (confirmModal.type === 'slot' && confirmModal.availabilityId && confirmModal.slotTime) {
+                      handleDeleteTimeSlot(confirmModal.availabilityId, confirmModal.slotTime);
+                    } else if (confirmModal.type === 'schedule' && confirmModal.availabilityId) {
                       handleDeleteSchedule(confirmModal.availabilityId);
                     }
-                    setConfirmModal({ open: false, type: null });
                   }}
                   className="flex-1"
                 >

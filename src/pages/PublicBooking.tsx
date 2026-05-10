@@ -1,28 +1,34 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon, Clock, CheckCircle2, Phone, User as UserIcon } from "lucide-react";
+import { Calendar as CalendarIcon, CheckCircle2, Phone, User as UserIcon } from "lucide-react";
 import { usePatientStore } from "@/stores/patientStore";
 import { useToast } from "@/hooks/use-toast";
-import { format, isBefore, startOfDay } from "date-fns";
+import { format, isBefore, startOfDay, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import InputMask from "react-input-mask";
 
 const PublicBooking: React.FC = () => {
   const { professionalId } = useParams<{ professionalId: string }>();
+  const [step, setStep] = useState<'calendar' | 'time' | 'details'>('calendar');
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState<string>("");
+  const [patientName, setPatientName] = useState("");
   const [patientPhone, setPatientPhone] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   
   const { getAvailabilitiesByProfessional, createPublicAppointment, publicAppointments } = usePatientStore();
   const { toast } = useToast();
 
-  const availabilities = professionalId ? getAvailabilitiesByProfessional(professionalId) : [];
-  const today = startOfDay(new Date());
+  const availabilities = useMemo(() => 
+    professionalId ? getAvailabilitiesByProfessional(professionalId) : [],
+    [professionalId, getAvailabilitiesByProfessional]
+  );
+  const today = useMemo(() => startOfDay(new Date()), []);
   
   // Info do profissional (mock - em produção viria do backend)
   const professionalInfo = {
@@ -45,6 +51,19 @@ const PublicBooking: React.FC = () => {
       })
       .map(av => new Date(av.date));
   }, [availabilities, publicAppointments, today]);
+
+  // Inicializar com o mês que tem disponibilidade
+  useEffect(() => {
+    if (availableDates.length > 0) {
+      const firstMonth = startOfMonth(availableDates[0]);
+      setCurrentMonth(prev => {
+        if (format(prev, "yyyy-MM") !== format(firstMonth, "yyyy-MM")) {
+          return firstMonth;
+        }
+        return prev;
+      });
+    }
+  }, [availableDates]);
   
   const selectedAvailability = selectedDate 
     ? availabilities.find(av => av.date === format(selectedDate, "yyyy-MM-dd"))
@@ -61,13 +80,32 @@ const PublicBooking: React.FC = () => {
     });
   }, [selectedAvailability, publicAppointments]);
 
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    if (date) {
+      setSelectedTime("");
+      setStep('time');
+    }
+  };
+
+  const handleTimeSelect = (time: string) => {
+    setSelectedTime(time);
+    setStep('details');
+  };
+
+  const handleBackToTime = () => {
+    setSelectedTime("");
+    setStep('time');
+  };
+
+  const handleBackToCalendar = () => {
+    setSelectedDate(undefined);
+    setSelectedTime("");
+    setStep('calendar');
+  };
+
   const handleBooking = async () => {
-    if (!selectedDate || !selectedTime || !professionalId || !selectedAvailability || !patientPhone) {
-      toast({
-        title: "Erro",
-        description: "Preencha todos os campos",
-        variant: "destructive"
-      });
+    if (!selectedDate || !selectedTime || !professionalId || !selectedAvailability || !patientPhone || !patientName) {
       return;
     }
 
@@ -76,16 +114,12 @@ const PublicBooking: React.FC = () => {
         availabilityId: selectedAvailability.id,
         date: format(selectedDate, "yyyy-MM-dd"),
         time: selectedTime,
-        patientName: `Paciente ${patientPhone.slice(-4)}`,
+        patientName: patientName,
         patientPhone,
         professionalId
       });
 
       setIsSubmitted(true);
-      toast({
-        title: "Agendamento confirmado!",
-        description: "Você receberá uma confirmação no WhatsApp."
-      });
     } catch (error) {
       toast({
         title: "Erro",
@@ -96,100 +130,112 @@ const PublicBooking: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-lg mx-auto space-y-6">
+    <div className="min-h-screen bg-background py-4 sm:py-8 px-4">
+      <div className="max-w-md mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-2">
           <span className="text-3xl font-bold text-foreground">
             mind<span className="text-primary">ro</span>
           </span>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center gap-3">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <UserIcon className="h-8 w-8 text-primary" />
-                </div>
-                <div className="text-center">
-                  <h2 className="text-xl font-bold">{professionalInfo.name}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {professionalInfo.profession} / {professionalInfo.registration}
-                  </p>
-                  <p className="text-sm text-muted-foreground flex items-center justify-center gap-1 mt-1">
-                    <Phone className="h-3 w-3" />
-                    {professionalInfo.phone}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        </div>
+
+        {/* Professional Info */}
+        <div className="text-center space-y-2">
+          <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+            <UserIcon className="h-7 w-7 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold">{professionalInfo.name}</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              {professionalInfo.profession} / {professionalInfo.registration}
+            </p>
+            <p className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1 mt-1">
+              <Phone className="h-3 w-3" />
+              {professionalInfo.phone}
+            </p>
+          </div>
         </div>
 
         {isSubmitted ? (
-          <Card>
-            <CardContent className="pt-8 text-center space-y-4">
-              <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Agendamento Confirmado!</h3>
-                <p className="text-muted-foreground">
-                  {selectedDate && format(selectedDate, "dd/MM/yyyy")} às {selectedTime}
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Confirmação enviada para {patientPhone}
-                </p>
-              </div>
-              <Button onClick={() => {
-                setIsSubmitted(false);
-                setSelectedDate(undefined);
-                setSelectedTime("");
-                setPatientPhone("");
-              }} variant="outline">
-                Novo Agendamento
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="text-center space-y-4 py-8 sm:py-12">
+            <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
+            <div>
+              <h3 className="text-lg sm:text-xl font-semibold mb-2">Agendamento Criado!</h3>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                {selectedDate && format(selectedDate, "dd/MM/yyyy")} às {selectedTime}
+              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+                Confirmação enviada para {patientPhone}
+              </p>
+            </div>
+            <Button onClick={() => {
+              setIsSubmitted(false);
+              setSelectedDate(undefined);
+              setSelectedTime("");
+              setPatientName("");
+              setPatientPhone("");
+              setStep('calendar');
+            }} variant="outline" className="w-full">
+              Novo Agendamento
+            </Button>
+          </div>
         ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <CalendarIcon className="h-5 w-5" />
-                Agendar Consulta
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Calendário */}
-              <div className="flex justify-center">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => {
-                    setSelectedDate(date);
-                    setSelectedTime("");
-                  }}
-                  locale={ptBR}
-                  disabled={(date) => {
-                    const isBeforeToday = isBefore(date, today);
-                    const hasAvailability = availableDates.some(d => 
-                      format(d, "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
-                    );
-                    return isBeforeToday || !hasAvailability;
-                  }}
-                  className="rounded-md border"
-                />
+          <div className="space-y-4 sm:space-y-6">
+            {/* STEP 1: CALENDÁRIO */}
+            {step === 'calendar' && (
+              <div className="flex justify-center items-center w-full">
+                <div className="w-full flex justify-center">
+                  <div className="inline-flex">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={handleDateSelect}
+                      month={currentMonth}
+                      onMonthChange={setCurrentMonth}
+                      locale={ptBR}
+                      disabled={(date) => {
+                        const isBeforeToday = isBefore(date, today);
+                        const hasAvailability = availableDates.some(d => 
+                          format(d, "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
+                        );
+                        return isBeforeToday || !hasAvailability;
+                      }}
+                      modifiers={{
+                        available: availableDates
+                      }}
+                      modifiersClassNames={{
+                        available: "!bg-green-100 dark:!bg-green-900/30 !text-green-700 dark:!text-green-400 font-semibold"
+                      }}
+                      className="[&_table]:w-full [&_button]:aspect-square [&_button]:p-0 [&_.rdp-head_button]:h-6 [&_.rdp-head_button]:text-xs [&_.rdp-nav]:justify-center [&_.rdp-nav_button]:h-6 [&_.rdp-nav_button]:w-6 [&_.rdp-nav_button]:p-0 [&_.rdp-nav_button_previous]:order-first [&_.rdp-nav_button_next]:order-last"
+                    />
+                  </div>
+                </div>
               </div>
+            )}
 
-              {/* Horários */}
-              {selectedDate && (
+            {/* STEP 2: HORÁRIOS */}
+            {step === 'time' && selectedDate && (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <p className="text-sm sm:text-base text-muted-foreground mb-2">
+                    Data selecionada:
+                  </p>
+                  <p className="text-lg sm:text-xl font-semibold capitalize">
+                    {format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                  </p>
+                </div>
+
                 <div className="space-y-3">
-                  <Label>Horário</Label>
+                  <Label className="text-base sm:text-lg font-semibold">Selecionar Horário</Label>
                   {availableTimeSlots.length > 0 ? (
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
                       {availableTimeSlots.map(slot => (
                         <Button
                           key={slot.time}
                           variant={selectedTime === slot.time ? "default" : "outline"}
-                          onClick={() => setSelectedTime(slot.time)}
+                          onClick={() => handleTimeSelect(slot.time)}
                           size="sm"
+                          className="text-xs sm:text-sm"
                         >
                           {slot.time}
                         </Button>
@@ -201,29 +247,78 @@ const PublicBooking: React.FC = () => {
                     </p>
                   )}
                 </div>
-              )}
 
-              {/* WhatsApp */}
-              {selectedDate && selectedTime && (
-                <div className="space-y-3">
-                  <Label htmlFor="phone">Seu WhatsApp</Label>
-                  <Input
-                    id="phone"
-                    value={patientPhone}
-                    onChange={(e) => setPatientPhone(e.target.value)}
-                    placeholder="(00) 00000-0000"
-                  />
-                  <Button 
-                    onClick={handleBooking}
-                    className="w-full"
-                    disabled={!patientPhone}
-                  >
-                    Confirmar Agendamento
-                  </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleBackToCalendar}
+                  className="w-full"
+                >
+                  Voltar para Calendário
+                </Button>
+              </div>
+            )}
+
+            {/* STEP 3: DADOS E CONFIRMAÇÃO */}
+            {step === 'details' && selectedDate && selectedTime && (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <p className="text-sm sm:text-base text-muted-foreground mb-2">
+                    Agendamento confirmado para:
+                  </p>
+                  <p className="text-base sm:text-lg font-semibold">
+                    {format(selectedDate, "dd/MM/yyyy")} às {selectedTime}
+                  </p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-base sm:text-lg font-semibold">WhatsApp</Label>
+                    <InputMask
+                      mask="(99) 99999-9999"
+                      value={patientPhone}
+                      onChange={(e) => setPatientPhone(e.target.value)}
+                    >
+                      {(inputProps: any) => (
+                        <Input
+                          {...inputProps}
+                          id="phone"
+                          placeholder="(11) 99999-9999"
+                          className="text-base"
+                        />
+                      )}
+                    </InputMask>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-base sm:text-lg font-semibold">Nome Completo</Label>
+                    <Input
+                      id="name"
+                      value={patientName}
+                      onChange={(e) => setPatientName(e.target.value)}
+                      placeholder="Seu nome completo"
+                      className="text-base"
+                    />
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={handleBooking}
+                  className="w-full text-base sm:text-lg py-2 sm:py-3"
+                  disabled={!patientPhone || !patientName}
+                >
+                  Criar Agendamento
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={handleBackToTime}
+                  className="w-full"
+                >
+                  Voltar para Horário
+                </Button>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
