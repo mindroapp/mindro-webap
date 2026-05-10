@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import MarketingLayout from "@/components/layouts/MarketingLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Brain, FileText, Video, Wallet, Shield, Headphones } from "lucide-react";
@@ -58,31 +57,12 @@ const LandingPage: React.FC = () => {
                 <span className="text-primary">Profissionais</span> de Saúde Mental
               </h1>
               <p className="text-base sm:text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0">
-                Simplifique a gestão do seu consultório com nossa plataforma completa. 
-                Agendamentos, prontuário eletrônico, teleconsultas e muito mais.
+                Transforme seu consultório com a plataforma mindro. 
+                Descubra a eficiência do atendimento personalizado e veja sua agenda multiplicar.
               </p>
               <p className="text-sm text-muted-foreground">
-                Especialmente desenvolvido para Psicólogos, Psicanalistas, Terapeutas e Neuropsicólogos.
+                Pensado e desenvolvido por profissionais de saúde mental para profissionais de saúde mental.
               </p>
-              <div className="flex flex-wrap justify-center lg:justify-start gap-2 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1">✅ Agendamento inteligente com IA</span>
-                <span className="inline-flex items-center gap-1">✅ WhatsApp integrado</span>
-                <span className="inline-flex items-center gap-1">✅ Sem burocracia</span>
-              </div>
-              
-              {/* CTA Buttons - Mobile */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4 justify-center lg:justify-start">
-                <Link to="/register" className="w-full sm:w-auto">
-                  <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground">
-                    Começar Grátis
-                  </Button>
-                </Link>
-                <Link to="/plans" className="w-full sm:w-auto">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10">
-                    Ver Planos
-                  </Button>
-                </Link>
-              </div>
             </div>
             
             {/* Hero image */}
@@ -135,38 +115,6 @@ const LandingPage: React.FC = () => {
               );
             })}
           </div>
-        </div>
-      </section>
-      
-      {/* Call to action */}
-      <section className="w-full py-12 sm:py-16 lg:py-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="p-6 sm:p-8 md:p-12">
-              <div className="text-center space-y-4 sm:space-y-6">
-                <h2 className="text-2xl sm:text-3xl font-bold text-primary">
-                  Comece hoje mesmo
-                </h2>
-                <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base px-4">
-                  Descubra como a mindro pode transformar sua prática profissional com 
-                  7 dias grátis em qualquer plano, sem necessidade de cartão de crédito.
-                </p>
-                
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-4">
-                  <Link to="/plans" className="w-full sm:w-auto">
-                    <Button size="lg" variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10">
-                      Ver Planos
-                    </Button>
-                  </Link>
-                  <Link to="/register" className="w-full sm:w-auto">
-                    <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground">
-                      Cadastrar Grátis
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </section>
     </MarketingLayout>

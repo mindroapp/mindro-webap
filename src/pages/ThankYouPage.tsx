@@ -10,7 +10,6 @@ const ThankYouPage: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Pegar o nome do state passado durante o cadastro
     if (location.state?.firstName) {
       setFirstName(location.state.firstName);
     }
@@ -59,7 +58,8 @@ const ThankYouPage: React.FC = () => {
 
               <div className="border-t pt-4">
                 <p className="text-sm text-gray-500 italic">
-                  "Esta será uma parceria de sucesso, {firstName}! Juntos, vamos transformar sua prática profissional."
+                  Esta será uma parceria de sucesso, {firstName}! 
+                  Juntos, vamos transformar sua prática profissional.
                 </p>
               </div>
             </div>
@@ -68,12 +68,6 @@ const ThankYouPage: React.FC = () => {
               <Link to="/" className="block">
                 <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
                   Voltar ao Site
-                </Button>
-              </Link>
-              
-              <Link to="/login" className="block">
-                <Button variant="outline" className="w-full">
-                  Já tenho conta? Fazer Login
                 </Button>
               </Link>
             </div>
