@@ -183,32 +183,30 @@ const PublicBooking: React.FC = () => {
           <div className="space-y-4 sm:space-y-6">
             {/* STEP 1: CALENDÁRIO */}
             {step === 'calendar' && (
-              <div className="flex justify-center items-center w-full">
-                <div className="w-full flex justify-center">
-                  <div className="inline-flex">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={handleDateSelect}
-                      month={currentMonth}
-                      onMonthChange={setCurrentMonth}
-                      locale={ptBR}
-                      disabled={(date) => {
-                        const isBeforeToday = isBefore(date, today);
-                        const hasAvailability = availableDates.some(d => 
-                          format(d, "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
-                        );
-                        return isBeforeToday || !hasAvailability;
-                      }}
-                      modifiers={{
-                        available: availableDates
-                      }}
-                      modifiersClassNames={{
-                        available: "!bg-green-100 dark:!bg-green-900/30 !text-green-700 dark:!text-green-400 font-semibold"
-                      }}
-                      className="[&_table]:w-full [&_button]:aspect-square [&_button]:p-0 [&_.rdp-head_button]:h-6 [&_.rdp-head_button]:text-xs [&_.rdp-nav]:justify-center [&_.rdp-nav_button]:h-6 [&_.rdp-nav_button]:w-6 [&_.rdp-nav_button]:p-0 [&_.rdp-nav_button_previous]:order-first [&_.rdp-nav_button_next]:order-last"
-                    />
-                  </div>
+              <div className="w-full bg-card border rounded-xl p-3 sm:p-4 shadow-sm">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  month={currentMonth}
+                  onMonthChange={setCurrentMonth}
+                  locale={ptBR}
+                  disabled={(date) => {
+                    const isBeforeToday = isBefore(date, today);
+                    const hasAvailability = availableDates.some(d =>
+                      format(d, "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
+                    );
+                    return isBeforeToday || !hasAvailability;
+                  }}
+                  modifiers={{ available: availableDates }}
+                  modifiersClassNames={{
+                    available: "!bg-green-100 dark:!bg-green-900/30 !text-green-700 dark:!text-green-400 font-semibold"
+                  }}
+                  className="w-full p-0 [&_.rdp-months]:w-full [&_.rdp-month]:w-full [&_table]:w-full [&_.rdp-head_row]:flex [&_.rdp-head_row]:w-full [&_.rdp-head_cell]:flex-1 [&_.rdp-head_cell]:text-sm [&_.rdp-row]:flex [&_.rdp-row]:w-full [&_.rdp-cell]:flex-1 [&_.rdp-cell]:h-12 sm:[&_.rdp-cell]:h-14 [&_.rdp-cell]:p-0 [&_button.rdp-day]:w-full [&_button.rdp-day]:h-full [&_button.rdp-day]:text-base [&_button.rdp-day]:rounded-md [&_.rdp-caption_label]:text-base [&_.rdp-caption_label]:font-semibold"
+                />
+                <div className="flex items-center justify-center gap-2 mt-3 text-xs text-muted-foreground">
+                  <span className="inline-block w-3 h-3 rounded-sm bg-green-100 dark:bg-green-900/30 border border-green-500/30" />
+                  Datas com horários disponíveis
                 </div>
               </div>
             )}
