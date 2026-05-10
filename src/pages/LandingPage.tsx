@@ -20,14 +20,20 @@ const HERO_IMG =
   "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=1200&q=80";
 const CARE_IMG =
   "https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=900&q=80";
+const SESSION_IMG =
+  "https://images.unsplash.com/photo-1573497620053-ea5300f94f21?auto=format&fit=crop&w=1200&q=80";
+const TECH_IMG =
+  "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80";
+const MIND_IMG =
+  "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=1200&q=80";
 
 const features = [
-  { title: "Agenda com IA", icon: Brain },
-  { title: "Prontuário", icon: FileText },
-  { title: "Teleconsulta", icon: Video },
-  { title: "Financeiro", icon: Wallet },
-  { title: "LGPD", icon: Shield },
-  { title: "Suporte humano", icon: Headphones },
+  { title: "Agenda com IA", icon: Brain, description: "Lembretes e organização automática." },
+  { title: "Prontuário", icon: FileText, description: "Registros clínicos seguros." },
+  { title: "Teleconsulta", icon: Video, description: "Atendimento online integrado." },
+  { title: "Financeiro", icon: Wallet, description: "Recibos e pacotes em um clique." },
+  { title: "LGPD", icon: Shield, description: "Dados criptografados e auditados." },
+  { title: "Suporte humano", icon: Headphones, description: "Time real ao seu lado." },
 ];
 
 const LandingPage: React.FC = () => {
@@ -87,33 +93,73 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Features compactos */}
-      <section className="w-full py-10 sm:py-14 bg-muted/40">
+      {/* Features — sem cards, lado a lado com mosaico de imagens */}
+      <section className="w-full pt-16 sm:pt-20 lg:pt-24 pb-12 sm:pb-16 bg-muted/40">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-6 sm:mb-8 max-w-xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Tudo num só lugar.
-            </h2>
-          </div>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 max-w-4xl mx-auto">
-            {features.map((f) => {
-              const Icon = f.icon;
-              return (
-                <Card key={f.title} className="text-center hover:border-primary/40 hover:shadow-sm transition-all">
-                  <CardContent className="p-3 sm:p-4 flex flex-col items-center gap-2">
-                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                      <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                    </div>
-                    <span className="text-[11px] sm:text-xs font-medium leading-tight">{f.title}</span>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-          <div className="text-center mt-6">
-            <Link to="/platform/resources" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
-              Ver todos os recursos <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center max-w-6xl mx-auto">
+            {/* Mosaico de imagens — saúde mental, sessões, tecnologia */}
+            <div className="grid grid-cols-6 grid-rows-6 gap-3 sm:gap-4 h-[360px] sm:h-[460px] lg:h-[520px] order-last lg:order-first">
+              <img
+                src={SESSION_IMG}
+                alt="Sessão de atendimento"
+                loading="lazy"
+                className="col-span-4 row-span-4 h-full w-full object-cover rounded-2xl shadow-lg"
+              />
+              <img
+                src={MIND_IMG}
+                alt="Bem-estar e saúde mental"
+                loading="lazy"
+                className="col-span-2 row-span-3 h-full w-full object-cover rounded-2xl shadow-md"
+              />
+              <img
+                src={TECH_IMG}
+                alt="Tecnologia como aliada"
+                loading="lazy"
+                className="col-span-2 row-span-3 h-full w-full object-cover rounded-2xl shadow-md"
+              />
+              <img
+                src={CARE_IMG}
+                alt="Cuidado próximo"
+                loading="lazy"
+                className="col-span-4 row-span-2 h-full w-full object-cover rounded-2xl shadow-md"
+              />
+            </div>
+
+            {/* Lista de recursos sem cards */}
+            <div>
+              <Badge variant="secondary" className="mb-3">Recursos</Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
+                Tudo num só lugar.
+              </h2>
+              <p className="text-muted-foreground mb-8 max-w-md">
+                Tecnologia que cuida de você enquanto você cuida de quem precisa.
+              </p>
+
+              <ul className="divide-y divide-border/60">
+                {features.map((f) => {
+                  const Icon = f.icon;
+                  return (
+                    <li key={f.title} className="flex items-start gap-4 py-4">
+                      <div className="shrink-0 p-2.5 rounded-lg bg-primary/10 text-primary">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-base leading-tight">{f.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-0.5">{f.description}</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <div className="mt-8">
+                <Link to="/platform/resources">
+                  <Button variant="outline" className="gap-2">
+                    Ver todos os recursos <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
