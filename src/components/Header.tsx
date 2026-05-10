@@ -96,28 +96,6 @@ const Header: React.FC = () => {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
 
-              {isAdmin ? (
-                <>
-                  {adminLinks.map((link) => (
-                    <DropdownMenuItem key={link.href} onClick={() => navigate(link.href)}>
-                      <link.icon className="mr-2 h-4 w-4" />
-                      <span>{link.name}</span>
-                    </DropdownMenuItem>
-                  ))}
-                  <DropdownMenuSeparator />
-                </>
-              ) : (
-                <>
-                  {professionalLinks.map((link) => (
-                    <DropdownMenuItem key={link.href} onClick={() => navigate(link.href)}>
-                      <link.icon className="mr-2 h-4 w-4" />
-                      <span>{link.name}</span>
-                    </DropdownMenuItem>
-                  ))}
-                  <DropdownMenuSeparator />
-                </>
-              )}
-              
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Sair</span>

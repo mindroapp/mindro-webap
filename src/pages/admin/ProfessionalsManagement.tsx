@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Eye, CheckCircle, XCircle, Pause, Play, Search, Edit, FileText, AlertTriangle } from "lucide-react";
+import { Eye, CheckCircle, XCircle, Pause, Play, Search, Edit, FileText, AlertTriangle, MessageCircle, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import ProfessionalEditModal from "@/components/ProfessionalEditModal";
@@ -22,8 +22,8 @@ const pendingProfessionals = [
     phone: "(85) 9 9999-9999",
     profession: "Psicólogo",
     registration: "CRP 11/12345",
-    requestDate: "2024-01-15",
-    documents: ["diploma.pdf", "crp.pdf", "identidade.pdf"]
+    requestDate: "2024-01-15 14:30",
+    documents: ["diploma.jpg", "registro.png"]
   },
   {
     id: 2,
@@ -32,8 +32,8 @@ const pendingProfessionals = [
     phone: "(85) 9 8888-8888",
     profession: "Psicanalista",
     registration: "CFP 12345",
-    requestDate: "2024-01-14",
-    documents: ["diploma.pdf", "cfp.pdf", "comprovante_residencia.pdf"]
+    requestDate: "2024-01-14 09:15",
+    documents: ["diploma.jpg", "registro.png", "identidade.jpg"]
   }
 ];
 
@@ -47,7 +47,8 @@ const activeProfessionals = [
     registration: "CRP 11/54321",
     status: "Ativo",
     joinDate: "2023-12-01",
-    plan: "Profissional"
+    plan: "Profissional",
+    documents: ["diploma.jpg", "registro.png", "identidade.jpg"]
   },
   {
     id: 4,
@@ -58,7 +59,8 @@ const activeProfessionals = [
     registration: "CRT 98765",
     status: "Suspenso",
     joinDate: "2023-11-15",
-    plan: "Básico"
+    plan: "Básico",
+    documents: ["diploma.jpg", "registro.png"]
   },
   {
     id: 5,
@@ -69,9 +71,35 @@ const activeProfessionals = [
     registration: "CRP 11/67890",
     status: "Ativo",
     joinDate: "2023-10-20",
-    plan: "Premium"
+    plan: "Premium",
+    documents: ["diploma.jpg", "registro.png", "identidade.jpg"]
   }
 ];
+
+// Função para formatar datas para dd/mm/yyyy
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+// Função para formatar data e hora para dd/mm/yyyy hh:mm
+const formatDateTime = (dateTimeString: string): string => {
+  const [datePart, timePart] = dateTimeString.split(' ');
+  const date = new Date(datePart);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year} ${timePart}`;
+};
+
+// Função para abrir WhatsApp
+const openWhatsApp = (phone: string) => {
+  const cleanPhone = phone.replace(/\D/g, '');
+  window.open(`https://wa.me/${cleanPhone}`, '_blank');
+};
 
 const ProfessionalsManagement: React.FC = () => {
   const [selectedProfessional, setSelectedProfessional] = useState<any>(null);
@@ -79,10 +107,10 @@ const ProfessionalsManagement: React.FC = () => {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
   const [activateDialogOpen, setActivateDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [professionFilter, setProfessionFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const { toast } = useToast();
 
@@ -122,16 +150,35 @@ const ProfessionalsManagement: React.FC = () => {
     });
   };
 
+  const handleDeleteProfessional = (id: number) => {
+    console.log("Excluir profissional:", id);
+    setDeleteDialogOpen(false);
+    toast({
+      title: "Profissional excluído",
+      description: "O profissional foi removido do sistema."
+    });
+  };
+
+  const handleRequestDocuments = (phone: string, missingDocs: string[]) => {
+    const message = `Olá ${selectedProfessional?.name}, detectamos que os seguintes documentos estão faltando no seu cadastro: ${missingDocs.join(", ")}. Por favor, adicione-os na plataforma o quanto antes.`;
+    const cleanPhone = phone.replace(/\D/g, '');
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    toast({
+      title: "Solicitação enviada",
+      description: "Mensagem enviada via WhatsApp com sucesso."
+    });
+  };
+
   const filteredActiveProfessionals = activeProfessionals.filter((professional) => {
     const matchesSearch = 
       professional.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
       professional.profession.toLowerCase().includes(searchTerm.toLowerCase()) ||
       professional.registration.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesProfession = professionFilter === "all" || professional.profession === professionFilter;
     const matchesStatus = statusFilter === "all" || professional.status === statusFilter;
     
-    return matchesSearch && matchesProfession && matchesStatus;
+    return matchesSearch && matchesStatus;
   });
 
   const filteredPendingProfessionals = pendingProfessionals.filter((professional) => {
@@ -140,9 +187,7 @@ const ProfessionalsManagement: React.FC = () => {
       professional.profession.toLowerCase().includes(searchTerm.toLowerCase()) ||
       professional.registration.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesProfession = professionFilter === "all" || professional.profession === professionFilter;
-    
-    return matchesSearch && matchesProfession;
+    return matchesSearch;
   });
 
   const ViewDetailsDialog = ({ professional, trigger }: { professional: any; trigger: React.ReactNode }) => (
@@ -178,8 +223,8 @@ const ProfessionalsManagement: React.FC = () => {
             </div>
             {professional?.requestDate && (
               <div>
-                <label className="font-semibold text-sm">Data da Solicitação:</label>
-                <p className="text-sm">{professional.requestDate}</p>
+                <label className="font-semibold text-sm">Data/Hora Cadastro:</label>
+                <p className="text-sm">{formatDateTime(professional.requestDate)}</p>
               </div>
             )}
             {professional?.status && (
@@ -245,28 +290,16 @@ const ProfessionalsManagement: React.FC = () => {
                   className="pl-10"
                 />
               </div>
-              <Select value={professionFilter} onValueChange={setProfessionFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Filtrar por profissão" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as profissões</SelectItem>
-                  <SelectItem value="Psicólogo">Psicólogo</SelectItem>
-                  <SelectItem value="Psicanalista">Psicanalista</SelectItem>
-                  <SelectItem value="Terapeuta">Terapeuta</SelectItem>
-                  <SelectItem value="Neuropsicólogo">Neuropsicólogo</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
 
         <Tabs defaultValue="requests" className="space-y-4">
-          <TabsList className="w-full md:w-auto">
-            <TabsTrigger value="requests" className="flex-1 md:flex-none">
+          <TabsList className="w-full grid grid-cols-2 gap-0">
+            <TabsTrigger value="requests" className="flex-1">
               Solicitações ({filteredPendingProfessionals.length})
             </TabsTrigger>
-            <TabsTrigger value="active" className="flex-1 md:flex-none">
+            <TabsTrigger value="active" className="flex-1">
               Ativos ({filteredActiveProfessionals.length})
             </TabsTrigger>
           </TabsList>
@@ -286,7 +319,7 @@ const ProfessionalsManagement: React.FC = () => {
                         <TableHead className="hidden lg:table-cell">Telefone</TableHead>
                         <TableHead>Profissão</TableHead>
                         <TableHead className="hidden sm:table-cell">Registro</TableHead>
-                        <TableHead className="hidden lg:table-cell">Data</TableHead>
+                        <TableHead className="hidden lg:table-cell">Data/Hora Cadastro</TableHead>
                         <TableHead>Ações</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -295,20 +328,32 @@ const ProfessionalsManagement: React.FC = () => {
                         <TableRow key={professional.id}>
                           <TableCell className="font-medium">{professional.name}</TableCell>
                           <TableCell className="hidden md:table-cell">{professional.email}</TableCell>
-                          <TableCell className="hidden lg:table-cell">{professional.phone}</TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            <button
+                              onClick={() => openWhatsApp(professional.phone)}
+                              className="text-blue-600 hover:text-blue-800 hover:underline"
+                              title="Abrir WhatsApp"
+                            >
+                              {professional.phone}
+                            </button>
+                          </TableCell>
                           <TableCell>{professional.profession}</TableCell>
                           <TableCell className="hidden sm:table-cell">{professional.registration}</TableCell>
-                          <TableCell className="hidden lg:table-cell">{professional.requestDate}</TableCell>
+                          <TableCell className="hidden lg:table-cell">{formatDateTime(professional.requestDate)}</TableCell>
                           <TableCell>
                             <div className="flex gap-1 md:gap-2">
-                              <ViewDetailsDialog
-                                professional={professional}
-                                trigger={
-                                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                }
-                              />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => {
+                                  setSelectedProfessional(professional);
+                                  setDocumentsModalOpen(true);
+                                }}
+                                title="Ver Anexos"
+                              >
+                                <FileText className="h-4 w-4" />
+                              </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -368,9 +413,9 @@ const ProfessionalsManagement: React.FC = () => {
                         <TableHead className="hidden md:table-cell">Email</TableHead>
                         <TableHead className="hidden lg:table-cell">Telefone</TableHead>
                         <TableHead>Profissão</TableHead>
-                        <TableHead className="hidden sm:table-cell">Plano</TableHead>
+                        <TableHead className="hidden sm:table-cell">Registro</TableHead>
+                        <TableHead className="hidden lg:table-cell">Aceito em</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead className="hidden lg:table-cell">Entrada</TableHead>
                         <TableHead>Ações</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -379,27 +424,40 @@ const ProfessionalsManagement: React.FC = () => {
                         <TableRow key={professional.id}>
                           <TableCell className="font-medium">{professional.name}</TableCell>
                           <TableCell className="hidden md:table-cell">{professional.email}</TableCell>
-                          <TableCell className="hidden lg:table-cell">{professional.phone}</TableCell>
-                          <TableCell>{professional.profession}</TableCell>
-                          <TableCell className="hidden sm:table-cell">
-                            <Badge variant="outline">{professional.plan}</Badge>
+                          <TableCell className="hidden lg:table-cell">
+                            <button
+                              onClick={() => openWhatsApp(professional.phone)}
+                              className="text-blue-600 hover:text-blue-800 hover:underline"
+                              title="Abrir WhatsApp"
+                            >
+                              {professional.phone}
+                            </button>
                           </TableCell>
+                          <TableCell>{professional.profession}</TableCell>
+                          <TableCell className="hidden sm:table-cell">{professional.registration}</TableCell>
+                          <TableCell className="hidden lg:table-cell">{formatDate(professional.joinDate)}</TableCell>
                           <TableCell>
-                            <Badge variant={professional.status === "Ativo" ? "default" : "destructive"}>
+                            <Badge 
+                              className={professional.status === "Ativo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
+                              variant="outline"
+                            >
                               {professional.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="hidden lg:table-cell">{professional.joinDate}</TableCell>
                           <TableCell>
                             <div className="flex gap-1 md:gap-2">
-                              <ViewDetailsDialog
-                                professional={professional}
-                                trigger={
-                                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                }
-                              />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => {
+                                  setSelectedProfessional(professional);
+                                  setDocumentsModalOpen(true);
+                                }}
+                                title="Ver Anexos"
+                              >
+                                <FileText className="h-4 w-4" />
+                              </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -408,6 +466,7 @@ const ProfessionalsManagement: React.FC = () => {
                                   setSelectedProfessional(professional);
                                   setEditModalOpen(true);
                                 }}
+                                title="Editar Profissional"
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -420,6 +479,7 @@ const ProfessionalsManagement: React.FC = () => {
                                     setSelectedProfessional(professional);
                                     setSuspendDialogOpen(true);
                                   }}
+                                  title="Suspender Profissional"
                                 >
                                   <Pause className="h-4 w-4" />
                                 </Button>
@@ -432,10 +492,23 @@ const ProfessionalsManagement: React.FC = () => {
                                     setSelectedProfessional(professional);
                                     setActivateDialogOpen(true);
                                   }}
+                                  title="Ativar Profissional"
                                 >
                                   <Play className="h-4 w-4" />
                                 </Button>
                               )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                onClick={() => {
+                                  setSelectedProfessional(professional);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                title="Excluir Profissional"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -559,6 +632,31 @@ const ProfessionalsManagement: React.FC = () => {
           </DialogContent>
         </Dialog>
 
+        {/* Modal de Exclusão */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Trash2 className="h-5 w-5 text-red-600" />
+                Confirmar Exclusão
+              </DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja excluir o cadastro de <strong>{selectedProfessional?.name}</strong>?
+                Esta ação não poderá ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} className="w-full sm:w-auto">
+                Cancelar
+              </Button>
+              <Button variant="destructive" className="w-full sm:w-auto" onClick={() => handleDeleteProfessional(selectedProfessional?.id)}>
+                <Trash2 className="h-4 w-4 mr-1" />
+                Excluir
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <ProfessionalEditModal
           isOpen={editModalOpen}
           onClose={() => setEditModalOpen(false)}
@@ -569,6 +667,9 @@ const ProfessionalsManagement: React.FC = () => {
           isOpen={documentsModalOpen}
           onClose={() => setDocumentsModalOpen(false)}
           documents={selectedProfessional?.documents || []}
+          professionalName={selectedProfessional?.name || ""}
+          professionalPhone={selectedProfessional?.phone || ""}
+          onRequestDocuments={handleRequestDocuments}
         />
       </div>
     </AdminLayout>
