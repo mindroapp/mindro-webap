@@ -1,5 +1,6 @@
 import { StateCreator } from "zustand";
-import { Patient, mockPatients, InitialRecord } from "@/stores/patientStore";
+import { Patient, InitialRecord } from "@/stores/patientStore";
+import { mockPatients } from "@/stores/mockData";
 import { apiFetch } from "@/services/api";
 
 export interface PatientSlice {

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Calendar, Clock, Users, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,22 @@ import ScheduleForm from "./ScheduleForm";
 
 const ScheduleCalendarView: React.FC = () => {
   const { user } = useAuth();
-  const { getAvailabilitiesByProfessional, deleteAvailability, removeTimeSlot, deletePublicAppointment, publicAppointments } = usePatientStore();
+  const {
+    getAvailabilitiesByProfessional,
+    fetchAvailabilities,
+    fetchPublicAppointments,
+    deleteAvailability,
+    removeTimeSlot,
+    deletePublicAppointment,
+    publicAppointments,
+  } = usePatientStore();
+
+  useEffect(() => {
+    if (user?.email) {
+      fetchAvailabilities(user.email).catch(console.error);
+      fetchPublicAppointments(user.email).catch(console.error);
+    }
+  }, [user?.email]);
   const { toast } = useToast();
 
   const [currentDate, setCurrentDate] = useState(new Date());

@@ -22,9 +22,12 @@ const ScheduleManager: React.FC = () => {
     logo: null as string | null
   });
 
+  const publicLink = user?.email
+    ? `${window.location.origin}/agendamento/${encodeURIComponent(user.email)}`
+    : "";
+
   const copyPublicLink = () => {
-    const link = `${window.location.origin}/booking/${user?.email}`;
-    navigator.clipboard.writeText(link);
+    navigator.clipboard.writeText(publicLink);
     toast({
       title: "Link copiado",
       description: "Compartilhe com seus pacientes."
@@ -32,8 +35,7 @@ const ScheduleManager: React.FC = () => {
   };
 
   const openPublicLink = () => {
-    const link = `${window.location.origin}/booking/${user?.email}`;
-    window.open(link, '_blank');
+    window.open(publicLink, '_blank');
   };
 
   const handleSaveConfig = () => {
@@ -61,26 +63,36 @@ const ScheduleManager: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Link de Agendamento Público */}
-      <Card className="border-primary/30">
+      <Card className={user?.isVerified ? "border-primary/30" : "border-muted"}>
         <CardContent className="p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          {user?.isVerified ? (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold">Link de Agendamento Público</h3>
+                <p className="text-sm text-muted-foreground mb-1">
+                  Compartilhe com seus pacientes para que possam agendar consultas.
+                </p>
+                <p className="text-xs text-primary font-mono truncate">{publicLink}</p>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <Button variant="outline" size="sm" onClick={copyPublicLink}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copiar
+                </Button>
+                <Button variant="outline" size="sm" onClick={openPublicLink}>
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Abrir
+                </Button>
+              </div>
+            </div>
+          ) : (
             <div>
-              <h3 className="font-semibold">Link de Agendamento Público</h3>
-              <p className="text-sm text-muted-foreground">
-                Compartilhe este link com seus pacientes para que eles possam agendar consultas
+              <h3 className="font-semibold text-muted-foreground">Link de Agendamento Público</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Seu link estará disponível após a aprovação da sua conta pelo administrador.
               </p>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={copyPublicLink}>
-                <Copy className="h-4 w-4 mr-2" />
-                Copiar Link
-              </Button>
-              <Button variant="outline" size="sm" onClick={openPublicLink}>
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Visualizar
-              </Button>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 

@@ -105,7 +105,7 @@ const App = () => (
         <Route path="/video-meeting" element={<TeleconsultationRoom />} />
         
         {/* Rota Pública de Agendamento */}
-        <Route path="/booking/:professionalId" element={<PublicBooking />} />
+        <Route path="/agendamento/:professionalId" element={<PublicBooking />} />
 
         {/* Redireciona para o dashboard adequado com base no papel do usuário */}
         <Route path="/dashboard" element={<ProtectedRoute><RoleBasedRedirect /></ProtectedRoute>} />

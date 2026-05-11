@@ -1,13 +1,14 @@
-
 import { StateCreator } from "zustand";
 import { ScheduleEvent } from "@/stores/patientStore";
 import { PatientSlice } from "./patientSlice";
 import { SessionSlice } from "./sessionSlice";
 import { DocumentSlice } from "./documentSlice";
+import scheduleService from "@/services/scheduleService";
 
 export interface ScheduleSlice {
   scheduleEvents: ScheduleEvent[];
-  addScheduleEvent: (eventData: Omit<ScheduleEvent, "id">) => Promise<void>;
+  fetchScheduleEvents: (professionalId: string) => Promise<void>;
+  addScheduleEvent: (eventData: Omit<ScheduleEvent, "id"> & { professionalId: string }) => Promise<void>;
   updateScheduleEvent: (eventId: string, eventData: Partial<ScheduleEvent>) => Promise<void>;
   deleteScheduleEvent: (eventId: string) => Promise<void>;
   getPatientEvents: (patientId: string) => ScheduleEvent[];
@@ -21,79 +22,68 @@ export const createScheduleSlice: StateCreator<
   ScheduleSlice
 > = (set, get) => ({
   scheduleEvents: [],
-  
+
+  fetchScheduleEvents: async (professionalId) => {
+    const data = await scheduleService.getScheduleEvents(professionalId) as ScheduleEvent[];
+    set({ scheduleEvents: data });
+  },
+
   addScheduleEvent: async (eventData) => {
     set({ isLoading: true });
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Find the patient to get the phone number
-      const patient = get().patients.find(p => p.id === eventData.patientId);
-      
-      const newEvent: ScheduleEvent = {
-        ...eventData,
-        id: `e${Date.now()}`,
-        patientPhone: patient?.phone || "",
-        videoLink: "",
-      };
-      
-      set(state => ({
-        scheduleEvents: [...state.scheduleEvents, newEvent],
-        isLoading: false
+      const created = await scheduleService.createScheduleEvent(eventData) as ScheduleEvent;
+      set((state) => ({
+        scheduleEvents: [...state.scheduleEvents, created],
+        isLoading: false,
       }));
     } catch (error) {
       console.error("Error adding schedule event:", error);
       set({ isLoading: false });
+      throw error;
     }
   },
-  
+
   updateScheduleEvent: async (eventId, eventData) => {
     set({ isLoading: true });
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      set(state => ({
-        scheduleEvents: state.scheduleEvents.map(event => 
-          event.id === eventId 
-            ? { ...event, ...eventData } 
-            : event
+      const updated = await scheduleService.updateScheduleEvent(eventId, eventData) as ScheduleEvent;
+      set((state) => ({
+        scheduleEvents: state.scheduleEvents.map((event) =>
+          event.id === eventId ? updated : event
         ),
-        isLoading: false
+        isLoading: false,
       }));
     } catch (error) {
       console.error("Error updating schedule event:", error);
       set({ isLoading: false });
+      throw error;
     }
   },
-  
+
   deleteScheduleEvent: async (eventId) => {
     set({ isLoading: true });
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      set(state => ({
-        scheduleEvents: state.scheduleEvents.filter(event => event.id !== eventId),
-        isLoading: false
+      await scheduleService.deleteScheduleEvent(eventId);
+      set((state) => ({
+        scheduleEvents: state.scheduleEvents.filter((event) => event.id !== eventId),
+        isLoading: false,
       }));
     } catch (error) {
       console.error("Error deleting schedule event:", error);
       set({ isLoading: false });
+      throw error;
     }
   },
-  
+
   getPatientEvents: (patientId) => {
-    return get().scheduleEvents.filter(event => event.patientId === patientId);
+    return get().scheduleEvents.filter((event) => event.patientId === patientId);
   },
-  
+
   getDateEvents: (date) => {
-    return get().scheduleEvents.filter(event => {
-      // Compare dates without time
-      const eventDate = new Date(event.date).toISOString().split('T')[0];
-      const compareDate = new Date(date).toISOString().split('T')[0];
+    return get().scheduleEvents.filter((event) => {
+      const eventDate = new Date(event.date).toISOString().split("T")[0];
+      const compareDate = new Date(date).toISOString().split("T")[0];
       return eventDate === compareDate;
     });
-  }
+  },
 });

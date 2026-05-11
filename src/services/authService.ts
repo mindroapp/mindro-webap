@@ -1,6 +1,3 @@
-
-import { apiFetch } from "@/services/api";
-
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
@@ -13,50 +10,47 @@ export interface LoginResponse {
   };
 }
 
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
 export interface RegisterRequest {
   fullName: string;
   email: string;
-  password: string;
   phone: string;
-  role?: string;
+  password: string;
+  confirmPassword: string;
+  profession: string;
+  professionalRegister: string;
+  professionalCouncil?: string;
 }
 
-const AUTH_TOKEN_KEY = "accessToken";
-const REFRESH_TOKEN_KEY = "refreshToken";
-const USER_KEY = "user";
+const BASE_URL = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:6001/api';
+const AUTH_TOKEN_KEY = 'accessToken';
+const REFRESH_TOKEN_KEY = 'refreshToken';
+const USER_KEY = 'user';
+
+async function authFetch<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
 
 const authService = {
   async login(email: string, password: string): Promise<LoginResponse> {
-    return apiFetch<LoginResponse>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
+    return authFetch<LoginResponse>('/auth/login', { email, password });
   },
 
-  async register(fullName: string, email: string, password: string, phone: string) {
-    return apiFetch<LoginResponse>("/users/register", {
-      method: "POST",
-      body: JSON.stringify({ fullName, email, password, phone }),
-    });
-  },
-
-  async refreshToken() {
-    return apiFetch<LoginResponse>("/auth/refresh-token", {
-      method: "POST",
-      body: JSON.stringify({}),
-    });
+  async register(data: RegisterRequest): Promise<LoginResponse> {
+    const phone = data.phone.replace(/\D/g, '');
+    return authFetch<LoginResponse>('/auth/register', { ...data, phone });
   },
 
   async resetPassword(email: string) {
-    return apiFetch("/auth/reset-password", {
-      method: "POST",
-      body: JSON.stringify({ email }),
-    });
+    return authFetch('/auth/reset-password', { email });
   },
 };
 

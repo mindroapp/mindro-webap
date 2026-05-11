@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
-import InputMask from "react-input-mask";
+import { MaskedInput } from "@/components/ui/masked-input";
 import { cn } from "@/lib/utils";
 import { PROFESSIONS, getProfessionByValue } from "@/lib/professions";
 
@@ -99,22 +99,17 @@ const RegisterPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      await register(name, email, password, phone);
-
-      // Persistir info profissional localmente até integração com backend
-      try {
-        const stored = localStorage.getItem("user");
-        if (stored) {
-          const u = JSON.parse(stored);
-          u.profession = profession;
-          u.professionLabel = selectedProfession?.label;
-          u.council = selectedProfession?.council;
-          u.registration = registration;
-          localStorage.setItem("user", JSON.stringify(u));
-        }
-      } catch {
-        // ignore
-      }
+      await register(
+        name,
+        email,
+        password,
+        phone,
+        profession,
+        registration,
+        selectedProfession?.council !== "OPTIONAL" && selectedProfession?.council !== "NONE"
+          ? selectedProfession?.council
+          : undefined,
+      );
 
       const firstName = name.split(" ")[0];
       navigate("/thank-you", { replace: true, state: { firstName } });
@@ -224,21 +219,14 @@ const RegisterPage: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Telefone *</Label>
-                  <InputMask
+                  <MaskedInput
+                    id="phone"
                     mask="(99) 9 9999-9999"
-                    maskChar={null}
+                    placeholder="(85) 9 9285-0222"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                  >
-                    {(inputProps: any) => (
-                      <Input
-                        {...inputProps}
-                        id="phone"
-                        placeholder="(85) 9 9285-0222"
-                        required
-                      />
-                    )}
-                  </InputMask>
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">

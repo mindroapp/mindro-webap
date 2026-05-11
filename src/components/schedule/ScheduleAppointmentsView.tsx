@@ -12,7 +12,13 @@ import { ptBR } from "date-fns/locale";
 
 const ScheduleAppointmentsView: React.FC = () => {
   const { user } = useAuth();
-  const { scheduleEvents, getPublicAppointmentsByProfessional, patients } = usePatientStore();
+  const {
+    scheduleEvents,
+    fetchScheduleEvents,
+    getPublicAppointmentsByProfessional,
+    fetchPublicAppointments,
+    patients,
+  } = usePatientStore();
   const { toast } = useToast();
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -25,11 +31,18 @@ const ScheduleAppointmentsView: React.FC = () => {
   const today = startOfDay(new Date());
   const professionalAppointments = user ? getPublicAppointmentsByProfessional(user.email) : [];
 
-  // Inicializar selectedDate com a data atual ao carregar
+  // Inicializar selectedDate com a data atual ao carregar e buscar dados
   useEffect(() => {
     setSelectedDate(today);
     setCurrentDate(today);
   }, []);
+
+  useEffect(() => {
+    if (user?.email) {
+      fetchScheduleEvents(user.email).catch(console.error);
+      fetchPublicAppointments(user.email).catch(console.error);
+    }
+  }, [user?.email]);
 
   // Stats
   const stats = useMemo(() => {

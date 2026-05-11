@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { usePatientStore } from "@/stores/patientStore";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,7 @@ const ScheduleEventForm: React.FC<ScheduleEventFormProps> = ({
   onCancel,
   onSuccess
 }) => {
+  const { user } = useAuth();
   const { patients, addScheduleEvent, isLoading } = usePatientStore();
   const { toast } = useToast();
   
@@ -68,7 +70,8 @@ const ScheduleEventForm: React.FC<ScheduleEventFormProps> = ({
         duration: formData.duration,
         notes: formData.notes,
         status: formData.status,
-        videoLink: ""
+        videoLink: "",
+        professionalId: user?.email ?? "",
       });
 
       toast({

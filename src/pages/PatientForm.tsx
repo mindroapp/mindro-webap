@@ -12,7 +12,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import { usePatientStore } from "@/stores/patientStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import InputMask from 'react-input-mask';
+import { MaskedInput } from '@/components/ui/masked-input';
 
 const patientFormSchema = z.object({
   name: z.string()
@@ -126,21 +126,12 @@ const PatientForm = () => {
                         <FormItem>
                           <FormLabel>Telefone</FormLabel>
                           <FormControl>
-                            <InputMask
+                            <MaskedInput
                               mask="(99) 9 9999-9999"
-                              maskChar={null}
+                              placeholder="(85) 9 9285-0222"
                               value={field.value}
-                              onChange={e => {
-                                // Permite apenas números
-                                const onlyNumbers = e.target.value.replace(/\D/g, '');
-                                // Aplica a máscara
-                                field.onChange(e.target.value);
-                              }}
-                            >
-                              {(inputProps: any) => (
-                                <Input {...inputProps} placeholder="(85) 9 9285-0222" />
-                              )}
-                            </InputMask>
+                              onChange={(e) => field.onChange(e.target.value)}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

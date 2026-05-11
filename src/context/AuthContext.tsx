@@ -17,7 +17,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isVerified: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, phone: string) => Promise<void>;
+  register: (name: string, email: string, password: string, phone: string, profession: string, professionalRegister: string, professionalCouncil?: string) => Promise<void>;
   logout: () => void;
   resetPassword: (email: string) => Promise<void>;
   getAccessToken: () => string | null;
@@ -81,10 +81,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const register = async (name: string, email: string, password: string, phone: string) => {
+  const register = async (name: string, email: string, password: string, phone: string, profession: string, professionalRegister: string, professionalCouncil?: string) => {
     try {
       setIsLoading(true);
-      const response = await authService.register(name, email, password, phone);
+      const response = await authService.register({
+        fullName: name,
+        email,
+        phone,
+        password,
+        confirmPassword: password,
+        profession,
+        professionalRegister,
+        professionalCouncil,
+      });
       const { user: userData, accessToken, refreshToken } = response;
       const user: User = {
         id: userData.id,

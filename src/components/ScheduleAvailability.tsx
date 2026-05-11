@@ -153,7 +153,7 @@ const ScheduleAvailability: React.FC = () => {
   };
 
   const copyPublicLink = () => {
-    const link = `${window.location.origin}/booking/${user?.email}`;
+    const link = user?.email ? `${window.location.origin}/agendamento/${encodeURIComponent(user.email)}` : "";
     navigator.clipboard.writeText(link);
     toast({
       title: "Link copiado",
@@ -162,7 +162,7 @@ const ScheduleAvailability: React.FC = () => {
   };
 
   const openPublicLink = () => {
-    const link = `${window.location.origin}/booking/${user?.email}`;
+    const link = user?.email ? `${window.location.origin}/agendamento/${encodeURIComponent(user.email)}` : "";
     window.open(link, '_blank');
   };
 

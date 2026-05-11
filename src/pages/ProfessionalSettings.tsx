@@ -1,28 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Save, User, Shield, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Edit, Shield, AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import InputMask from 'react-input-mask';
+import ProfessionalEditModal from "@/components/ProfessionalEditModal";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import usersService from "@/services/usersService";
 
 const ProfessionalSettings: React.FC = () => {
   const { toast } = useToast();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   
-  // Dados do profissional - mock data
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  
   const [professionalData, setProfessionalData] = useState({
-    name: "Dr. João Silva",
-    email: "joao@exemplo.com",
-    phone: "(85) 9 9999-9999",
-    profession: "Psicólogo",
-    council: "CRP",
-    registration: "CRP 11/12345",
-    diplomaDocument: null as File | null,
-    carteiraDocument: null as File | null
+    fullName: "",
+    email: "",
+    phone: "",
+    profession: "",
+    professionalCouncil: "",
+    professionalRegister: "",
   });
 
   const [passwords, setPasswords] = useState({
@@ -37,26 +40,36 @@ const ProfessionalSettings: React.FC = () => {
     confirm: false
   });
 
-  const { logout } = useAuth();
-  const navigate = useNavigate();
+  // Carregar dados do perfil ao montar o componente
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        setIsLoadingProfile(true);
+        const profile = await usersService.getCurrentProfile();
+        setProfessionalData({
+          fullName: profile.fullName || "",
+          email: profile.email || "",
+          phone: profile.phone || "",
+          profession: profile.profession || "",
+          professionalCouncil: profile.professionalCouncil || "",
+          professionalRegister: profile.professionalRegister || "",
+        });
+      } catch (error) {
+        console.error("Erro ao carregar perfil:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os dados do perfil",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
 
-  const handleSaveProfessionalData = () => {
-    if (!professionalData.name || !professionalData.email || !professionalData.phone) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Nome, email e telefone são obrigatórios.",
-        variant: "destructive",
-      });
-      return;
-    }
+    loadProfile();
+  }, [toast]);
 
-    toast({
-      title: "Dados salvos",
-      description: "Seus dados cadastrais foram atualizados com sucesso!",
-    });
-  };
-
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!passwords.current || !passwords.new || !passwords.confirm) {
       toast({
         title: "Campos obrigatórios",
@@ -84,43 +97,54 @@ const ProfessionalSettings: React.FC = () => {
       return;
     }
 
-    toast({
-      title: "✅ Senha alterada",
-      description: "Você será desconectado em breve...",
-    });
-    
-    setTimeout(() => {
-      localStorage.clear();
-      logout();
-      navigate("/login");
-    }, 1500);
-    setPasswords({ current: "", new: "", confirm: "" });
-  };
-
-  const handleDocumentUpload = (event: React.ChangeEvent<HTMLInputElement>, type: 'diploma' | 'carteira') => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Tipo de arquivo inválido",
-          description: "Por favor, envie apenas imagens (JPG, PNG, etc).",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (type === 'diploma') {
-        setProfessionalData({ ...professionalData, diplomaDocument: file });
-      } else {
-        setProfessionalData({ ...professionalData, carteiraDocument: file });
-      }
-      
+    try {
+      // TODO: Implementar chamada de API para mudar senha
       toast({
-        title: "Documento carregado",
-        description: `Arquivo ${file.name} carregado com sucesso!`,
+        title: "✅ Senha alterada",
+        description: "Você será desconectado em breve...",
+      });
+      
+      setTimeout(() => {
+        localStorage.clear();
+        logout();
+        navigate("/login");
+      }, 1500);
+      setPasswords({ current: "", new: "", confirm: "" });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Falha ao alterar a senha",
+        variant: "destructive",
       });
     }
   };
+
+  const handleEditSuccess = async () => {
+    // Recarregar os dados após edição bem-sucedida
+    try {
+      const profile = await usersService.getCurrentProfile();
+      setProfessionalData({
+        fullName: profile.fullName || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        profession: profile.profession || "",
+        professionalCouncil: profile.professionalCouncil || "",
+        professionalRegister: profile.professionalRegister || "",
+      });
+    } catch (error) {
+      console.error("Erro ao recarregar perfil:", error);
+    }
+  };
+
+  if (isLoadingProfile) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <p className="text-gray-600">Carregando dados...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -137,131 +161,59 @@ const ProfessionalSettings: React.FC = () => {
         {/* Seção de Perfil */}
         <div>
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Dados Cadastrais
-              </CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Dados Cadastrais</CardTitle>
+              <Button onClick={() => setIsEditModalOpen(true)} variant="outline" size="sm">
+                <Edit className="h-4 w-4 mr-2" />
+                Editar
+              </Button>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome Completo</Label>
-                  <Input
-                    id="name"
-                    value={professionalData.name}
-                    onChange={(e) => setProfessionalData({...professionalData, name: e.target.value})}
-                  />
+                  <Label>Nome Completo</Label>
+                  <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
+                    <p className="text-gray-900">{professionalData.fullName || "-"}</p>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={professionalData.email}
-                    onChange={(e) => setProfessionalData({...professionalData, email: e.target.value})}
-                  />
+                  <Label>Email</Label>
+                  <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
+                    <p className="text-gray-900">{professionalData.email || "-"}</p>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone</Label>
-                  <InputMask
-                    mask="(99) 9 9999-9999"
-                    value={professionalData.phone}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProfessionalData({...professionalData, phone: e.target.value})}
-                  >
-                    {(inputProps) => <Input {...inputProps} id="phone" />}
-                  </InputMask>
+                  <Label>Telefone</Label>
+                  <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
+                    <p className="text-gray-900">{professionalData.phone || "-"}</p>
+                  </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="profession">Profissão</Label>
-                  <Input
-                    id="profession"
-                    value={professionalData.profession}
-                    disabled
-                    className="bg-gray-50"
-                  />
+                  <Label>Profissão</Label>
+                  <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
+                    <p className="text-gray-900">{professionalData.profession || "-"}</p>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="council">Conselho</Label>
-                  <Input
-                    id="council"
-                    value={professionalData.council}
-                    disabled
-                    className="bg-gray-50"
-                  />
+                  <Label>Conselho</Label>
+                  <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
+                    <p className="text-gray-900">{professionalData.professionalCouncil || "-"}</p>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="registration">Registro Profissional</Label>
-                  <Input
-                    id="registration"
-                    value={professionalData.registration}
-                    disabled
-                    className="bg-gray-50"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4 pt-4 border-t">
-                <h3 className="font-semibold text-sm">Documentação Profissional</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="diploma">Diploma</Label>
-                    <div className="flex items-center gap-4">
-                      <Input
-                        id="diploma"
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleDocumentUpload(e, 'diploma')}
-                        className="flex-1"
-                      />
-                      <Button variant="outline" size="sm">
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload
-                      </Button>
-                    </div>
-                    {professionalData.diplomaDocument && (
-                      <p className="text-sm text-green-600">
-                        ✅ {professionalData.diplomaDocument.name}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="carteira">Carteira Profissional</Label>
-                    <div className="flex items-center gap-4">
-                      <Input
-                        id="carteira"
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleDocumentUpload(e, 'carteira')}
-                        className="flex-1"
-                      />
-                      <Button variant="outline" size="sm">
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload
-                      </Button>
-                    </div>
-                    {professionalData.carteiraDocument && (
-                      <p className="text-sm text-green-600">
-                        ✅ {professionalData.carteiraDocument.name}
-                      </p>
-                    )}
+                  <Label>Registro Profissional</Label>
+                  <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
+                    <p className="text-gray-900">{professionalData.professionalRegister || "-"}</p>
                   </div>
                 </div>
               </div>
-
-              <Button onClick={handleSaveProfessionalData} className="flex items-center gap-2">
-                <Save className="h-4 w-4" />
-                Salvar Dados
-              </Button>
             </CardContent>
           </Card>
         </div>
@@ -335,14 +287,14 @@ const ProfessionalSettings: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirmar Senha</Label>
+                  <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
                   <div className="relative">
                     <Input
                       id="confirm-password"
                       type={showPasswords.confirm ? "text" : "password"}
                       value={passwords.confirm}
                       onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
-                      placeholder="Confirme sua senha"
+                      placeholder="Confirme a nova senha"
                       className="pr-10"
                     />
                     <button
@@ -359,18 +311,21 @@ const ProfessionalSettings: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <p className="text-xs text-gray-500">
-                Sua senha deve ter no mínimo 6 caracteres
-              </p>
 
-              <Button onClick={handleChangePassword} className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
+              <Button onClick={handleChangePassword} className="w-full md:w-auto">
                 Alterar Senha
               </Button>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Modal de Edição */}
+      <ProfessionalEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={handleEditSuccess}
+      />
     </DashboardLayout>
   );
 };

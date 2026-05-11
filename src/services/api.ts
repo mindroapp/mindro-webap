@@ -1,13 +1,12 @@
 // src/services/api.ts
 import { getAccessToken } from "@/services/authService";
-import { mockPatients, mockScheduleEvents } from "@/stores/patientStore";
+import { mockPatients } from "@/stores/mockData";
 import { mockPayments, mockPackages } from "@/stores/slices/financialSlice";
 
 // Variáveis locais para simular estado mutável dos mocks
 let patients = [...mockPatients];
 let payments = [...mockPayments];
 let packages = [...mockPackages];
-let scheduleEvents = [...mockScheduleEvents];
 
 interface ApiOptions extends RequestInit {
   withAuth?: boolean;
@@ -23,98 +22,6 @@ export async function apiFetch<T = unknown>(
     const error = new Error("Não autenticado") as Error & { status: number };
     error.status = 401;
     throw error;
-  }
-
-  // --- Auth ---
-  if (endpoint === "/auth/login" && options.method === "POST") {
-    const { email } = JSON.parse(options.body as string);
-    
-    // Admin
-    if (email === "admin@exemplo.com") {
-      return {
-        accessToken: "mock-access-token-admin",
-        refreshToken: "mock-refresh-token-admin",
-        user: {
-          id: "99",
-          fullName: "Administrador",
-          email: "admin@exemplo.com",
-          role: "admin",
-          isVerified: true
-        }
-      } as T;
-    }
-    
-    // Usuário verificado
-    if (email === "joao@exemplo.com") {
-      return {
-        accessToken: "mock-access-token-verified",
-        refreshToken: "mock-refresh-token-verified",
-        user: {
-          id: "1",
-          fullName: "João Silva",
-          email: "joao@exemplo.com",
-          role: "professional",
-          isVerified: true
-        }
-      } as T;
-    }
-    
-    // Usuário não verificado
-    if (email === "maria@exemplo.com") {
-      return {
-        accessToken: "mock-access-token-unverified",
-        refreshToken: "mock-refresh-token-unverified",
-        user: {
-          id: "2",
-          fullName: "Maria Santos",
-          email: "maria@exemplo.com",
-          role: "professional",
-          isVerified: false
-        }
-      } as T;
-    }
-    
-    // padrão: profissional verificado
-    return {
-      accessToken: "mock-access-token",
-      refreshToken: "mock-refresh-token",
-      user: {
-        id: "1",
-        fullName: "Usuário Mock",
-        email,
-        role: "professional",
-        isVerified: true
-      }
-    } as T;
-  }
-  if (endpoint === "/users/register" && options.method === "POST") {
-    return {
-      accessToken: "mock-access-token",
-      refreshToken: "mock-refresh-token",
-      user: {
-        id: "2",
-        fullName: "Novo Usuário",
-        email: "novo@mock.com",
-        role: "professional",
-        isVerified: false
-      }
-    } as T;
-  }
-  if (endpoint === "/auth/refresh-token" && options.method === "POST") {
-    return {
-      accessToken: "mock-access-token-refreshed",
-      refreshToken: "mock-refresh-token-refreshed",
-      user: {
-        id: "1",
-        fullName: "Usuário Mock",
-        email: "mock@mock.com",
-        role: "professional",
-        isVerified: true
-      }
-    } as T;
-  }
-  if (endpoint === "/auth/reset-password" && options.method === "POST") {
-    return { message: "E-mail de redefinição enviado" } as T;
   }
 
   // --- Pacientes ---
@@ -192,27 +99,6 @@ export async function apiFetch<T = unknown>(
     const data = JSON.parse(options.body as string);
     patients = patients.map(p => p.id === id ? { ...p, initialRecord: data } : p);
     return patients.find(p => p.id === id) as T;
-  }
-
-  // --- Agendamentos ---
-  if (endpoint === "/schedule" && (!options.method || options.method === "GET")) {
-    return scheduleEvents as T;
-  }
-  if (endpoint === "/schedule" && options.method === "POST") {
-    const data = JSON.parse(options.body as string);
-    const newEvent = { ...data, id: `e${Date.now()}` };
-    scheduleEvents.push(newEvent);
-    return newEvent as T;
-  }
-  if (endpoint.match(/^\/schedule\/[^/]+$/) && options.method === "PUT") {
-    const id = endpoint.split("/").pop();
-    scheduleEvents = scheduleEvents.map(e => e.id === id ? { ...e, ...JSON.parse(options.body as string) } : e);
-    return scheduleEvents.find(e => e.id === id) as T;
-  }
-  if (endpoint.match(/^\/schedule\/[^/]+$/) && options.method === "DELETE") {
-    const id = endpoint.split("/").pop();
-    scheduleEvents = scheduleEvents.filter(e => e.id !== id);
-    return { success: true } as T;
   }
 
   // --- Financeiro: Pagamentos ---
