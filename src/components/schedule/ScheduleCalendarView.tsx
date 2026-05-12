@@ -192,6 +192,14 @@ const ScheduleCalendarView: React.FC = () => {
   const selectedAvailability = selectedDate ? getAvailabilityForDate(selectedDate) : null;
   const selectedStats = selectedDate ? getScheduleStats(selectedDate) : null;
 
+  const isSlotPast = (slotTime: string): boolean => {
+    if (!selectedDate) return false;
+    const [hours, minutes] = slotTime.split(':').map(Number);
+    const slotDateTime = new Date(selectedDate);
+    slotDateTime.setHours(hours, minutes, 0, 0);
+    return isBefore(slotDateTime, new Date());
+  };
+
   const filteredSlots = selectedAvailability?.timeSlots.filter(slot => {
     const isBooked = publicAppointments.some(
       apt => apt.availabilityId === selectedAvailability.id && apt.time === slot.time
@@ -432,7 +440,8 @@ const ScheduleCalendarView: React.FC = () => {
                 </Button>
               </div>
 
-              {!isPastDate && selectedStats?.busy === 0 && (
+              {!isPastDate && selectedStats?.busy === 0 &&
+                selectedAvailability.timeSlots.some(s => !isSlotPast(s.time)) && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -469,13 +478,13 @@ const ScheduleCalendarView: React.FC = () => {
                         <Badge variant={isBooked ? "destructive" : "default"} className="text-xs">
                           {isBooked ? 'Ocupado' : 'Livre'}
                         </Badge>
-                        {!isPastDate && (
+                        {!isPastDate && !isSlotPast(slot.time) && (
                           <button
-                            onClick={() => setConfirmModal({ 
-                              open: true, 
-                              type: 'slot', 
+                            onClick={() => setConfirmModal({
+                              open: true,
+                              type: 'slot',
                               availabilityId: selectedAvailability.id,
-                              slotTime: slot.time 
+                              slotTime: slot.time
                             })}
                             className="p-1 hover:bg-destructive/10 rounded text-destructive/60 hover:text-destructive transition-colors"
                             title="Excluir horário"

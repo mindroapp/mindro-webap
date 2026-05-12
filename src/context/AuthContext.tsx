@@ -8,6 +8,8 @@ interface User {
   email: string;
   role?: "admin" | "professional";
   isVerified?: boolean;
+  professionalCouncil?: string | null;
+  professionalRegister?: string | null;
 }
 
 interface AuthContextType {
@@ -65,6 +67,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         email: userData.email,
         role: userData.role as "admin" | "professional",
         isVerified: userData.isVerified ?? false,
+        professionalCouncil: userData.professionalCouncil ?? null,
+        professionalRegister: userData.professionalRegister ?? null,
       };
       if (accessToken) localStorage.setItem("accessToken", accessToken);
       if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
@@ -101,6 +105,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         email: userData.email,
         role: userData.role as "admin" | "professional",
         isVerified: userData.isVerified ?? false,
+        professionalCouncil: userData.professionalCouncil ?? null,
+        professionalRegister: userData.professionalRegister ?? null,
       };
       if (accessToken) localStorage.setItem("accessToken", accessToken);
       if (refreshToken) localStorage.setItem("refreshToken", refreshToken);

@@ -10,6 +10,7 @@ import ProfessionalEditModal from "@/components/ProfessionalEditModal";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import usersService from "@/services/usersService";
+import { formatPhoneNumber } from "@/lib/format";
 
 const ProfessionalSettings: React.FC = () => {
   const { toast } = useToast();
@@ -18,6 +19,7 @@ const ProfessionalSettings: React.FC = () => {
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   
   const [professionalData, setProfessionalData] = useState({
     fullName: "",
@@ -98,7 +100,13 @@ const ProfessionalSettings: React.FC = () => {
     }
 
     try {
-      // TODO: Implementar chamada de API para mudar senha
+      setIsChangingPassword(true);
+      await usersService.changePassword({
+        currentPassword: passwords.current,
+        newPassword: passwords.new,
+        confirmPassword: passwords.confirm,
+      });
+      
       toast({
         title: "✅ Senha alterada",
         description: "Você será desconectado em breve...",
@@ -116,6 +124,8 @@ const ProfessionalSettings: React.FC = () => {
         description: error.message || "Falha ao alterar a senha",
         variant: "destructive",
       });
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -168,50 +178,36 @@ const ProfessionalSettings: React.FC = () => {
                 Editar
               </Button>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Nome Completo</Label>
-                  <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
-                    <p className="text-gray-900">{professionalData.fullName || "-"}</p>
-                  </div>
+            <CardContent>
+              <div className="space-y-1">
+                <div className="py-1">
+                  <span className="text-gray-600">Nome Completo:</span>
+                  <span className="text-gray-900 font-medium ml-2">{professionalData.fullName || "-"}</span>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
-                    <p className="text-gray-900">{professionalData.email || "-"}</p>
-                  </div>
+                <div className="py-1">
+                  <span className="text-gray-600">Email:</span>
+                  <span className="text-gray-900 font-medium ml-2">{professionalData.email || "-"}</span>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Telefone</Label>
-                  <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
-                    <p className="text-gray-900">{professionalData.phone || "-"}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Profissão</Label>
-                  <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
-                    <p className="text-gray-900">{professionalData.profession || "-"}</p>
-                  </div>
+                <div className="py-1">
+                  <span className="text-gray-600">Telefone:</span>
+                  <span className="text-gray-900 font-medium ml-2">{formatPhoneNumber(professionalData.phone) || "-"}</span>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Conselho</Label>
-                  <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
-                    <p className="text-gray-900">{professionalData.professionalCouncil || "-"}</p>
-                  </div>
+                <div className="py-1">
+                  <span className="text-gray-600">Profissão:</span>
+                  <span className="text-gray-900 font-medium ml-2">{professionalData.profession || "-"}</span>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Registro Profissional</Label>
-                  <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
-                    <p className="text-gray-900">{professionalData.professionalRegister || "-"}</p>
-                  </div>
+                <div className="py-1">
+                  <span className="text-gray-600">Conselho:</span>
+                  <span className="text-gray-900 font-medium ml-2">{professionalData.professionalCouncil || "-"}</span>
+                </div>
+
+                <div className="py-1">
+                  <span className="text-gray-600">Registro Profissional:</span>
+                  <span className="text-gray-900 font-medium ml-2">{professionalData.professionalRegister || "-"}</span>
                 </div>
               </div>
             </CardContent>
@@ -312,8 +308,15 @@ const ProfessionalSettings: React.FC = () => {
                 </div>
               </div>
 
-              <Button onClick={handleChangePassword} className="w-full md:w-auto">
-                Alterar Senha
+              <Button onClick={handleChangePassword} className="w-full md:w-auto" disabled={isChangingPassword}>
+                {isChangingPassword ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Alterando...
+                  </>
+                ) : (
+                  "Alterar Senha"
+                )}
               </Button>
             </CardContent>
           </Card>

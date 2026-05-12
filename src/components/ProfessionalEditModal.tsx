@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MaskedInput } from "@/components/ui/masked-input";
-import { Save } from "lucide-react";
+import { Save, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import usersService from "@/services/usersService";
@@ -23,7 +23,7 @@ const ProfessionalEditModal: React.FC<ProfessionalEditModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  professional
+  professional,
 }) => {
   const [formData, setFormData] = useState({
     fullName: "",
@@ -31,138 +31,124 @@ const ProfessionalEditModal: React.FC<ProfessionalEditModalProps> = ({
     phone: "",
     profession: "",
     professionalRegister: "",
-    professionalCouncil: ""
+    professionalCouncil: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Carregar dados do profissional quando o modal abre
+  // Admin editing a specific professional vs. professional editing own profile
+  const isAdminEdit = !!(professional && professional.id);
+
   useEffect(() => {
     const loadProfileData = async () => {
       try {
         if (!isOpen) {
-          // Limpar form quando modal fecha
           setFormData({
             fullName: "",
             email: "",
             phone: "",
             profession: "",
             professionalRegister: "",
-            professionalCouncil: ""
+            professionalCouncil: "",
           });
           return;
         }
-        
-        // Se foi passado um profissional (edição do admin), usar esses dados
-        if (professional && professional.id) {
-          console.log("Carregando dados do profissional:", professional);
-          
-          // Handle both ApiUser and DisplayProfessional formats
+
+        if (isAdminEdit) {
           const fullName = professional.fullName || professional.name || "";
-          let phone = professional.phone || "";
-          
-          // Garantir que o telefone seja apenas números (para unmask={true})
-          phone = phone.replace(/\D/g, '');
-          
-          const registration = professional.professionalRegister || professional.registration || "";
-          
-          const newFormData = {
-            fullName: fullName,
+          const phone = (professional.phone || "").replace(/\D/g, "");
+          const registration =
+            professional.professionalRegister || professional.registration || "";
+
+          setFormData({
+            fullName,
             email: professional.email || "",
-            phone: phone,
+            phone,
             profession: professional.profession || "",
             professionalRegister: registration,
-            professionalCouncil: professional.professionalCouncil || ""
-          };
-          
-          console.log("Form data após carregamento:", newFormData);
-          setFormData(newFormData);
+            professionalCouncil: professional.professionalCouncil || "",
+          });
           return;
         }
 
-        // Caso contrário, tentar carregar o perfil do usuário autenticado
         try {
           const profile = await usersService.getCurrentProfile();
           setFormData({
             fullName: profile.fullName || "",
             email: profile.email || "",
-            phone: (profile.phone || "").replace(/\D/g, ''),
+            phone: (profile.phone || "").replace(/\D/g, ""),
             profession: profile.profession || "",
             professionalRegister: profile.professionalRegister || "",
-            professionalCouncil: profile.professionalCouncil || ""
+            professionalCouncil: profile.professionalCouncil || "",
           });
-        } catch (err) {
-          // Endpoint de profile não existe, apenas mostra o formulário vazio
+        } catch {
           console.warn("Endpoint de perfil não disponível");
-          // Manter form vazio
         }
       } catch (error) {
         console.error("Erro ao carregar dados do profissional:", error);
         toast({
           title: "Erro",
           description: "Não foi possível carregar os dados do profissional",
-          variant: "destructive"
+          variant: "destructive",
         });
       }
     };
 
     loadProfileData();
-  }, [isOpen, professional?.id, toast]);
+  }, [isOpen, professional?.id, toast, isAdminEdit]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.fullName || !formData.email || !formData.phone) {
+
+    if (!formData.email || !formData.phone) {
       toast({
         title: "Campos obrigatórios",
-        description: "Nome, email e telefone são obrigatórios",
-        variant: "destructive"
+        description: "Email e telefone são obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isAdminEdit && !formData.fullName) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Nome é obrigatório",
+        variant: "destructive",
       });
       return;
     }
 
     setIsLoading(true);
     try {
-      const updateData = {
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone, // Já vem sem formatação com unmask={true}
-        profession: formData.profession,
-        professionalRegister: formData.professionalRegister,
-        professionalCouncil: formData.professionalCouncil
-      };
-
-      // Se é edição do admin (professional prop passou), usar updateUser com o ID
-      if (professional && professional.id) {
-        await usersService.updateUser(professional.id, updateData);
+      if (isAdminEdit) {
+        await usersService.updateUser(professional.id, {
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          profession: formData.profession,
+          professionalRegister: formData.professionalRegister,
+          professionalCouncil: formData.professionalCouncil,
+        });
       } else {
-        // Caso contrário, tentar atualizar o perfil do usuário autenticado
-        try {
-          await usersService.updateProfile(updateData);
-        } catch (err) {
-          // Se endpoint de profile não existe, tenta updateUser com o ID do usuário autenticado
-          if (user?.id) {
-            await usersService.updateUser(user.id, updateData);
-          } else {
-            throw err;
-          }
-        }
+        await usersService.updateProfile({
+          email: formData.email,
+          phone: formData.phone,
+        });
       }
 
       toast({
         title: "Sucesso",
-        description: "Dados do profissional atualizado com sucesso!"
+        description: "Dados atualizados com sucesso!",
       });
 
       if (onSuccess) onSuccess();
       onClose();
     } catch (error: any) {
-      console.error("Erro ao atualizar perfil:", error);
       toast({
         title: "Erro",
         description: error.message || "Falha ao atualizar os dados. Tente novamente.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -177,18 +163,34 @@ const ProfessionalEditModal: React.FC<ProfessionalEditModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Editar Perfil Profissional</DialogTitle>
+          <DialogTitle>
+            {isAdminEdit ? "Editar Profissional" : "Editar Dados de Contato"}
+          </DialogTitle>
         </DialogHeader>
-        
+
+        {!isAdminEdit && (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+            <Lock className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>
+              Somente <strong>email</strong> e <strong>telefone</strong> podem ser alterados pelo
+              profissional. Para alterar nome, profissão ou registro, entre em contato com o
+              administrador.
+            </span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="fullName">Nome Completo *</Label>
+            <Label htmlFor="fullName" className={!isAdminEdit ? "text-muted-foreground" : ""}>
+              Nome Completo {isAdminEdit && "*"}
+            </Label>
             <Input
               id="fullName"
               value={formData.fullName}
               onChange={(e) => handleChange("fullName", e.target.value)}
-              required
-              disabled={isLoading}
+              disabled={isLoading || !isAdminEdit}
+              readOnly={!isAdminEdit}
+              className={!isAdminEdit ? "bg-muted cursor-not-allowed" : ""}
             />
           </div>
 
@@ -218,39 +220,68 @@ const ProfessionalEditModal: React.FC<ProfessionalEditModalProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="profession">Profissão *</Label>
-            <Select value={formData.profession} onValueChange={(value) => handleChange("profession", value)}>
-              <SelectTrigger disabled={isLoading}>
-                <SelectValue placeholder="Selecione a profissão" />
-              </SelectTrigger>
-              <SelectContent>
-                {PROFESSIONS.map((prof) => (
-                  <SelectItem key={prof.value} value={prof.value}>
-                    {prof.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="profession" className={!isAdminEdit ? "text-muted-foreground" : ""}>
+              Profissão {isAdminEdit && "*"}
+            </Label>
+            {isAdminEdit ? (
+              <Select
+                value={formData.profession}
+                onValueChange={(value) => handleChange("profession", value)}
+                disabled={isLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a profissão" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROFESSIONS.map((prof) => (
+                    <SelectItem key={prof.value} value={prof.value}>
+                      {prof.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                id="profession"
+                value={formData.profession}
+                disabled
+                readOnly
+                className="bg-muted cursor-not-allowed"
+              />
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="professionalRegister">Registro Profissional *</Label>
+            <Label
+              htmlFor="professionalRegister"
+              className={!isAdminEdit ? "text-muted-foreground" : ""}
+            >
+              Registro Profissional {isAdminEdit && "*"}
+            </Label>
             <Input
               id="professionalRegister"
               value={formData.professionalRegister}
               onChange={(e) => handleChange("professionalRegister", e.target.value)}
-              required
-              disabled={isLoading}
+              disabled={isLoading || !isAdminEdit}
+              readOnly={!isAdminEdit}
+              className={!isAdminEdit ? "bg-muted cursor-not-allowed" : ""}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="professionalCouncil">Conselho (Opcional)</Label>
+            <Label
+              htmlFor="professionalCouncil"
+              className={!isAdminEdit ? "text-muted-foreground" : ""}
+            >
+              Conselho {isAdminEdit ? "(Opcional)" : ""}
+            </Label>
             <Input
               id="professionalCouncil"
               value={formData.professionalCouncil}
               onChange={(e) => handleChange("professionalCouncil", e.target.value)}
-              disabled={isLoading}
+              disabled={isLoading || !isAdminEdit}
+              readOnly={!isAdminEdit}
+              className={!isAdminEdit ? "bg-muted cursor-not-allowed" : ""}
             />
           </div>
 

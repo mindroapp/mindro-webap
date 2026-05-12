@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Plus, X, Calendar, Clock, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +51,15 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ onClose, onScheduleCreated 
   const minDate = useMemo(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
+  }, []);
+
+  // Pré-selecionar "Meio Período (Manhã)" ao montar o componente
+  useEffect(() => {
+    const manhaPreset = presetSchedules[0];
+    setSelectedPreset(manhaPreset);
+    setLunchBreak(manhaPreset.lunch);
+    if (manhaPreset.lunchStart) setLunchStart(manhaPreset.lunchStart);
+    if (manhaPreset.lunchEnd) setLunchEnd(manhaPreset.lunchEnd);
   }, []);
 
   const generateTimeSlots = (preset: PresetSchedule, duration: number): string[] => {

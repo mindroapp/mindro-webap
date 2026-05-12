@@ -1,4 +1,3 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,17 +11,10 @@ import { useAuth } from "@/context/AuthContext";
 import { ShieldCheck, BarChart3, MessageSquare, Home, Calendar, Wallet, HelpCircle, Settings, UserCheck } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import ProfileAvatarEditor from "@/components/ProfileAvatarEditor";
 
 const Header: React.FC = () => {
   const { user, isAdmin, isVerified } = useAuth();
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
 
   const adminLinks = [
     { name: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
@@ -58,13 +50,15 @@ const Header: React.FC = () => {
         <div className="flex items-center space-x-2 md:space-x-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="" alt={user?.name || "Usuário"} />
-                  <AvatarFallback className={`${isAdmin ? 'bg-amber-500' : 'bg-psycho-primary'} text-white`}>
-                    {user?.name ? getInitials(user.name) : "U"}
-                  </AvatarFallback>
-                </Avatar>
+              <Button variant="ghost" className="relative rounded-full p-0">
+                <ProfileAvatarEditor
+                  name={user?.name || "Usuário"}
+                  avatar={null}
+                  isAdmin={isAdmin}
+                  readonly={true}
+                  onAvatarChange={() => {}}
+                  size="sm"
+                />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>

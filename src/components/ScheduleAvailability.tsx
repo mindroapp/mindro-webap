@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar as CalendarIcon, Clock, Copy, Plus, Trash2, ExternalLink, Users, CheckCircle } from "lucide-react";
 import { usePatientStore } from "@/stores/patientStore";
 import { useAuth } from "@/context/AuthContext";
+import { buildPublicBookingUrl } from "@/lib/format";
 import { useToast } from "@/hooks/use-toast";
 import { format, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -153,7 +154,7 @@ const ScheduleAvailability: React.FC = () => {
   };
 
   const copyPublicLink = () => {
-    const link = user?.email ? `${window.location.origin}/agendamento/${encodeURIComponent(user.email)}` : "";
+    const link = user?.email ? buildPublicBookingUrl(user?.professionalCouncil, user?.professionalRegister) : "";
     navigator.clipboard.writeText(link);
     toast({
       title: "Link copiado",
@@ -162,7 +163,7 @@ const ScheduleAvailability: React.FC = () => {
   };
 
   const openPublicLink = () => {
-    const link = user?.email ? `${window.location.origin}/agendamento/${encodeURIComponent(user.email)}` : "";
+    const link = user?.email ? buildPublicBookingUrl(user?.professionalCouncil, user?.professionalRegister) : "";
     window.open(link, '_blank');
   };
 

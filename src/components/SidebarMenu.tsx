@@ -1,19 +1,51 @@
 import { cn } from "@/lib/utils";
 import { BarChart3, Calendar, Menu, Users, Wallet, Settings, MessageCircle, Smartphone, LogOut } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
+import usersService from "@/services/usersService";
 
 const SidebarMenu: React.FC = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [professionalProfile, setProfessionalProfile] = useState<{
+    name: string;
+    profession: string;
+    registration: string;
+  } | null>(null);
   const navigate = useNavigate();
   const { logout, user } = useAuth();
-  // Mock profissional (substituir por dados reais do contexto quando disponível)
-  const professionalData = {
-    name: "Dr. João Silva",
-    profession: "Psicólogo",
-    registration: "CRP 12/34567"
+
+  // Carregar dados do profissional logado
+  useEffect(() => {
+    const loadProfessionalData = async () => {
+      try {
+        if (user?.role !== "admin") {
+          const profile = await usersService.getCurrentProfile();
+          setProfessionalProfile({
+            name: profile.fullName || "",
+            profession: profile.profession || "",
+            registration: `${profile.professionalCouncil || ""} ${profile.professionalRegister || ""}`.trim(),
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados do profissional:", error);
+      }
+    };
+
+    loadProfessionalData();
+  }, [user?.role]);
+
+  const getFirstName = (fullName: string) => {
+    const firstName = fullName.split(" ")[0];
+    return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+  };
+
+  const formatProfession = (profession: string) => {
+    return profession
+      .split("_")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
   };
 
   const navigation = [
@@ -75,13 +107,14 @@ const SidebarMenu: React.FC = () => {
             </div>
           </div>
           {/* Bloco de informações do profissional */}
-          {user?.role !== "admin" && (
+          {user?.role !== "admin" && professionalProfile && (
             <div className="px-4 mb-4 text-center">
               <div className="font-semibold text-gray-900 dark:text-white text-base leading-tight">
-                {professionalData.name}
+                Olá {getFirstName(professionalProfile.name)}!
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">
-                {professionalData.profession} / {professionalData.registration}
+              <div className="text-xs text-gray-500 dark:text-gray-300 mt-2 space-y-1">
+                <div>{formatProfession(professionalProfile.profession)}</div>
+                <div>{professionalProfile.registration}</div>
               </div>
             </div>
           )}

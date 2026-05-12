@@ -4,6 +4,7 @@ import { Patient } from "@/stores/patientStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { formatPhoneNumber } from "@/lib/format";
 
 interface PatientCardProps {
   patient: Patient;
@@ -71,7 +72,7 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, onClick }) => {
             </div>
             <div>
               <p className="text-muted-foreground">Telefone</p>
-              <p className="font-medium text-foreground truncate">{patient.phone}</p>
+              <p className="font-medium text-foreground truncate">{formatPhoneNumber(patient.phone)}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Paciente desde</p>

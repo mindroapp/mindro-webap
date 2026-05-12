@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Label } from "@/components/ui/label";
+import { formatPhoneNumber } from "@/lib/format";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -85,6 +86,7 @@ const PatientDetail: React.FC = () => {
   const [isEditingPatient, setIsEditingPatient] = useState(false);
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
   const [isNewSessionModalOpen, setIsNewSessionModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("initial-record");
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [isTeleconsultationOpen, setIsTeleconsultationOpen] = useState(false);
@@ -121,7 +123,7 @@ const PatientDetail: React.FC = () => {
     if (id) {
       fetchPatient(id);
     }
-  }, [id, fetchPatient]);
+  }, [id]);
 
   const getInitials = (name: string) => {
     return name
@@ -498,7 +500,7 @@ const PatientDetail: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-muted-foreground">Telefone:</span>
-                        <span className="font-medium">{selectedPatient.phone}</span>
+                        <span className="font-medium">{formatPhoneNumber(selectedPatient.phone)}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-muted-foreground">Desde:</span>
@@ -518,7 +520,7 @@ const PatientDetail: React.FC = () => {
             </CardContent>
           </Card>
   
-          <Tabs defaultValue="initial-record">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-6 w-full flex overflow-x-auto">
               <TabsTrigger value="initial-record" className="flex-1 text-xs md:text-sm">Avaliação Inicial</TabsTrigger>
             <TabsTrigger value="sessions" className="flex-1 text-xs md:text-sm">Sessões ({selectedPatient.sessions.length})</TabsTrigger>
@@ -528,7 +530,7 @@ const PatientDetail: React.FC = () => {
             <TabsContent value="initial-record" className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <h2 className="text-lg md:text-xl font-semibold">Avaliação Inicial</h2>
-                <Button onClick={() => setIsAssessmentModalOpen(true)} size="sm">
+                <Button onClick={() => { setActiveTab("initial-record"); setIsAssessmentModalOpen(true); }} size="sm">
                   <Plus size={16} className="mr-1" /> 
                   {selectedPatient.initialRecord ? "Editar Avaliação" : "Criar Avaliação"}
                 </Button>
@@ -543,7 +545,7 @@ const PatientDetail: React.FC = () => {
                   <p className="text-muted-foreground mb-4">
                     A avaliação inicial deste paciente ainda não foi registrada.
                   </p>
-                  <Button onClick={() => setIsAssessmentModalOpen(true)}>
+                  <Button onClick={() => { setActiveTab("initial-record"); setIsAssessmentModalOpen(true); }}>
                     <Plus size={16} className="mr-1" /> Criar avaliação inicial
                   </Button>
                 </div>
@@ -604,7 +606,7 @@ const PatientDetail: React.FC = () => {
             <TabsContent value="sessions" className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <h2 className="text-lg md:text-xl font-semibold">Notas de Sessão</h2>
-                <Button onClick={() => setIsNewSessionModalOpen(true)} size="sm">
+                <Button onClick={() => { setActiveTab("sessions"); setIsNewSessionModalOpen(true); }} size="sm">
                   <Plus size={16} className="mr-1" /> Nova Sessão
                 </Button>
               </div>
@@ -681,7 +683,7 @@ const PatientDetail: React.FC = () => {
                   <p className="text-muted-foreground mb-4">
                     Tente ajustar os filtros de busca.
                   </p>
-                  <Button onClick={() => setIsNewSessionModalOpen(true)}>
+                  <Button onClick={() => { setActiveTab("sessions"); setIsNewSessionModalOpen(true); }}>
                     <Plus size={16} className="mr-1" /> Criar sessão
                   </Button>
                 </div>

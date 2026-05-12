@@ -91,8 +91,8 @@ export const usePatientStore = create<PatientState>()(
 
       patients: mockPatients,
       scheduleEvents: [],
-      payments: mockPayments,
-      packages: mockPackages,
+      payments: [],
+      packages: [],
       availabilities: [],
       publicAppointments: [],
     }),

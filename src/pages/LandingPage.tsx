@@ -41,12 +41,11 @@ const LandingPage: React.FC = () => {
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-14 items-center">
             <div className="space-y-5 text-center lg:text-left">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
-                Mais eficiência<br /><span className="text-primary">Mais pacientes</span>
+                Mais organização<br /><span className="text-primary">Mais pacientes<br /></span>Mais faturamento
               </h1>
               <p className="text-base sm:text-lg text-muted-foreground max-w-md mx-auto lg:mx-0">
-                Agenda inteligente, confirmações via WhatsApp, prontuário e financeiro integrados.
+                A Mindro automatiza sua rotina clínica para você ganhar tempo, profissionalizar seus atendimentos e aumentar seus resultados
               </p>
-
               <div className="flex flex-col sm:flex-row gap-3 pt-2 justify-center lg:justify-start">
                 <Link to="/register" className="w-full sm:w-auto">
                   <Button size="lg" className="w-full sm:w-auto gap-2">

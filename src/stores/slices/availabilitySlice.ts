@@ -20,6 +20,8 @@ export interface PublicAppointment {
   time: string;
   patientName: string;
   patientPhone: string;
+  patientEmail?: string | null;
+  patientBirthDate?: string | null;
   professionalId: string;
   status: "pending" | "confirmed" | "cancelled";
   createdAt: string;

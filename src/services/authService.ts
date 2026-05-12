@@ -7,6 +7,8 @@ export interface LoginResponse {
     email: string;
     role: string;
     isVerified?: boolean;
+    professionalCouncil?: string | null;
+    professionalRegister?: string | null;
   };
 }
 

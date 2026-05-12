@@ -4,9 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Copy, ExternalLink } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { buildPublicBookingUrl } from "@/lib/format";
+import usersService from "@/services/usersService";
 import { useToast } from "@/hooks/use-toast";
 import ScheduleCalendarView from "@/components/schedule/ScheduleCalendarView";
 import ScheduleAppointmentsView from "@/components/schedule/ScheduleAppointmentsView";
+import ProfileAvatarEditor from "@/components/ProfileAvatarEditor";
+import schedulePublicProfileService from "@/services/schedulePublicProfileService";
 
 const ScheduleManager: React.FC = () => {
   const { user } = useAuth();
@@ -14,17 +18,47 @@ const ScheduleManager: React.FC = () => {
 
   // Estado para configurações da página pública
   const [publicPageConfig, setPublicPageConfig] = React.useState({
-    pageName: "Consultório Dr. João Silva",
+    avatar: null as string | null,
+    pageName: "",
     address: "",
     bio: "",
     instagram: "",
-    color: "#0066FF",
-    logo: null as string | null
   });
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [council, setCouncil] = React.useState<string | null>(null);
+  const [register, setRegister] = React.useState<string | null>(null);
 
-  const publicLink = user?.email
-    ? `${window.location.origin}/agendamento/${encodeURIComponent(user.email)}`
-    : "";
+  // Carregar configurações do backend ao montar
+  React.useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const [profile, apiUser] = await Promise.all([
+          schedulePublicProfileService.getPublicProfile(),
+          usersService.getCurrentProfile(),
+        ]);
+        if (profile) {
+          setPublicPageConfig({
+            avatar: profile.avatar || null,
+            pageName: profile.pageName || "Consultório Dr. João Silva",
+            address: profile.address || "",
+            bio: profile.bio || "",
+            instagram: profile.instagram || "",
+          });
+        }
+        setCouncil(apiUser.professionalCouncil ?? null);
+        setRegister(apiUser.professionalRegister ?? null);
+      } catch (err) {
+        console.error("Erro ao carregar dados:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const publicLink = buildPublicBookingUrl(council, register);
 
   const copyPublicLink = () => {
     navigator.clipboard.writeText(publicLink);
@@ -38,25 +72,27 @@ const ScheduleManager: React.FC = () => {
     window.open(publicLink, '_blank');
   };
 
-  const handleSaveConfig = () => {
-    // Salvar configurações (será integrado com store depois)
-    toast({
-      title: "Configurações salvas",
-      description: "Suas configurações foram atualizadas com sucesso."
-    });
-  };
-
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPublicPageConfig(prev => ({
-          ...prev,
-          logo: reader.result as string
-        }));
-      };
-      reader.readAsDataURL(file);
+  const handleSaveConfig = async () => {
+    try {
+      // Salvar configurações no backend
+      await schedulePublicProfileService.updatePublicProfile({
+        avatar: publicPageConfig.avatar,
+        pageName: publicPageConfig.pageName,
+        address: publicPageConfig.address,
+        bio: publicPageConfig.bio,
+        instagram: publicPageConfig.instagram,
+      });
+      
+      toast({
+        title: "Configurações salvas",
+        description: "Suas configurações foram atualizadas com sucesso."
+      });
+    } catch (err: any) {
+      toast({
+        title: "Erro ao salvar",
+        description: err.message || "Ocorreu um erro ao salvar as configurações",
+        variant: "destructive"
+      });
     }
   };
 
@@ -117,8 +153,23 @@ const ScheduleManager: React.FC = () => {
             <CardContent className="p-6">
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Configurações da Página Pública</h3>
-                  <div className="space-y-4">
+                  <h3 className="text-lg font-semibold mb-6">Configurações da Página Pública</h3>
+                  <div className="space-y-6">
+                    {/* Avatar */}
+                    <div className="flex flex-col items-center pb-6 border-b">
+                      <ProfileAvatarEditor
+                        name={user?.name || "Usuário"}
+                        avatar={publicPageConfig.avatar}
+                        isAdmin={user?.role === "admin"}
+                        onAvatarChange={(imageData) =>
+                          setPublicPageConfig((prev) => ({
+                            ...prev,
+                            avatar: imageData,
+                          }))
+                        }
+                      />
+                    </div>
+
                     {/* Nome da Página */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Nome da Página</label>
@@ -129,21 +180,6 @@ const ScheduleManager: React.FC = () => {
                         placeholder="Ex: Consultório Dr. João Silva"
                         className="w-full px-3 py-2 border rounded-md text-sm"
                       />
-                    </div>
-
-                    {/* Logo */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Logo</label>
-                      <input 
-                        type="file" 
-                        accept="image/*"
-                        onChange={handleLogoUpload}
-                        className="w-full"
-                      />
-                      <p className="text-xs text-muted-foreground">Recomendado: 200x200px</p>
-                      {publicPageConfig.logo && (
-                        <img src={publicPageConfig.logo} alt="Preview" className="mt-2 h-20 w-20 rounded-lg object-cover" />
-                      )}
                     </div>
 
                     {/* Endereço */}
@@ -182,34 +218,8 @@ const ScheduleManager: React.FC = () => {
                       />
                     </div>
 
-                    {/* Paleta de Cores */}
-                    <div className="space-y-3">
-                      <label className="text-sm font-medium">Cor da Página</label>
-                      <div className="flex gap-3">
-                        {[
-                          { name: 'Azul', value: '#0066FF' },
-                          { name: 'Verde', value: '#00B366' },
-                          { name: 'Roxo', value: '#9933FF' },
-                          { name: 'Rosa', value: '#FF1493' },
-                          { name: 'Laranja', value: '#FF8C00' }
-                        ].map(color => (
-                          <button
-                            key={color.value}
-                            onClick={() => setPublicPageConfig(prev => ({ ...prev, color: color.value }))}
-                            className={`w-12 h-12 rounded-lg border-2 transition-all cursor-pointer ${
-                              publicPageConfig.color === color.value 
-                                ? 'border-gray-800 ring-2 ring-offset-2 ring-gray-400' 
-                                : 'border-gray-300 hover:border-gray-500'
-                            }`}
-                            style={{ backgroundColor: color.value }}
-                            title={color.name}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
                     {/* Botão Salvar */}
-                    <Button onClick={handleSaveConfig} className="w-full mt-6">
+                    <Button onClick={handleSaveConfig} className="w-full mt-6 h-10">
                       Salvar Configurações
                     </Button>
                   </div>

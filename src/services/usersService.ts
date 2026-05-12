@@ -108,6 +108,17 @@ const usersService = {
   delete(id: string): Promise<void> {
     return request(`/users/${id}`, { method: "DELETE" });
   },
+
+  async changePassword(data: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }): Promise<ApiUser> {
+    return request("/users/profile/change-password", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
 };
 
 export default usersService;

@@ -18,7 +18,7 @@ const patientFormSchema = z.object({
     .regex(/^[A-Za-zÀ-ÿ\s]+$/, { message: "O nome deve conter apenas letras" }),
   email: z.string().email({ message: "Por favor, insira um endereço de e-mail válido" }),
   phone: z.string()
-    .min(11, { message: "O telefone deve ter no mínimo 11 caracteres" }),
+    .regex(/^\d{10,11}$/, { message: "Informe um telefone válido com DDD" }),
   birthdate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Por favor, insira uma data válida",
   }),
@@ -126,7 +126,8 @@ const PatientFormModal: React.FC<PatientFormModalProps> = ({
                         mask="(99) 9 9999-9999"
                         placeholder="(85) 9 9285-0222"
                         value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
+                        onAccept={(value: string) => field.onChange(value)}
+                        onBlur={field.onBlur}
                       />
                     </FormControl>
                     <FormMessage />

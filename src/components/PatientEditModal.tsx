@@ -5,6 +5,7 @@ import { usePatientStore } from "@/stores/patientStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MaskedInput } from "@/components/ui/masked-input";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 
@@ -88,7 +89,12 @@ const PatientEditModal: React.FC<PatientEditModalProps> = ({ patient, isOpen, on
                 <FormItem>
                   <FormLabel>Telefone</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <MaskedInput
+                      mask="(99) 9 9999-9999"
+                      placeholder="(85) 9 9999-9999"
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
