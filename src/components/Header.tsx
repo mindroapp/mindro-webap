@@ -8,13 +8,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
-import { ShieldCheck, BarChart3, MessageSquare, Home, Calendar, Wallet, HelpCircle, Settings, UserCheck } from "lucide-react";
+import { ShieldCheck, BarChart3, MessageSquare, Home, Calendar, Wallet, HelpCircle, Settings, UserCheck, LogOut } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import ProfileAvatarEditor from "@/components/ProfileAvatarEditor";
 
 const Header: React.FC = () => {
-  const { user, isAdmin, isVerified } = useAuth();
+  const { user, isAdmin, isVerified, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   const adminLinks = [
     { name: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
@@ -81,6 +87,11 @@ const Header: React.FC = () => {
                   )}
                 </div>
               </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                <LogOut className="h-4 w-4 mr-2" />
+                Sair
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
