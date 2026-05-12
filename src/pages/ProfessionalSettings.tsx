@@ -146,6 +146,13 @@ const ProfessionalSettings: React.FC = () => {
     }
   };
 
+  const formatProfession = (profession: string) => {
+    return profession
+      .split("_")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+  };
+
   if (isLoadingProfile) {
     return (
       <DashboardLayout>
@@ -197,7 +204,7 @@ const ProfessionalSettings: React.FC = () => {
 
                 <div className="py-1">
                   <span className="text-gray-600">Profissão:</span>
-                  <span className="text-gray-900 font-medium ml-2">{professionalData.profession || "-"}</span>
+                  <span className="text-gray-900 font-medium ml-2">{professionalData.profession ? formatProfession(professionalData.profession) : "-"}</span>
                 </div>
 
                 <div className="py-1">
