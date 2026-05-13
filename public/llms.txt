@@ -1,0 +1,22 @@
+# Mindro
+
+> Plataforma completa de gestão para profissionais de saúde mental: agenda, prontuário eletrônico, teleconsulta, gestão financeira e atendimento a pacientes.
+
+Mindro ajuda psicólogos, psicanalistas, psiquiatras e terapeutas a organizar a rotina clínica em um só lugar, com segurança LGPD e suporte humano.
+
+## Pages
+
+- [Home](/): Visão geral da plataforma Mindro.
+- [Planos](/plans): Preços e planos mensal e anual.
+- [Recursos da Plataforma](/platform/resources): Funcionalidades de agenda, prontuário, financeiro e teleconsulta.
+- [Segurança](/platform/security): Como protegemos dados clínicos e seguimos a LGPD.
+- [Blog](/company/blog): Artigos sobre prática clínica e tecnologia em saúde mental.
+- [Contato](/company/contact): Fale com o time da Mindro.
+- [Cadastro](/register): Crie sua conta de profissional.
+- [Login](/login): Acesse sua conta.
+
+## Optional
+
+- [Termos de Uso](/legal/terms)
+- [Política de Privacidade](/legal/privacy)
+- [Política de Cookies](/legal/cookies)
