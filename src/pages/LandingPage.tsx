@@ -36,6 +36,26 @@ const features = [
 const LandingPage: React.FC = () => {
   return (
     <MarketingLayout>
+      <SEO
+        title="Mindro — Plataforma de Gestão para Psicólogos"
+        description="Agenda inteligente, prontuário, teleconsulta e financeiro para psicólogos. Organize sua rotina clínica e aumente seu faturamento com a Mindro."
+        path="/"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Mindro",
+            url: "https://mindroapp.lovable.app/",
+            description: "Plataforma de gestão para profissionais de saúde mental.",
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "Mindro",
+            url: "https://mindroapp.lovable.app/",
+          },
+        ]}
+      />
       {/* Hero */}
       <section className="w-full pt-8 pb-10 sm:pt-12 sm:pb-14 lg:pt-16 lg:pb-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
