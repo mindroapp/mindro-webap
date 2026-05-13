@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Calendar, Clock, User } from "lucide-react";
 import MarketingLayout from "@/components/layouts/MarketingLayout";
+import SEO from "@/components/SEO";
 
 const BlogPage: React.FC = () => {
   // Mock blog data
@@ -66,6 +67,17 @@ const BlogPage: React.FC = () => {
 
   return (
     <MarketingLayout>
+      <SEO
+        title="Blog Mindro — Psicologia, Tecnologia e Saúde Mental"
+        description="Artigos sobre prática clínica, tecnologia em saúde mental e gestão de consultório para profissionais de psicologia."
+        path="/company/blog"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Blog",
+          name: "Blog Mindro",
+          url: "https://mindroapp.lovable.app/company/blog",
+        }}
+      />
       <div className="container mx-auto py-12 px-4 max-w-6xl">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4 text-indigo-700">Blog</h1>

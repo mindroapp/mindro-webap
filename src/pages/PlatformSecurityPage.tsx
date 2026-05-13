@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/accordion";
 import { useNavigate } from "react-router-dom";
 import MarketingLayout from "@/components/layouts/MarketingLayout";
+import SEO from "@/components/SEO";
 
 const items = [
   { title: "Criptografia ponta a ponta", description: "Dados em trânsito e em repouso.", icon: Lock },
@@ -34,6 +35,11 @@ const PlatformSecurityPage: React.FC = () => {
 
   return (
     <MarketingLayout>
+      <SEO
+        title="Segurança e LGPD — Mindro"
+        description="Como a Mindro protege dados clínicos: criptografia ponta a ponta, 2FA, backup diário, auditoria e total conformidade com a LGPD."
+        path="/platform/security"
+      />
       <div className="container mx-auto py-10 sm:py-14 px-4 max-w-5xl">
         <div className="text-center mb-8 sm:mb-12">
           <Badge variant="secondary" className="mb-3">Segurança</Badge>

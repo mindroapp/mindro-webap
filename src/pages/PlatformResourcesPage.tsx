@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import MarketingLayout from "@/components/layouts/MarketingLayout";
+import SEO from "@/components/SEO";
 
 const SESSION_IMG =
   "https://images.unsplash.com/photo-1573497620053-ea5300f94f21?auto=format&fit=crop&w=1200&q=80";
@@ -36,6 +37,11 @@ const PlatformResourcesPage: React.FC = () => {
 
   return (
     <MarketingLayout>
+      <SEO
+        title="Recursos da Plataforma — Mindro"
+        description="Conheça os recursos da Mindro: agendamento inteligente, prontuário eletrônico, teleconsulta, chat seguro e gestão financeira."
+        path="/platform/resources"
+      />
       <div className="container mx-auto pt-12 sm:pt-16 lg:pt-20 pb-12 sm:pb-16 px-4 max-w-6xl">
         <div className="text-center mb-10 sm:mb-14">
           <Badge variant="secondary" className="mb-3">Recursos</Badge>

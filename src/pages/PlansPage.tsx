@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import MarketingLayout from "@/components/layouts/MarketingLayout";
+import SEO from "@/components/SEO";
 
 const MONTHLY_PRICE = 49.9;
 const ANNUAL_INSTALLMENT = 45.75;
@@ -27,6 +28,11 @@ const PlansPage: React.FC = () => {
 
   return (
     <MarketingLayout>
+      <SEO
+        title="Planos e Preços — Mindro"
+        description="Conheça os planos da Mindro: mensal a R$ 49,90 ou anual com desconto. 1 mês grátis para novos profissionais."
+        path="/plans"
+      />
       <div className="container mx-auto py-10 sm:py-14 px-4 max-w-2xl">
         <div className="text-center mb-8">
           <Badge variant="secondary" className="mb-3">Planos</Badge>

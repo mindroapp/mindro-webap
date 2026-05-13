@@ -24,6 +24,7 @@ import * as z from "zod";
 import { toast } from "@/hooks/use-toast";
 import { Mail, Phone, MapPin, Clock } from "lucide-react";
 import MarketingLayout from "@/components/layouts/MarketingLayout";
+import SEO from "@/components/SEO";
 
 const formSchema = z.object({
   name: z.string().min(3, { message: "O nome deve ter pelo menos 3 caracteres." }),
@@ -59,6 +60,11 @@ const ContactPage: React.FC = () => {
 
   return (
     <MarketingLayout>
+      <SEO
+        title="Contato — Mindro"
+        description="Fale com o time da Mindro. Tire dúvidas sobre planos, recursos e suporte para profissionais de saúde mental."
+        path="/company/contact"
+      />
       <div className="container mx-auto py-12 px-4 max-w-6xl">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4 text-indigo-700">Entre em Contato</h1>

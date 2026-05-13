@@ -4,10 +4,12 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    
+
+    <title>Mindro — Plataforma de Gestão para Psicólogos</title>
+    <meta name="description" content="Mindro é a plataforma completa para psicólogos: agenda, prontuário eletrônico, teleconsulta e gestão financeira em um só lugar." />
+
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#6366f1" />
-    <meta name="description" content="Mindro - Plataforma completa de gestão para profissionais de psicologia. Gerencie pacientes, sessões, agendamentos e finanças." />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Mindro" />
@@ -15,33 +17,52 @@
     <meta name="format-detection" content="telephone=no" />
     <meta name="msapplication-TileColor" content="#6366f1" />
     <meta name="msapplication-tap-highlight" content="no" />
-    
+
     <!-- Apple Touch Icons -->
     <link rel="apple-touch-icon" href="/pwa-192x192.png" />
     <link rel="apple-touch-icon" sizes="152x152" href="/pwa-192x192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/pwa-192x192.png" />
     <link rel="apple-touch-icon" sizes="167x167" href="/pwa-192x192.png" />
-    
+
     <!-- Splash Screens for iOS -->
     <link rel="apple-touch-startup-image" href="/pwa-512x512.png" />
-    
+
     <!-- Manifest -->
     <link rel="manifest" href="/manifest.webmanifest" />
-    
-    <!-- Open Graph / SEO -->
+
+    <!-- Open Graph / SEO (sitewide fallback; per-route Helmet overrides) -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Mindro - Gestão para Psicólogos" />
-    <meta property="og:description" content="Plataforma completa de gestão para profissionais de psicologia" />
+    <meta property="og:title" content="Mindro — Plataforma de Gestão para Psicólogos" />
+    <meta property="og:description" content="Agenda, prontuário, teleconsulta e financeiro para profissionais de saúde mental." />
+    <meta property="og:url" content="https://mindroapp.lovable.app/" />
     <meta property="og:site_name" content="Mindro" />
-    
-    <title>Mindro</title>
-    
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Sitewide JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Mindro",
+      "url": "https://mindroapp.lovable.app/",
+      "description": "Plataforma de gestão para profissionais de saúde mental."
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Mindro",
+      "url": "https://mindroapp.lovable.app/"
+    }
+    </script>
+
     <style>
       /* Prevent pull-to-refresh on mobile */
       html, body {
         overscroll-behavior-y: contain;
       }
-      
+
       /* Safe area insets for notched devices */
       body {
         padding-top: env(safe-area-inset-top);
