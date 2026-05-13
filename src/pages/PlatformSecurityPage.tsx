@@ -35,6 +35,11 @@ const PlatformSecurityPage: React.FC = () => {
 
   return (
     <MarketingLayout>
+      <SEO
+        title="Segurança e LGPD — Mindro"
+        description="Como a Mindro protege dados clínicos: criptografia ponta a ponta, 2FA, backup diário, auditoria e total conformidade com a LGPD."
+        path="/platform/security"
+      />
       <div className="container mx-auto py-10 sm:py-14 px-4 max-w-5xl">
         <div className="text-center mb-8 sm:mb-12">
           <Badge variant="secondary" className="mb-3">Segurança</Badge>
