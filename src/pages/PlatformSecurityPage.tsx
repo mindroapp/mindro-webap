@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/accordion";
 import { useNavigate } from "react-router-dom";
 import MarketingLayout from "@/components/layouts/MarketingLayout";
+import SEO from "@/components/SEO";
 
 const items = [
   { title: "Criptografia ponta a ponta", description: "Dados em trânsito e em repouso.", icon: Lock },

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Calendar, Clock, User } from "lucide-react";
 import MarketingLayout from "@/components/layouts/MarketingLayout";
+import SEO from "@/components/SEO";
 
 const BlogPage: React.FC = () => {
   // Mock blog data
