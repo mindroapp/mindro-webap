@@ -1,10 +1,13 @@
+import { apiFetchJson } from '@/services/apiClient';
+
 export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
+  accessToken?: string;
+  refreshToken?: string;
   user: {
     id: string;
     fullName: string;
     email: string;
+    phone?: string | null;
     role: string;
     isVerified?: boolean;
     professionalCouncil?: string | null;
@@ -23,22 +26,15 @@ export interface RegisterRequest {
   professionalCouncil?: string;
 }
 
-const BASE_URL = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:6001/api';
 const AUTH_TOKEN_KEY = 'accessToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
 const USER_KEY = 'user';
 
 async function authFetch<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  return apiFetchJson<T>(path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.message || `Request failed: ${res.status}`);
-  }
-  return res.json();
 }
 
 const authService = {

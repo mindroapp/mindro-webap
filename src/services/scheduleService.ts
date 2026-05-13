@@ -1,22 +1,9 @@
 import { getAccessToken } from "@/services/authService";
-
-const BASE_URL = (import.meta as any).env?.VITE_API_URL ?? "http://localhost:6001/api";
-
-function headers(): HeadersInit {
-  const token = getAccessToken();
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
+import { apiFetchJson } from '@/services/apiClient';
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, { ...init, headers: headers() });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body?.message ?? `Request failed: ${res.status}`);
-  }
-  return res.json() as Promise<T>;
+  const token = getAccessToken();
+  return apiFetchJson<T>(path, init, token);
 }
 
 export interface TimeSlotPayload {
