@@ -34,7 +34,7 @@ const SessionEditModal: React.FC<SessionEditModalProps> = ({ patientId, session,
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full sm:max-w-[600px]">
+      <DialogContent className="w-full sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg">Editar Notas da Sessão</DialogTitle>
         </DialogHeader>

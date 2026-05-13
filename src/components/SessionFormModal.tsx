@@ -39,7 +39,7 @@ const SessionFormModal: React.FC<SessionFormModalProps> = ({ isOpen, onClose, pa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-[650px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nova Sessão</DialogTitle>
         </DialogHeader>

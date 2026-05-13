@@ -55,8 +55,8 @@ const SessionForm: React.FC<SessionFormProps> = ({
           <TabsTrigger value="basic" className="text-xs sm:text-sm">Informações Básicas</TabsTrigger>
           <TabsTrigger value="clinical" className="text-xs sm:text-sm">Clínico</TabsTrigger>
         </TabsList>
-        <TabsContent value="basic" className="space-y-3 sm:space-y-4">
-          <div className="grid grid-cols-1 gap-3 sm:gap-4">
+        <TabsContent value="basic" className="space-y-2 sm:space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-2 gap-2 sm:gap-4">
             <div className="space-y-2">
               <Label htmlFor="date" className="text-sm">Data da Sessão</Label>
               <Input
@@ -64,62 +64,62 @@ const SessionForm: React.FC<SessionFormProps> = ({
                 type="datetime-local"
                 {...form.register("date")}
                 required={!isEdit}
-                className="w-full"
+                className="w-full text-xs sm:text-sm"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="sessionValue" className="text-sm">Valor da Sessão (R$)</Label>
+              <Label htmlFor="sessionValue" className="text-sm">Valor (R$)</Label>
               <Input
                 id="sessionValue"
                 type="number"
                 step="0.01"
                 min="0"
                 {...form.register("sessionValue", { valueAsNumber: true })}
-                className="w-full"
+                className="w-full text-xs sm:text-sm"
               />
             </div>
-            <div className="space-y-2">
-              <Label className="text-sm">Humor</Label>
-              <div className="flex gap-1 sm:gap-2 items-center flex-wrap">
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <Button
-                    key={value}
-                    type="button"
-                    variant={form.watch("mood") === value ? "default" : "outline"}
-                    className="text-lg sm:text-2xl h-9 w-9 sm:h-10 sm:w-10 p-0"
-                    onClick={() => form.setValue("mood", value)}
-                  >
-                    {moodEmojis[value - 1]}
-                  </Button>
-                ))}
-              </div>
+          </div>
+          <div className="space-y-2 col-span-2 lg:col-span-1">
+            <Label className="text-sm">Humor</Label>
+            <div className="flex gap-1 items-center">
+              {[1, 2, 3, 4, 5].map((value) => (
+                <Button
+                  key={value}
+                  type="button"
+                  variant={form.watch("mood") === value ? "default" : "outline"}
+                  className="text-lg h-8 w-8 p-0 flex-1"
+                  onClick={() => form.setValue("mood", value)}
+                >
+                  {moodEmojis[value - 1]}
+                </Button>
+              ))}
             </div>
           </div>
-          <div className="space-y-2">
-            <Label className="text-sm">Notas da Sessão</Label>
-            <Textarea {...form.register("notes")} rows={3} className="text-sm" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm">Objetivos</Label>
+              <Textarea {...form.register("objectives")} rows={2} className="text-sm" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm">Intervenções</Label>
+              <Textarea {...form.register("interventions")} rows={2} className="text-sm" />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label className="text-sm">Objetivos</Label>
-            <Textarea {...form.register("objectives")} rows={2} className="text-sm" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm">Intervenções</Label>
-            <Textarea {...form.register("interventions")} rows={2} className="text-sm" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm">Próximos Passos</Label>
-            <Textarea {...form.register("nextSteps")} rows={2} className="text-sm" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm">Notas da Sessão</Label>
+              <Textarea {...form.register("notes")} rows={3} className="text-sm" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm">Próximos Passos</Label>
+              <Textarea {...form.register("nextSteps")} rows={3} className="text-sm" />
+            </div>
           </div>
         </TabsContent>
         <TabsContent value="clinical" className="space-y-3 sm:space-y-4">
           <div className="space-y-2">
             <Label className="text-sm">Diagnóstico</Label>
             <Input {...form.register("diagnosis")} className="text-sm" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm">Anotações Clínicas</Label>
-            <Textarea {...form.register("clinicalNotes")} rows={2} className="text-sm" />
           </div>
           <div className="space-y-2">
             <Label className="text-sm">Abordagem</Label>
@@ -143,17 +143,25 @@ const SessionForm: React.FC<SessionFormProps> = ({
             <Label className="text-sm">Medicações</Label>
             <Input {...form.register("medications")} className="text-sm" />
           </div>
-          <div className="space-y-2">
-            <Label className="text-sm">Progresso do Tratamento</Label>
-            <Textarea {...form.register("treatmentProgress")} rows={2} className="text-sm" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm">Anotações Clínicas</Label>
+              <Textarea {...form.register("clinicalNotes")} rows={2} className="text-sm" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm">Progresso do Tratamento</Label>
+              <Textarea {...form.register("treatmentProgress")} rows={2} className="text-sm" />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label className="text-sm">Notas Privadas</Label>
-            <Textarea {...form.register("privateNotes")} rows={2} className="text-sm" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm">Evolução</Label>
-            <Textarea {...form.register("evolution")} rows={2} className="text-sm" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm">Notas Privadas</Label>
+              <Textarea {...form.register("privateNotes")} rows={2} className="text-sm" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm">Evolução</Label>
+              <Textarea {...form.register("evolution")} rows={2} className="text-sm" />
+            </div>
           </div>
         </TabsContent>
       </Tabs>

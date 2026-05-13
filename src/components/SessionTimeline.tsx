@@ -73,7 +73,6 @@ const SessionTimeline: React.FC<SessionTimelineProps> = ({
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-foreground">{dateGroup}</h3>
             </div>
-            <div className="h-0.5 flex-1 bg-border"></div>
           </div>
 
           <div className="space-y-4 pl-0 md:pl-8">

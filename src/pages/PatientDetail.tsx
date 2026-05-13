@@ -611,8 +611,8 @@ const PatientDetail: React.FC = () => {
                 </Button>
               </div>
 
-              <div className="flex flex-col gap-4 mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="flex flex-col gap-4 mb-6 overflow-x-auto">
+                <div className="grid grid-cols-4 gap-3 min-w-max md:min-w-full">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Data Início</label>
                     <Input
@@ -647,7 +647,7 @@ const PatientDetail: React.FC = () => {
                   </div>
                   <div className="space-y-2 flex flex-col">
                     <label className="text-sm font-medium">Humor</label>
-                    <div className="flex gap-2 items-center flex-wrap">
+                    <div className="flex gap-2 items-center">
                       <Select value={sessionsFilters.mood} onValueChange={(value) => setSessionsFilters(prev => ({ ...prev, mood: value }))}>
                         <SelectTrigger className="flex-1">
                           <SelectValue />
@@ -696,7 +696,6 @@ const PatientDetail: React.FC = () => {
               )}
             </TabsContent>
   
-
             <TabsContent value="financial" className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <h2 className="text-lg md:text-xl font-semibold">Financeiro</h2>
@@ -708,8 +707,8 @@ const PatientDetail: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-4 mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="flex flex-col gap-4 mb-6 overflow-x-auto">
+                <div className="grid grid-cols-4 gap-3 min-w-max md:min-w-full">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Data Início</label>
                     <Input
