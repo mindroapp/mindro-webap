@@ -62,7 +62,7 @@ const SidebarMenu: React.FC = () => {
   };
 
   const handleSupportClick = () => {
-    const whatsappNumber = "5585987654321"; // Número de WhatsApp da equipe de suporte
+    const whatsappNumber = "558594245460"; // Número de WhatsApp da equipe de suporte
     const whatsappMessage = "Olá! Gostaria de iniciar um atendimento com a equipe de suporte técnico.";
     const encodedMessage = encodeURIComponent(whatsappMessage);
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;

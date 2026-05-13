@@ -12,7 +12,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   requireAdmin = false 
 }) => {
-  const { isAuthenticated, isLoading, user, getAccessToken, isAdmin } = useAuth();
+  const { isAuthenticated, isLoading, user, getAccessToken, isAdmin, isVerified } = useAuth();
   const location = useLocation();
 
   const { toast } = useToast();
@@ -51,6 +51,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (!isAuthenticated) {
     // Redirecionar para a página de login com a URL de retorno
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Verificar se usuário profissional não está verificado/aprovado
+  if (user?.role === "professional" && !isVerified) {
+    toast({
+      title: "Acesso negado",
+      description: "Sua conta ainda está aguardando aprovação do administrador.",
+      variant: "destructive"
+    });
+    return <Navigate to="/thank-you" replace />;
   }
 
   // Verificar se a rota requer permissão de administrador

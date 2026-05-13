@@ -16,7 +16,7 @@ const patientFormSchema = z.object({
   name: z.string()
     .nonempty({ message: "O nome é obrigatório" })
     .regex(/^[A-Za-zÀ-ÿ\s]+$/, { message: "O nome deve conter apenas letras" }),
-  email: z.string().email({ message: "Por favor, insira um endereço de e-mail válido" }),
+  email: z.string().email({ message: "Por favor, insira um endereço de e-mail válido" }).optional().or(z.literal("")).catch(""),
   phone: z.string()
     .regex(/^\d{10,11}$/, { message: "Informe um telefone válido com DDD" }),
   birthdate: z.string().refine((date) => !isNaN(Date.parse(date)), {

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -20,10 +20,10 @@ const ScheduleAvailability: React.FC = () => {
     { start: "08:00", end: "12:00", duration: 50 }
   ]);
   const { user } = useAuth();
-  const { availabilities, addAvailability, deleteAvailability, getAvailabilitiesByProfessional, publicAppointments } = usePatientStore();
+  const { availabilities, addAvailability, deleteAvailability, getAvailabilitiesByProfessional, publicAppointments, fetchAvailabilities, fetchPublicAppointments } = usePatientStore();
   const { toast } = useToast();
 
-  const professionalAvailabilities = user ? getAvailabilitiesByProfessional(user.email) : [];
+  const professionalAvailabilities = user ? getAvailabilitiesByProfessional(user.phone) : [];
   const today = startOfDay(new Date());
 
   // Stats
@@ -32,7 +32,11 @@ const ScheduleAvailability: React.FC = () => {
     const totalSlots = futureAvailabilities.reduce((acc, av) => acc + av.timeSlots.length, 0);
     const bookedSlots = futureAvailabilities.reduce((acc, av) => {
       return acc + av.timeSlots.filter(slot => {
-        return publicAppointments.some(apt => apt.availabilityId === av.id && apt.time === slot.time);
+        // Um slot é considerado booked se:
+        // 1. Não está marcado como available no banco (available: false), OU
+        // 2. Existe um appointment associado a ele
+        const hasAppointment = publicAppointments.some(apt => apt.availabilityId === av.id && apt.time === slot.time);
+        return !slot.available || hasAppointment;
       }).length;
     }, 0);
     
@@ -107,7 +111,7 @@ const ScheduleAvailability: React.FC = () => {
         await addAvailability({
           date: format(date, "yyyy-MM-dd"),
           timeSlots: allSlots.map(time => ({ time, available: true })),
-          professionalId: user?.email || ""
+          professionalId: user?.phone || ""
         });
       }
 
@@ -154,7 +158,7 @@ const ScheduleAvailability: React.FC = () => {
   };
 
   const copyPublicLink = () => {
-    const link = user?.email ? buildPublicBookingUrl(user?.professionalCouncil, user?.professionalRegister) : "";
+    const link = user?.email ? buildPublicBookingUrl(user?.phone) : "";
     navigator.clipboard.writeText(link);
     toast({
       title: "Link copiado",
@@ -163,7 +167,7 @@ const ScheduleAvailability: React.FC = () => {
   };
 
   const openPublicLink = () => {
-    const link = user?.email ? buildPublicBookingUrl(user?.professionalCouncil, user?.professionalRegister) : "";
+    const link = user?.email ? buildPublicBookingUrl(user?.phone) : "";
     window.open(link, '_blank');
   };
 

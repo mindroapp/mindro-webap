@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User, Phone, Video, MessageSquare, X, Mail, Cake, UserPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User, Phone, Video, MessageSquare, X, Mail, Cake, UserPlus, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { usePatientStore } from "@/stores/patientStore";
+import { useNavigate } from "react-router-dom";
+import scheduleService from "@/services/scheduleService";
 import { format, isBefore, isAfter, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -17,15 +19,16 @@ const ScheduleAppointmentsView: React.FC = () => {
     fetchScheduleEvents,
     getPublicAppointmentsByProfessional,
     fetchPublicAppointments,
+    fetchAvailabilities,
     patients,
     fetchPatients,
     addPatient,
   } = usePatientStore();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [filterType, setFilterType] = useState<'all' | 'today' | 'upcoming' | 'past'>('all');
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [cancelModal, setCancelModal] = useState<{ open: boolean; appointment: any }>({ open: false, appointment: null });
@@ -38,7 +41,7 @@ const ScheduleAppointmentsView: React.FC = () => {
     const clean = phone.replace(/\D/g, '');
     return !patients.some(p => p.phone.replace(/\D/g, '') === clean);
   };
-  const professionalAppointments = user ? getPublicAppointmentsByProfessional(user.email) : [];
+  const professionalAppointments = user?.id ? getPublicAppointmentsByProfessional(user.id) : [];
 
   // Inicializar selectedDate com a data atual ao carregar e buscar dados
   useEffect(() => {
@@ -47,12 +50,20 @@ const ScheduleAppointmentsView: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (user?.email) {
-      fetchScheduleEvents(user.email).catch(console.error);
-      fetchPublicAppointments(user.email).catch(console.error);
+    if (user?.id) {
+      fetchScheduleEvents(user.id).catch(console.error);
+      fetchPublicAppointments(user.id).catch(console.error);
       fetchPatients().catch(console.error);
+
+      // Polling every 15 seconds to keep data fresh
+      const interval = setInterval(() => {
+        fetchScheduleEvents(user.id).catch(console.error);
+        fetchPublicAppointments(user.id).catch(console.error);
+      }, 15000);
+
+      return () => clearInterval(interval);
     }
-  }, [user?.email]);
+  }, [user?.id, fetchScheduleEvents, fetchPublicAppointments, fetchPatients]);
 
   // Stats
   const stats = useMemo(() => {
@@ -230,6 +241,26 @@ const ScheduleAppointmentsView: React.FC = () => {
     window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${message}`, '_blank');
   };
 
+  const findPatientByAppointment = (appointment: any) => {
+    if (!appointment) return null;
+    
+    return patients.find(p => {
+      const cleanAppointmentPhone = appointment.patientPhone?.replace(/\D/g, '') || '';
+      const cleanPatientPhone = p.phone.replace(/\D/g, '');
+      
+      return p.name.toLowerCase() === appointment.patientName?.toLowerCase() ||
+        cleanPatientPhone === cleanAppointmentPhone;
+    });
+  };
+
+  const handleViewPatientRecord = () => {
+    const patient = findPatientByAppointment(selectedAppointment);
+    if (patient) {
+      navigate(`/patients/${patient.id}`);
+      setIsModalOpen(false);
+    }
+  };
+
   const handleConfirmDelete = () => {
     setCancelModal({ open: true, appointment: selectedAppointment });
   };
@@ -238,23 +269,19 @@ const ScheduleAppointmentsView: React.FC = () => {
     if (!cancelModal.appointment) return;
     
     try {
-      const response = await fetch(`/api/schedule/appointments/${cancelModal.appointment.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erro ao excluir agendamento');
-      }
+      await scheduleService.deletePublicAppointment(cancelModal.appointment.id);
 
       toast({
         title: "Agendamento excluído",
         description: "O agendamento foi removido e a agenda está disponível novamente."
       });
       
-      // Atualizar lista de agendamentos
-      if (user?.email) {
-        await fetchPublicAppointments(user.email);
+      // Recarregar agendamentos e availabilities para refletir o slot liberado
+      if (user?.id) {
+        await Promise.all([
+          fetchPublicAppointments(user.id),
+          fetchAvailabilities(user.id),
+        ]).catch(console.error);
       }
       
       setCancelModal({ open: false, appointment: null });
@@ -294,45 +321,6 @@ const ScheduleAppointmentsView: React.FC = () => {
 
   const selectedAppointments = selectedDate ? getAppointmentsForDate(selectedDate) : [];
   const currentMonthDays = getCalendarDays(currentDate);
-
-  // All appointments for list view
-  const allAppointments = useMemo(() => {
-    const appointments = [
-      ...scheduleEvents.map(event => ({
-        ...event,
-        dateObj: new Date(event.date),
-        time: format(new Date(event.date), "HH:mm")
-      })),
-      ...professionalAppointments.map(apt => ({
-        id: apt.id,
-        patientName: apt.patientName,
-        patientPhone: apt.patientPhone,
-        patientEmail: apt.patientEmail,
-        patientBirthDate: apt.patientBirthDate,
-        date: `${apt.date}T${apt.time}`,
-        dateObj: new Date(`${apt.date}T${apt.time}`),
-        time: apt.time,
-        status: apt.status,
-        isPublicAppointment: true
-      }))
-    ].filter(apt => {
-      const aptDate = apt.dateObj;
-      return aptDate.getFullYear() === currentDate.getFullYear() &&
-        aptDate.getMonth() === currentDate.getMonth();
-    });
-
-    // Apply filter
-    switch (filterType) {
-      case 'today':
-        return appointments.filter(apt => format(apt.dateObj, "yyyy-MM-dd") === format(today, "yyyy-MM-dd"));
-      case 'upcoming':
-        return appointments.filter(apt => isAfter(startOfDay(apt.dateObj), today));
-      case 'past':
-        return appointments.filter(apt => isBefore(startOfDay(apt.dateObj), today));
-      default:
-        return appointments;
-    }
-  }, [scheduleEvents, professionalAppointments, currentDate, filterType, today]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -503,116 +491,84 @@ const ScheduleAppointmentsView: React.FC = () => {
       {/* Appointments List */}
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <CardTitle className="flex-1">
-              {selectedDate ? (
-                <>Agendamentos - {formatDateFull(selectedDate)}</>
-              ) : (
-                <>Todos os Agendamentos</>
-              )}
-            </CardTitle>
-            {!selectedDate && (
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant={filterType === 'all' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilterType('all')}
-                >
-                  Todos
-                </Button>
-                <Button
-                  variant={filterType === 'today' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilterType('today')}
-                >
-                  Hoje
-                </Button>
-                <Button
-                  variant={filterType === 'upcoming' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilterType('upcoming')}
-                >
-                  Futuros
-                </Button>
-                <Button
-                  variant={filterType === 'past' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilterType('past')}
-                >
-                  Passados
-                </Button>
-              </div>
+          <CardTitle>
+            {selectedDate ? (
+              <>Agendamentos - {formatDateFull(selectedDate)}</>
+            ) : (
+              <>Selecione uma data para ver os agendamentos</>
             )}
-          </div>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          {(selectedDate ? selectedAppointments : allAppointments).length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-20" />
-              <p>Nenhum agendamento encontrado.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {(selectedDate ? selectedAppointments : allAppointments).map((appointment: any) => {
-                const appointmentDate = appointment.dateObj || new Date(appointment.date);
-                const appointmentTime = appointment.time || format(appointmentDate, "HH:mm");
-                const isPastAppointment = isBefore(appointmentDate, new Date());
+        {selectedDate && (
+          <CardContent>
+            {selectedAppointments.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                <p>Nenhum agendamento encontrado para esta data.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {selectedAppointments.map((appointment: any) => {
+                  const appointmentDate = appointment.dateObj || new Date(appointment.date);
+                  const appointmentTime = appointment.time || format(appointmentDate, "HH:mm");
+                  const isPastAppointment = isBefore(appointmentDate, new Date());
 
-                return (
-                  <div
-                    key={appointment.id}
-                    className={`p-4 rounded-xl border transition-all cursor-pointer hover:shadow-md ${
-                      isPastAppointment
-                        ? 'bg-muted/30 border-muted'
-                        : 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800'
-                    }`}
-                    onClick={() => handleAppointmentClick(appointment)}
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-                          isPastAppointment ? 'bg-muted' : 'bg-blue-200 dark:bg-blue-800'
-                        }`}>
-                          <User className={`h-5 w-5 ${isPastAppointment ? 'text-muted-foreground' : 'text-blue-600 dark:text-blue-400'}`} />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold">{appointment.patientName}</h4>
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <CalendarIcon className="h-3 w-3" />
-                              {format(appointmentDate, 'dd/MM/yyyy', { locale: ptBR })}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {appointmentTime}
-                            </div>
-                            {appointment.patientPhone && (
+                  return (
+                    <div
+                      key={appointment.id}
+                      className={`p-4 rounded-xl border transition-all cursor-pointer hover:shadow-md ${
+                        isPastAppointment
+                          ? 'bg-muted/30 border-muted'
+                          : 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800'
+                      }`}
+                      onClick={() => handleAppointmentClick(appointment)}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                            isPastAppointment ? 'bg-muted' : 'bg-blue-200 dark:bg-blue-800'
+                          }`}>
+                            <User className={`h-5 w-5 ${isPastAppointment ? 'text-muted-foreground' : 'text-blue-600 dark:text-blue-400'}`} />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold">{appointment.patientName}</h4>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
-                                <Phone className="h-3 w-3" />
-                                {formatPhoneNumber(appointment.patientPhone)}
+                                <CalendarIcon className="h-3 w-3" />
+                                {format(appointmentDate, 'dd/MM/yyyy', { locale: ptBR })}
                               </div>
-                            )}
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {appointmentTime}
+                              </div>
+                              {appointment.patientPhone && (
+                                <div className="flex items-center gap-1">
+                                  <Phone className="h-3 w-3" />
+                                  {formatPhoneNumber(appointment.patientPhone)}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-2">
-                        <Badge variant={isPastAppointment ? "secondary" : getStatusColor(appointment.status)}>
-                          {isPastAppointment ? 'Realizado' : getStatusLabel(appointment.status)}
-                        </Badge>
-                        {appointment.isPublicAppointment && isNewPatient(appointment.patientPhone) && (
-                          <Badge className="border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border">
-                            Novo Paciente
+                        <div className="flex items-center gap-2">
+                          <Badge variant={isPastAppointment ? "secondary" : getStatusColor(appointment.status)}>
+                            {isPastAppointment ? 'Realizado' : getStatusLabel(appointment.status)}
                           </Badge>
-                        )}
+                          {appointment.isPublicAppointment && isNewPatient(appointment.patientPhone) && (
+                            <Badge className="border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border">
+                              Novo Paciente
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        )}
       </Card>
 
       {/* Delete Confirmation Modal */}
@@ -731,20 +687,22 @@ const ScheduleAppointmentsView: React.FC = () => {
                 )}
 
                 <div className="flex gap-2">
-                  <Button
-                    onClick={handleStartVideoCall}
-                    className="flex-1"
-                    disabled={selectedIsPast}
-                    title="Iniciar Teleconsulta"
-                  >
-                    <Video className="h-4 w-4" />
-                  </Button>
+                  {selectedAppointment && findPatientByAppointment(selectedAppointment) && (
+                    <Button
+                      onClick={handleViewPatientRecord}
+                      className="flex-1"
+                      variant="outline"
+                      title="Ver Prontuário"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Prontuário</span>
+                    </Button>
+                  )}
 
                   {selectedAppointment.isPublicAppointment && isNewPatient(selectedAppointment.patientPhone) && (
                     <Button
                       onClick={createPatientFromAppointment}
-                      variant="outline"
-                      className="flex-1 border-yellow-400 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+                      className="flex-1"
                       disabled={isRegistering}
                       title="Cadastrar Paciente"
                     >

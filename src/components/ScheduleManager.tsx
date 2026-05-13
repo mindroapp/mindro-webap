@@ -25,8 +25,7 @@ const ScheduleManager: React.FC = () => {
     instagram: "",
   });
   const [isLoading, setIsLoading] = React.useState(true);
-  const [council, setCouncil] = React.useState<string | null>(null);
-  const [register, setRegister] = React.useState<string | null>(null);
+  const [phone, setPhone] = React.useState<string | null>(null);
 
   // Carregar configurações do backend ao montar
   React.useEffect(() => {
@@ -40,14 +39,13 @@ const ScheduleManager: React.FC = () => {
         if (profile) {
           setPublicPageConfig({
             avatar: profile.avatar || null,
-            pageName: profile.pageName || "Consultório Dr. João Silva",
+            pageName: profile.pageName || "",
             address: profile.address || "",
             bio: profile.bio || "",
             instagram: profile.instagram || "",
           });
         }
-        setCouncil(apiUser.professionalCouncil ?? null);
-        setRegister(apiUser.professionalRegister ?? null);
+        setPhone(apiUser.phone ?? null);
       } catch (err) {
         console.error("Erro ao carregar dados:", err);
       } finally {
@@ -58,7 +56,7 @@ const ScheduleManager: React.FC = () => {
     loadData();
   }, []);
 
-  const publicLink = buildPublicBookingUrl(council, register);
+  const publicLink = buildPublicBookingUrl(phone);
 
   const copyPublicLink = () => {
     navigator.clipboard.writeText(publicLink);
@@ -106,9 +104,8 @@ const ScheduleManager: React.FC = () => {
               <div className="min-w-0 flex-1">
                 <h3 className="font-semibold">Link de Agendamento Público</h3>
                 <p className="text-sm text-muted-foreground mb-1">
-                  Compartilhe com seus pacientes para que possam agendar consultas.
+                  Compartilhe com seus pacientes para que possam agendar consultas
                 </p>
-                <p className="text-xs text-primary font-mono truncate">{publicLink}</p>
               </div>
               <div className="flex gap-2 shrink-0">
                 <Button variant="outline" size="sm" onClick={copyPublicLink}>
@@ -177,7 +174,7 @@ const ScheduleManager: React.FC = () => {
                         type="text" 
                         value={publicPageConfig.pageName}
                         onChange={(e) => setPublicPageConfig(prev => ({ ...prev, pageName: e.target.value }))}
-                        placeholder="Ex: Consultório Dr. João Silva"
+                        placeholder="Dra. Ana Beatriz | Psicóloga Clínica"
                         className="w-full px-3 py-2 border rounded-md text-sm"
                       />
                     </div>

@@ -36,6 +36,8 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ onClose, onScheduleCreated 
   const [lunchBreak, setLunchBreak] = useState(false);
   const [lunchStart, setLunchStart] = useState('12:00');
   const [lunchEnd, setLunchEnd] = useState('13:00');
+  const [customStartTime, setCustomStartTime] = useState('08:00');
+  const [customEndTime, setCustomEndTime] = useState('18:00');
   const [enableRecurrence, setEnableRecurrence] = useState(false);
   const [recurrenceOccurrences, setRecurrenceOccurrences] = useState(4);
   const [selectedPreset, setSelectedPreset] = useState<PresetSchedule | null>(null);
@@ -45,7 +47,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ onClose, onScheduleCreated 
     { name: 'Meio Período (Manhã)', start: '08:00', end: '12:00', lunch: false },
     { name: 'Meio Período (Tarde)', start: '14:00', end: '18:00', lunch: false },
     { name: 'Período Integral', start: '08:00', end: '17:00', lunch: true, lunchStart: '12:00', lunchEnd: '13:00' },
-    { name: 'Estendido', start: '07:00', end: '19:00', lunch: true, lunchStart: '12:00', lunchEnd: '13:00' },
+    { name: 'Personalizado', start: '10:00', end: '18:00', lunch: false },
   ];
 
   const minDate = useMemo(() => {
@@ -64,8 +66,13 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ onClose, onScheduleCreated 
 
   const generateTimeSlots = (preset: PresetSchedule, duration: number): string[] => {
     const slots: string[] = [];
-    const startTime = new Date(`2000-01-01T${preset.start}:00`);
-    const endTime = new Date(`2000-01-01T${preset.end}:00`);
+    
+    // Use custom times if "Personalizado" is selected
+    const startTimeStr = selectedPreset?.name === 'Personalizado' ? customStartTime : preset.start;
+    const endTimeStr = selectedPreset?.name === 'Personalizado' ? customEndTime : preset.end;
+    
+    const startTime = new Date(`2000-01-01T${startTimeStr}:00`);
+    const endTime = new Date(`2000-01-01T${endTimeStr}:00`);
 
     const currentTime = new Date(startTime);
     while (currentTime < endTime) {
@@ -159,7 +166,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ onClose, onScheduleCreated 
         await addAvailability({
           date: date.toISOString().split('T')[0],
           timeSlots: timeSlots.map(time => ({ time, available: true })),
-          professionalId: user?.email || ""
+          professionalId: user?.id || ""
         });
       }
 
@@ -283,6 +290,33 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ onClose, onScheduleCreated 
                 Agendas podem ser criadas a partir de hoje
               </p>
 
+              {/* Custom Time Inputs - Personalizado */}
+              {selectedPreset?.name === 'Personalizado' && (
+                <div className="mt-4 bg-muted/30 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold mb-4">Horário Personalizado</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-2 block">Hora de Início</Label>
+                      <Input
+                        type="time"
+                        value={customStartTime}
+                        onChange={(e) => setCustomStartTime(e.target.value)}
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-2 block">Hora de Término</Label>
+                      <Input
+                        type="time"
+                        value={customEndTime}
+                        onChange={(e) => setCustomEndTime(e.target.value)}
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Recurrence Option */}
               <div className="mt-4 bg-muted/30 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-3">
@@ -362,6 +396,33 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ onClose, onScheduleCreated 
                     ? `Agendas serão criadas para todos os dias entre ${new Date(startDate + 'T00:00:00').toLocaleDateString('pt-BR')} e ${new Date(endDate + 'T00:00:00').toLocaleDateString('pt-BR')}`
                     : `Agenda será criada apenas para ${new Date(startDate + 'T00:00:00').toLocaleDateString('pt-BR')}`}
                 </p>
+              )}
+
+              {/* Custom Time Inputs - Personalizado */}
+              {selectedPreset?.name === 'Personalizado' && (
+                <div className="col-span-full mt-4 bg-muted/30 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold mb-4">Horário Personalizado</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-2 block">Hora de Início</Label>
+                      <Input
+                        type="time"
+                        value={customStartTime}
+                        onChange={(e) => setCustomStartTime(e.target.value)}
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-2 block">Hora de Término</Label>
+                      <Input
+                        type="time"
+                        value={customEndTime}
+                        onChange={(e) => setCustomEndTime(e.target.value)}
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           )}

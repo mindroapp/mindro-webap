@@ -112,6 +112,7 @@ const RegisterPage: React.FC = () => {
       );
 
       const firstName = name.split(" ")[0];
+      // Sempre redirecionar para thank-you, onde será mostrada mensagem apropriada
       navigate("/thank-you", { replace: true, state: { firstName } });
     } catch (err: any) {
       const errorMessage =

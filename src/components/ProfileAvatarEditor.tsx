@@ -29,9 +29,9 @@ const ProfileAvatarEditor: React.FC<ProfileAvatarEditorProps> = ({
   };
 
   const textSizeClasses = {
-    sm: "text-xs",
-    md: "text-sm",
-    lg: "text-lg font-semibold",
+    sm: "text-base",
+    md: "text-lg",
+    lg: "text-3xl font-semibold",
   };
 
   const getInitials = (fullName: string) => {

@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar as CalendarIcon, Video, MessageSquare, Phone, User, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, Video, MessageSquare, Phone, User, Clock, FileText } from "lucide-react";
 import { usePatientStore } from "@/stores/patientStore";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { format, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -18,9 +19,10 @@ const ScheduleAppointments: React.FC = () => {
   const { user } = useAuth();
   const { scheduleEvents, publicAppointments, getPublicAppointmentsByProfessional, patients } = usePatientStore();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const today = startOfDay(new Date());
-  const professionalAppointments = user ? getPublicAppointmentsByProfessional(user.email) : [];
+  const professionalAppointments = user?.id ? getPublicAppointmentsByProfessional(user.id) : [];
 
   // Stats
   const stats = useMemo(() => {
@@ -106,6 +108,26 @@ const ScheduleAppointments: React.FC = () => {
       title: "WhatsApp aberto",
       description: "Você pode enviar o lembrete agora."
     });
+  };
+
+  const findPatientByAppointment = (appointment: any) => {
+    if (!appointment) return null;
+    
+    return patients.find(p => {
+      const cleanAppointmentPhone = appointment.patientPhone?.replace(/\D/g, '') || '';
+      const cleanPatientPhone = p.phone.replace(/\D/g, '');
+      
+      return p.name.toLowerCase() === appointment.patientName?.toLowerCase() ||
+        cleanPatientPhone === cleanAppointmentPhone;
+    });
+  };
+
+  const handleViewPatientRecord = () => {
+    const patient = findPatientByAppointment(selectedAppointment);
+    if (patient) {
+      navigate(`/patients/${patient.id}`);
+      setIsModalOpen(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -310,6 +332,16 @@ const ScheduleAppointments: React.FC = () => {
                   <Video className="h-4 w-4 mr-2" />
                   Iniciar Teleconsulta
                 </Button>
+                {selectedAppointment && findPatientByAppointment(selectedAppointment) && (
+                  <Button
+                    variant="outline"
+                    onClick={handleViewPatientRecord}
+                    className="w-full"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Ver Prontuário
+                  </Button>
+                )}
                 {selectedAppointment.patientPhone && (
                   <Button
                     variant="outline"

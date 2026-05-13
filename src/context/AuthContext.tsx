@@ -6,6 +6,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
   role?: "admin" | "professional";
   isVerified?: boolean;
   professionalCouncil?: string | null;
@@ -65,6 +66,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         id: userData.id,
         name: userData.fullName,
         email: userData.email,
+        phone: userData.phone ?? null,
         role: userData.role as "admin" | "professional",
         isVerified: userData.isVerified ?? false,
         professionalCouncil: userData.professionalCouncil ?? null,
@@ -103,19 +105,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         id: userData.id,
         name: userData.fullName,
         email: userData.email,
+        phone: userData.phone ?? null,
         role: userData.role as "admin" | "professional",
         isVerified: userData.isVerified ?? false,
         professionalCouncil: userData.professionalCouncil ?? null,
         professionalRegister: userData.professionalRegister ?? null,
       };
-      if (accessToken) localStorage.setItem("accessToken", accessToken);
-      if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
-      localStorage.setItem("user", JSON.stringify(user));
-      setUser(user);
-      toast({
-        title: "Registro realizado com sucesso",
-        description: "Sua conta foi criada com sucesso.",
-      });
+
+      // Apenas armazenar tokens se o usuário estiver verificado
+      // Profissionais não aprovados não devem ser logados automaticamente
+      if (accessToken && refreshToken) {
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
+        setUser(user);
+        toast({
+          title: "Registro realizado com sucesso",
+          description: "Bem-vindo à plataforma!",
+        });
+      } else {
+        // Para profissionais não aprovados, não fazer login
+        // Apenas mostrar mensagem de sucesso
+        toast({
+          title: "Registro realizado com sucesso",
+          description: "Sua conta foi criada e está aguardando aprovação do administrador.",
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Falha no registro",

@@ -1,10 +1,11 @@
 export function buildPublicBookingUrl(
-  council: string | null | undefined,
-  register: string | null | undefined
+  phone: string | null | undefined
 ): string {
-  if (!council && !register) return "";
-  const slug = [council, register].filter(Boolean).join("-");
-  return `${window.location.origin}/agendamento/${encodeURIComponent(slug)}`;
+  if (!phone) return "";
+  // Remove tudo que não é número
+  const cleaned = phone.replace(/\D/g, "");
+  if (cleaned.length === 0) return "";
+  return `${window.location.origin}/agendamento/${encodeURIComponent(cleaned)}`;
 }
 
 /**

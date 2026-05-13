@@ -71,7 +71,7 @@ const ScheduleEventForm: React.FC<ScheduleEventFormProps> = ({
         notes: formData.notes,
         status: formData.status,
         videoLink: "",
-        professionalId: user?.email ?? "",
+        professionalId: user?.phone ?? "",
       });
 
       toast({

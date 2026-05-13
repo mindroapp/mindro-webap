@@ -23,11 +23,22 @@ const ScheduleCalendarView: React.FC = () => {
   } = usePatientStore();
 
   useEffect(() => {
-    if (user?.email) {
-      fetchAvailabilities(user.email).catch(console.error);
-      fetchPublicAppointments(user.email).catch(console.error);
+    if (user?.id) {
+      // Fetch immediate
+      fetchAvailabilities(user.id).catch(console.error);
+      fetchPublicAppointments(user.id).catch(console.error);
+
+      // Polling every 15 seconds to keep data fresh
+      const interval = setInterval(() => {
+        fetchAvailabilities(user.id).catch(console.error);
+        fetchPublicAppointments(user.id).catch(console.error);
+      }, 15000);
+
+      return () => clearInterval(interval);
+    } else {
+      console.warn('User id not loaded:', user);
     }
-  }, [user?.email]);
+  }, [user?.id, fetchAvailabilities, fetchPublicAppointments]);
   const { toast } = useToast();
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -41,7 +52,7 @@ const ScheduleCalendarView: React.FC = () => {
     slotTime?: string;
   }>({ open: false, type: null });
 
-  const professionalAvailabilities = user ? getAvailabilitiesByProfessional(user.email) : [];
+  const professionalAvailabilities = user?.id ? getAvailabilitiesByProfessional(user.id) : [];
   const today = startOfDay(new Date());
 
   // Stats
@@ -55,7 +66,11 @@ const ScheduleCalendarView: React.FC = () => {
     const totalSlots = currentMonthAvailabilities.reduce((acc, av) => acc + av.timeSlots.length, 0);
     const bookedSlots = currentMonthAvailabilities.reduce((acc, av) => {
       return acc + av.timeSlots.filter(slot => {
-        return publicAppointments.some(apt => apt.availabilityId === av.id && apt.time === slot.time);
+        // Um slot é considerado booked se:
+        // 1. Não está marcado como available no banco (available: false), OU
+        // 2. Existe um appointment associado a ele
+        const hasAppointment = publicAppointments.some(apt => apt.availabilityId === av.id && apt.time === slot.time);
+        return !slot.available || hasAppointment;
       }).length;
     }, 0);
 
@@ -95,7 +110,11 @@ const ScheduleCalendarView: React.FC = () => {
 
     const total = availability.timeSlots.length;
     const busy = availability.timeSlots.filter(slot => {
-      return publicAppointments.some(apt => apt.availabilityId === availability.id && apt.time === slot.time);
+      // Um slot é considerado booked se:
+      // 1. Não está marcado como available no banco (available: false), OU
+      // 2. Existe um appointment associado a ele
+      const hasAppointment = publicAppointments.some(apt => apt.availabilityId === availability.id && apt.time === slot.time);
+      return !slot.available || hasAppointment;
     }).length;
 
     return { total, available: total - busy, busy };
@@ -151,6 +170,7 @@ const ScheduleCalendarView: React.FC = () => {
         description: "A agenda foi removida com sucesso."
       });
       setSelectedDate(null);
+      setConfirmModal({ open: false, type: null });
     } catch (error) {
       toast({
         title: "Erro",
@@ -201,9 +221,11 @@ const ScheduleCalendarView: React.FC = () => {
   };
 
   const filteredSlots = selectedAvailability?.timeSlots.filter(slot => {
-    const isBooked = publicAppointments.some(
+    const hasAppointment = publicAppointments.some(
       apt => apt.availabilityId === selectedAvailability.id && apt.time === slot.time
     );
+    // Um slot é considerado booked se não está available ou tem appointment
+    const isBooked = !slot.available || hasAppointment;
     if (filterType === 'available') return !isBooked;
     if (filterType === 'busy') return isBooked;
     return true;

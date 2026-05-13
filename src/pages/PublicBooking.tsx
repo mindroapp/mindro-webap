@@ -61,7 +61,6 @@ const PublicBooking: React.FC = () => {
 
   const [professional, setProfessional] = useState<Professional | null>(null);
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
-  const [appointments, setAppointments] = useState<PublicAppointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -124,14 +123,10 @@ const PublicBooking: React.FC = () => {
       setLoading(true);
       const encoded = encodeURIComponent(professionalId);
       const prof = await publicFetch<Professional>(`/users/public/${encoded}`);
-      const profEmail = encodeURIComponent(prof.email);
-      const [avails, apts] = await Promise.all([
-        publicFetch<Availability[]>(`/schedule/availabilities?professionalId=${profEmail}`),
-        publicFetch<PublicAppointment[]>(`/schedule/appointments?professionalId=${profEmail}`),
-      ]);
+      const profId = encodeURIComponent(prof.id);
+      const avails = await publicFetch<Availability[]>(`/schedule/availabilities?professionalId=${profId}`);
       setProfessional(prof);
       setAvailabilities(avails);
-      setAppointments(apts);
     } catch (err: any) {
       if (err.message?.includes("not found") || err.message?.includes("404")) {
         setNotFound(true);
@@ -148,14 +143,7 @@ const PublicBooking: React.FC = () => {
   const hasValidTimeSlots = (availability: Availability, isToday: boolean): boolean => {
     const now = new Date();
     return availability.timeSlots.some((slot) => {
-      const booked = appointments.find(
-        (apt) =>
-          apt.availabilityId === availability.id &&
-          apt.time === slot.time &&
-          apt.status !== "cancelled"
-      );
-
-      if (!slot.available || booked) return false;
+      if (!slot.available) return false;
 
       if (isToday) {
         const [hours, minutes] = slot.time.split(":").map(Number);
@@ -182,7 +170,7 @@ const PublicBooking: React.FC = () => {
         return isFuture && hasValidTimeSlots(av, isToday);
       })
       .map((av) => new Date(`${av.date}T00:00:00`));
-  }, [availabilities, appointments, today]);
+  }, [availabilities, today]);
 
   const selectedAvailability = useMemo(
     () =>
@@ -199,14 +187,7 @@ const PublicBooking: React.FC = () => {
     const isToday = format(selectedDate, "yyyy-MM-dd") === format(now, "yyyy-MM-dd");
     
     return selectedAvailability.timeSlots.filter((slot) => {
-      const booked = appointments.find(
-        (apt) =>
-          apt.availabilityId === selectedAvailability.id &&
-          apt.time === slot.time &&
-          apt.status !== "cancelled"
-      );
-      
-      if (!slot.available || booked) return false;
+      if (!slot.available) return false;
       
       // Se é hoje, filtrar por 30 minutos de antecedência
       if (isToday) {
@@ -220,7 +201,7 @@ const PublicBooking: React.FC = () => {
       
       return true;
     });
-  }, [selectedAvailability, appointments, selectedDate]);
+  }, [selectedAvailability, selectedDate]);
 
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
@@ -282,7 +263,7 @@ const PublicBooking: React.FC = () => {
           email: patientEmail,
           phone: cleanPhone,
           birthDate: patientBirthDate ? new Date(patientBirthDate).toISOString() : null,
-          professionalId,
+          professionalId: professional?.email || professionalId,
         }),
       });
       setExistingPatient(newPatient);
@@ -294,7 +275,7 @@ const PublicBooking: React.FC = () => {
   };
 
   const handleBooking = async () => {
-    if (!selectedDate || !selectedTime || !professionalId || !selectedAvailability || !patientName || !patientPhone) return;
+    if (!selectedDate || !selectedTime || !professional || !selectedAvailability || !patientName || !patientPhone) return;
     setIsBooking(true);
     setBookingError(null);
     try {
@@ -311,7 +292,7 @@ const PublicBooking: React.FC = () => {
           patientEmail: patientEmail || undefined,
           patientBirthDate: patientBirthDate || undefined,
           isFirstTime: isPatient === true,
-          professionalId,
+          professionalId: professional.id,
         }),
       });
       setStep("success");
@@ -473,7 +454,7 @@ const PublicBooking: React.FC = () => {
                 {availableDates.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground text-sm space-y-2">
                     <CalendarEmpty />
-                    <p>Nenhum horário disponível neste mês.</p>
+                    <p>Profissional sem agenda cadastrada no sistema</p>
                   </div>
                 ) : (
                   <>
@@ -640,8 +621,9 @@ const PublicBooking: React.FC = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="email" className="text-base font-semibold">
+                        <Label htmlFor="email" className="text-base font-semibold flex items-center gap-2">
                           Email
+                          <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
                         </Label>
                         <Input
                           id="email"
@@ -702,7 +684,7 @@ const PublicBooking: React.FC = () => {
                   <Button
                     onClick={handleBooking}
                     className="w-full"
-                    disabled={!patientName || !patientPhone || !patientEmail || !patientBirthDate || isBooking}
+                    disabled={!patientName || !patientPhone || !patientBirthDate || isBooking}
                   >
                     {isBooking ? (
                       <>
