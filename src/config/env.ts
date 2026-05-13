@@ -1,7 +1,9 @@
 
+import { API_BASE_URL } from '@/services/apiClient';
+
 // Configuração de variáveis de ambiente
 export const config = {
-  apiUrl: import.meta.env.MINDRO_BACKEND_BASE_URL || 'http://localhost:3000/api',
+  apiUrl: API_BASE_URL,
   tokenExpiryTime: 15 * 60 * 1000, // 15 minutos em milissegundos
 };
 
