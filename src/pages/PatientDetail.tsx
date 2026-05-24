@@ -1,3 +1,31 @@
+// Funções de máscara e validação PIX
+function maskCPF(value: string) {
+  return value
+    .replace(/\D/g, "")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d{1,2})$/, "$1-$2")
+    .slice(0, 14);
+}
+function maskCNPJ(value: string) {
+  return value
+    .replace(/\D/g, "")
+    .replace(/(\d{2})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1/$2")
+    .replace(/(\d{4})(\d{1,2})$/, "$1-$2")
+    .slice(0, 18);
+}
+function maskPhone(value: string) {
+  return value
+    .replace(/\D/g, "")
+    .replace(/(\d{2})(\d)/, "($1) $2")
+    .replace(/(\d{5})(\d)/, "$1-$2")
+    .slice(0, 15);
+}
+function validateEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { usePatientStore } from "@/stores/patientStore";
@@ -39,7 +67,9 @@ import {
   Check,
   Video,
   FileDown,
-  X
+  X,
+  ClipboardEdit,
+  ClipboardPlus
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Label } from "@/components/ui/label";
@@ -531,7 +561,11 @@ const PatientDetail: React.FC = () => {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <h2 className="text-lg md:text-xl font-semibold">Avaliação Inicial</h2>
                 <Button onClick={() => { setActiveTab("initial-record"); setIsAssessmentModalOpen(true); }} size="sm">
-                  <Plus size={16} className="mr-1" /> 
+                  {selectedPatient.initialRecord ? (
+                    <ClipboardEdit size={16} className="mr-1" />
+                  ) : (
+                    <ClipboardPlus size={16} className="mr-1" />
+                  )}
                   {selectedPatient.initialRecord ? "Editar Avaliação" : "Criar Avaliação"}
                 </Button>
               </div>
@@ -546,7 +580,7 @@ const PatientDetail: React.FC = () => {
                     A avaliação inicial deste paciente ainda não foi registrada.
                   </p>
                   <Button onClick={() => { setActiveTab("initial-record"); setIsAssessmentModalOpen(true); }}>
-                    <Plus size={16} className="mr-1" /> Criar avaliação inicial
+                    <ClipboardPlus size={16} className="mr-1" /> Criar avaliação inicial
                   </Button>
                 </div>
               ) : (
@@ -774,7 +808,24 @@ const PatientDetail: React.FC = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-8"></TableHead>
+                          <TableHead className="w-8">
+                            <Checkbox
+                              checked={paginatedPayments.length > 0 && paginatedPayments.every(p => selectedPaymentIds.has(p.id))}
+                              indeterminate={paginatedPayments.some(p => selectedPaymentIds.has(p.id)) && !paginatedPayments.every(p => selectedPaymentIds.has(p.id))}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  const newSet = new Set(selectedPaymentIds);
+                                  paginatedPayments.forEach(p => newSet.add(p.id));
+                                  setSelectedPaymentIds(newSet);
+                                } else {
+                                  const newSet = new Set(selectedPaymentIds);
+                                  paginatedPayments.forEach(p => newSet.delete(p.id));
+                                  setSelectedPaymentIds(newSet);
+                                }
+                              }}
+                              aria-label="Selecionar todos"
+                            />
+                          </TableHead>
                           <TableHead>Data</TableHead>
                           <TableHead>Valor</TableHead>
                           <TableHead>Status</TableHead>
@@ -890,9 +941,6 @@ const PatientDetail: React.FC = () => {
                       <div>
                         <strong>Serviço Prestado:</strong> Sessão de psicoterapia individual
                       </div>
-                      <div>
-                        <strong>Recibo:</strong> {selectedPayment.receiptNumber || "-"}
-                      </div>
                     </div>
                   )}
                 </DialogContent>
@@ -907,7 +955,10 @@ const PatientDetail: React.FC = () => {
             initialRecord={selectedPatient.initialRecord}
           />
 
-          <Dialog open={isPixConfigOpen} onOpenChange={setIsPixConfigOpen}>
+          <Dialog open={isPixConfigOpen} onOpenChange={(open) => {
+            setIsPixConfigOpen(open);
+            if (!open) setPixConfig({ ...defaultPixConfig });
+          }}>
             <DialogContent className="sm:max-w-sm">
               <DialogHeader>
                 <DialogTitle>Dados do relatório</DialogTitle>
@@ -931,10 +982,26 @@ const PatientDetail: React.FC = () => {
                 <div className="space-y-1">
                   <Label className="text-xs">Chave PIX</Label>
                   <Input
-                    value={pixConfig.pixKey}
-                    onChange={(e) => setPixConfig(p => ({ ...p, pixKey: e.target.value }))}
+                    value={(() => {
+                      if (pixConfig.pixKeyType === "CPF") return maskCPF(pixConfig.pixKey);
+                      if (pixConfig.pixKeyType === "CNPJ") return maskCNPJ(pixConfig.pixKey);
+                      if (pixConfig.pixKeyType === "Telefone") return maskPhone(pixConfig.pixKey);
+                      return pixConfig.pixKey;
+                    })()}
+                    onChange={(e) => {
+                      let value = e.target.value;
+                      if (pixConfig.pixKeyType === "CPF") value = value.replace(/\D/g, "");
+                      if (pixConfig.pixKeyType === "CNPJ") value = value.replace(/\D/g, "");
+                      if (pixConfig.pixKeyType === "Telefone") value = value.replace(/\D/g, "");
+                      setPixConfig(p => ({ ...p, pixKey: value }));
+                    }}
                     placeholder="Sua chave PIX"
+                    type={pixConfig.pixKeyType === "E-mail" ? "email" : "text"}
+                    inputMode={pixConfig.pixKeyType === "Telefone" ? "tel" : "text"}
                   />
+                  {pixConfig.pixKeyType === "E-mail" && pixConfig.pixKey && !validateEmail(pixConfig.pixKey) && (
+                    <span className="text-xs text-red-500">E-mail inválido</span>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Observação</Label>
@@ -948,7 +1015,10 @@ const PatientDetail: React.FC = () => {
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={() => setIsPixConfigOpen(false)}>Cancelar</Button>
+                <Button variant="outline" onClick={() => {
+                  setIsPixConfigOpen(false);
+                  setPixConfig({ ...defaultPixConfig });
+                }}>Cancelar</Button>
                 <Button onClick={handleConfirmPdfGeneration}>
                   <FileDown size={16} className="mr-1" /> Exportar Relatório
                 </Button>
