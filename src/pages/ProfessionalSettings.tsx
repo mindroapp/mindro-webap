@@ -187,35 +187,51 @@ const ProfessionalSettings: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-1">
-                <div className="py-1">
-                  <span className="text-gray-600">Nome Completo:</span>
-                  <span className="text-gray-900 font-medium ml-2">{professionalData.fullName || "-"}</span>
-                </div>
-
-                <div className="py-1">
-                  <span className="text-gray-600">Email:</span>
-                  <span className="text-gray-900 font-medium ml-2">{professionalData.email || "-"}</span>
-                </div>
-
-                <div className="py-1">
-                  <span className="text-gray-600">Telefone:</span>
-                  <span className="text-gray-900 font-medium ml-2">{formatPhoneNumber(professionalData.phone) || "-"}</span>
-                </div>
-
-                <div className="py-1">
-                  <span className="text-gray-600">Profissão:</span>
-                  <span className="text-gray-900 font-medium ml-2">{professionalData.profession ? formatProfession(professionalData.profession) : "-"}</span>
-                </div>
-
-                <div className="py-1">
-                  <span className="text-gray-600">Conselho:</span>
-                  <span className="text-gray-900 font-medium ml-2">{professionalData.professionalCouncil || "-"}</span>
-                </div>
-
-                <div className="py-1">
-                  <span className="text-gray-600">Registro Profissional:</span>
-                  <span className="text-gray-900 font-medium ml-2">{professionalData.professionalRegister || "-"}</span>
-                </div>
+                {professionalData.fullName && (
+                  <div className="py-1">
+                    <span className="text-gray-600">Nome Completo:</span>
+                    <span className="text-gray-900 font-medium ml-2">{professionalData.fullName}</span>
+                  </div>
+                )}
+                {professionalData.email && (
+                  <div className="py-1">
+                    <span className="text-gray-600">Email:</span>
+                    <span className="text-gray-900 font-medium ml-2">{professionalData.email}</span>
+                  </div>
+                )}
+                {professionalData.phone && (
+                  <div className="py-1">
+                    <span className="text-gray-600">Telefone:</span>
+                    <span className="text-gray-900 font-medium ml-2">{formatPhoneNumber(professionalData.phone)}</span>
+                  </div>
+                )}
+                {professionalData.profession && (
+                  <div className="py-1">
+                    <span className="text-gray-600">Profissão:</span>
+                    <span className="text-gray-900 font-medium ml-2">{formatProfession(professionalData.profession)}</span>
+                  </div>
+                )}
+                {professionalData.professionalCouncil && (
+                  <div className="py-1">
+                    <span className="text-gray-600">Conselho:</span>
+                    <span className="text-gray-900 font-medium ml-2">{professionalData.professionalCouncil}</span>
+                  </div>
+                )}
+                {professionalData.professionalRegister && (
+                  <div className="py-1">
+                    <span className="text-gray-600">Registro Profissional:</span>
+                    <span className="text-gray-900 font-medium ml-2">{professionalData.professionalRegister}</span>
+                  </div>
+                )}
+                {/* Se nenhum campo estiver preenchido, exibe mensagem */}
+                {!professionalData.fullName &&
+                  !professionalData.email &&
+                  !professionalData.phone &&
+                  !professionalData.profession &&
+                  !professionalData.professionalCouncil &&
+                  !professionalData.professionalRegister && (
+                    <div className="py-1 text-gray-500">Nenhum dado cadastral preenchido.</div>
+                )}
               </div>
             </CardContent>
           </Card>

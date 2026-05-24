@@ -1,3 +1,10 @@
+// Função para formatar o nome da profissão
+const formatProfession = (profession: string) => {
+  return profession
+    .split("_")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
 
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -180,19 +187,21 @@ const ProfessionalEditModal: React.FC<ProfessionalEditModalProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName" className={!isAdminEdit ? "text-muted-foreground" : ""}>
-              Nome Completo {isAdminEdit && "*"}
-            </Label>
-            <Input
-              id="fullName"
-              value={formData.fullName}
-              onChange={(e) => handleChange("fullName", e.target.value)}
-              disabled={isLoading || !isAdminEdit}
-              readOnly={!isAdminEdit}
-              className={!isAdminEdit ? "bg-muted cursor-not-allowed" : ""}
-            />
-          </div>
+          {((isAdminEdit && formData.fullName !== "") || !isAdminEdit) && (
+            <div className="space-y-2">
+              <Label htmlFor="fullName" className={!isAdminEdit ? "text-muted-foreground" : ""}>
+                Nome Completo {isAdminEdit && "*"}
+              </Label>
+              <Input
+                id="fullName"
+                value={formData.fullName}
+                onChange={(e) => handleChange("fullName", e.target.value)}
+                disabled={isLoading || !isAdminEdit}
+                readOnly={!isAdminEdit}
+                className={!isAdminEdit ? "bg-muted cursor-not-allowed" : ""}
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="email">Email *</Label>
@@ -219,71 +228,77 @@ const ProfessionalEditModal: React.FC<ProfessionalEditModalProps> = ({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="profession" className={!isAdminEdit ? "text-muted-foreground" : ""}>
-              Profissão {isAdminEdit && "*"}
-            </Label>
-            {isAdminEdit ? (
-              <Select
-                value={formData.profession}
-                onValueChange={(value) => handleChange("profession", value)}
-                disabled={isLoading}
+          {((isAdminEdit && formData.profession !== "") || !isAdminEdit) && (
+            <div className="space-y-2">
+              <Label htmlFor="profession" className={!isAdminEdit ? "text-muted-foreground" : ""}>
+                Profissão {isAdminEdit && "*"}
+              </Label>
+              {isAdminEdit ? (
+                <Select
+                  value={formData.profession}
+                  onValueChange={(value) => handleChange("profession", value)}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a profissão" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROFESSIONS.map((prof) => (
+                      <SelectItem key={prof.value} value={prof.value}>
+                        {prof.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id="profession"
+                  value={formatProfession(formData.profession)}
+                  disabled
+                  readOnly
+                  className="bg-muted cursor-not-allowed"
+                />
+              )}
+            </div>
+          )}
+
+          {((isAdminEdit && formData.professionalRegister !== "") || !isAdminEdit) && (
+            <div className="space-y-2">
+              <Label
+                htmlFor="professionalRegister"
+                className={!isAdminEdit ? "text-muted-foreground" : ""}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a profissão" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROFESSIONS.map((prof) => (
-                    <SelectItem key={prof.value} value={prof.value}>
-                      {prof.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
+                Registro Profissional {isAdminEdit && "*"}
+              </Label>
               <Input
-                id="profession"
-                value={formData.profession}
-                disabled
-                readOnly
-                className="bg-muted cursor-not-allowed"
+                id="professionalRegister"
+                value={formData.professionalRegister}
+                onChange={(e) => handleChange("professionalRegister", e.target.value)}
+                disabled={isLoading || !isAdminEdit}
+                readOnly={!isAdminEdit}
+                className={!isAdminEdit ? "bg-muted cursor-not-allowed" : ""}
               />
-            )}
-          </div>
+            </div>
+          )}
 
-          <div className="space-y-2">
-            <Label
-              htmlFor="professionalRegister"
-              className={!isAdminEdit ? "text-muted-foreground" : ""}
-            >
-              Registro Profissional {isAdminEdit && "*"}
-            </Label>
-            <Input
-              id="professionalRegister"
-              value={formData.professionalRegister}
-              onChange={(e) => handleChange("professionalRegister", e.target.value)}
-              disabled={isLoading || !isAdminEdit}
-              readOnly={!isAdminEdit}
-              className={!isAdminEdit ? "bg-muted cursor-not-allowed" : ""}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label
-              htmlFor="professionalCouncil"
-              className={!isAdminEdit ? "text-muted-foreground" : ""}
-            >
-              Conselho {isAdminEdit ? "(Opcional)" : ""}
-            </Label>
-            <Input
-              id="professionalCouncil"
-              value={formData.professionalCouncil}
-              onChange={(e) => handleChange("professionalCouncil", e.target.value)}
-              disabled={isLoading || !isAdminEdit}
-              readOnly={!isAdminEdit}
-              className={!isAdminEdit ? "bg-muted cursor-not-allowed" : ""}
-            />
-          </div>
+          {((isAdminEdit && formData.professionalCouncil !== "") || !isAdminEdit) && (
+            <div className="space-y-2">
+              <Label
+                htmlFor="professionalCouncil"
+                className={!isAdminEdit ? "text-muted-foreground" : ""}
+              >
+                Conselho {isAdminEdit ? "(Opcional)" : ""}
+              </Label>
+              <Input
+                id="professionalCouncil"
+                value={formData.professionalCouncil}
+                onChange={(e) => handleChange("professionalCouncil", e.target.value)}
+                disabled={isLoading || !isAdminEdit}
+                readOnly={!isAdminEdit}
+                className={!isAdminEdit ? "bg-muted cursor-not-allowed" : ""}
+              />
+            </div>
+          )}
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
