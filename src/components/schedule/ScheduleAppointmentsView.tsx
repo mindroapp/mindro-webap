@@ -206,10 +206,6 @@ const ScheduleAppointmentsView: React.FC = () => {
   const createPatientFromAppointment = async () => {
     if (!selectedAppointment) return;
 
-    if (!selectedAppointment.patientEmail) {
-      toast({ title: "Dados incompletos", description: "Este agendamento não possui e-mail do paciente.", variant: "destructive" });
-      return;
-    }
     if (!selectedAppointment.patientBirthDate) {
       toast({ title: "Dados incompletos", description: "Este agendamento não possui data de nascimento do paciente.", variant: "destructive" });
       return;
@@ -712,12 +708,12 @@ const ScheduleAppointmentsView: React.FC = () => {
 
                   {selectedAppointment.patientPhone && (
                     <Button
-                      variant="outline"
+                      variant="success"
                       onClick={() => handleSendWhatsApp(
                         selectedAppointment.patientPhone,
                         selectedAppointment.patientName
                       )}
-                      className="flex-1"
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white border-green-700"
                       disabled={selectedIsPast}
                       title="Enviar Lembrete WhatsApp"
                     >
