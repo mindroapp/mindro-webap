@@ -345,7 +345,7 @@ const PatientDetail: React.FC = () => {
 <body>
 <div class="wrap">
   <div class="top">
-    <div class="brand">mindro</div>
+    <div class="brand"><span style="color:#111">mind</span><span style="color:#4F46E5">ro</span></div>
     <div class="meta"><b>Relatório de Cobrança</b>${new Date().toLocaleDateString('pt-BR')}</div>
   </div>
 
