@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import authService, { LoginResponse } from "@/services/authService";
+import { apiFetch } from "@/services/apiClient";
 
 interface User {
   id: string;
@@ -32,53 +33,67 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+function mapUser(userData: LoginResponse["user"]): User {
+  return {
+    id: userData.id,
+    name: userData.fullName,
+    email: userData.email,
+    phone: userData.phone ?? null,
+    role: userData.role as "admin" | "professional",
+    isVerified: userData.isVerified ?? false,
+    professionalCouncil: userData.professionalCouncil ?? null,
+    professionalRegister: userData.professionalRegister ?? null,
+  };
+}
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Carregar usuário do localStorage ao iniciar
+  // Escutar evento de sessão expirada (disparado pelo apiClient quando refresh falha)
   useEffect(() => {
-    const loadUserFromStorage = () => {
+    const handleSessionExpired = () => setUser(null);
+    window.addEventListener('auth:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
+  }, []);
+
+  // Verificar sessão ativa via cookie httpOnly ao iniciar
+  useEffect(() => {
+    const initSession = async () => {
       try {
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          try {
-            setUser(JSON.parse(storedUser));
-          } catch (error) {
-            setUser(null);
-            localStorage.removeItem("user");
-          }
+        const res = await apiFetch('/users/profile/me', { method: 'GET' });
+        if (res.ok) {
+          const userData = await res.json();
+          setUser({
+            id: userData.id,
+            name: userData.fullName,
+            email: userData.email,
+            phone: userData.phone ?? null,
+            role: userData.role?.toLowerCase() as "admin" | "professional",
+            isVerified: userData.approvalStatus === 'APPROVED',
+            professionalCouncil: userData.professionalCouncil ?? null,
+            professionalRegister: userData.professionalRegister ?? null,
+          });
         }
+      } catch {
+        // Sem sessão ativa — usuário não logado
       } finally {
         setIsLoading(false);
       }
     };
-    loadUserFromStorage();
+    initSession();
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      const response: LoginResponse = await authService.login(email, password);
-      const { user: userData, accessToken, refreshToken } = response;
-      const user: User = {
-        id: userData.id,
-        name: userData.fullName,
-        email: userData.email,
-        phone: userData.phone ?? null,
-        role: userData.role as "admin" | "professional",
-        isVerified: userData.isVerified ?? false,
-        professionalCouncil: userData.professionalCouncil ?? null,
-        professionalRegister: userData.professionalRegister ?? null,
-      };
-      if (accessToken) localStorage.setItem("accessToken", accessToken);
-      if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
-      localStorage.setItem("user", JSON.stringify(user));
-      setUser(user);
+      const response = await authService.login(email, password);
+      const mappedUser = mapUser(response.user);
+      setUser(mappedUser);
       toast({
         title: "Login realizado com sucesso",
-        description: `Bem-vindo de volta, ${user.name}!`,
+        description: `Bem-vindo de volta, ${mappedUser.name}!`,
       });
     } catch (error: any) {
       throw error;
@@ -100,31 +115,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         professionalRegister,
         professionalCouncil,
       });
-      const { user: userData, accessToken, refreshToken } = response;
-      const user: User = {
-        id: userData.id,
-        name: userData.fullName,
-        email: userData.email,
-        phone: userData.phone ?? null,
-        role: userData.role as "admin" | "professional",
-        isVerified: userData.isVerified ?? false,
-        professionalCouncil: userData.professionalCouncil ?? null,
-        professionalRegister: userData.professionalRegister ?? null,
-      };
 
-      // Apenas armazenar tokens se o usuário estiver verificado
-      // Profissionais não aprovados não devem ser logados automaticamente
-      if (accessToken && refreshToken) {
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("refreshToken", refreshToken);
-        setUser(user);
+      if (response.user.isVerified) {
+        setUser(mapUser(response.user));
         toast({
           title: "Registro realizado com sucesso",
           description: "Bem-vindo à plataforma!",
         });
       } else {
-        // Para profissionais não aprovados, não fazer login
-        // Apenas mostrar mensagem de sucesso
         toast({
           title: "Registro realizado com sucesso",
           description: "Sua conta foi criada e está aguardando aprovação do administrador.",
@@ -143,10 +141,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logout = () => {
+    authService.logout().catch(() => {});
     setUser(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
     toast({
       title: "Logout realizado",
       description: "Você saiu da sua conta com sucesso.",
@@ -170,23 +166,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const getAccessToken = (): string | null => {
-    return localStorage.getItem("accessToken");
-  };
+  // Tokens agora são gerenciados via httpOnly cookie — não expostos ao JavaScript
+  const getAccessToken = (): string | null => null;
 
   const isAdmin = user?.role === "admin";
   const isVerified = user?.isVerified ?? false;
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isAuthenticated: !!user, 
-      isLoading, 
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated: !!user,
+      isLoading,
       isAdmin,
       isVerified,
-      login, 
-      register, 
-      logout, 
+      login,
+      register,
+      logout,
       resetPassword,
       getAccessToken
     }}>

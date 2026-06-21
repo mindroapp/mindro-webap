@@ -44,6 +44,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import ClientsManagement from "./pages/admin/ClientsManagement";
 import WhatsAppConfig from "./pages/admin/WhatsAppConfig";
 import ProfessionalsManagement from "./pages/admin/ProfessionalsManagement";
+import RemindersManagement from "./pages/admin/RemindersManagement";
 
 // Novas páginas para profissionais
 import ProfessionalSettings from "./pages/ProfessionalSettings";
@@ -138,6 +139,7 @@ const App = () => (
         <Route path="/admin/professionals" element={<ProtectedRoute><ProfessionalsManagement /></ProtectedRoute>} />
         <Route path="/admin/clients" element={<ProtectedRoute><ClientsManagement /></ProtectedRoute>} />
         <Route path="/admin/whatsapp" element={<ProtectedRoute><WhatsAppConfig /></ProtectedRoute>} />
+        <Route path="/admin/reminders" element={<ProtectedRoute><RemindersManagement /></ProtectedRoute>} />
         
         {/* Rota 404 */}
         <Route path="*" element={<NotFound />} />

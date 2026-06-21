@@ -1,29 +1,9 @@
-/**
- * API Client Centralizador
- * 
- * Este arquivo centraliza toda a configuração de conexão com a API.
- * A URL base é carregada apenas de .env (VITE_API_URL)
- */
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4002/api';
 
-/**
- * URL base da API
- * Variável de ambiente: VITE_API_URL
- * Padrão: http://localhost:6001/api (para desenvolvimento local)
- */
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:6001/api';
-
-/**
- * Cria uma URL completa para um endpoint da API
- * @param endpoint - Endpoint da API (ex: '/patients', '/auth/login')
- * @returns URL completa (ex: 'http://localhost:6001/api/patients')
- */
 export function getApiUrl(endpoint: string): string {
   return `${API_BASE_URL}${endpoint}`;
 }
 
-/**
- * Configuração de headers padrão para requisições
- */
 export function getApiHeaders(token?: string | null): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -36,14 +16,7 @@ export function getApiHeaders(token?: string | null): Record<string, string> {
   return headers;
 }
 
-/**
- * Realiza uma requisição autenticada para a API
- * @param endpoint - Endpoint da API
- * @param options - Opções de requisição (RequestInit)
- * @param token - Token de autenticação (opcional)
- * @returns Response da API
- */
-export async function apiFetch<T = unknown>(
+export async function apiFetch(
   endpoint: string,
   options: RequestInit = {},
   token?: string | null,
@@ -51,25 +24,18 @@ export async function apiFetch<T = unknown>(
   const url = getApiUrl(endpoint);
   const headers = getApiHeaders(token);
 
-  const response = await fetch(url, {
+  return fetch(url, {
     ...options,
+    credentials: 'include',
     headers: {
       ...headers,
       ...(options.headers as Record<string, string> | undefined),
     },
   });
-
-  return response;
 }
 
-/**
- * Realiza uma requisição para a API e retorna JSON
- * Lança erro se a resposta não for ok
- * @param endpoint - Endpoint da API
- * @param options - Opções de requisição (RequestInit)
- * @param token - Token de autenticação (opcional)
- * @returns Dados da resposta como JSON
- */
+let isRefreshing = false;
+
 export async function apiFetchJson<T = unknown>(
   endpoint: string,
   options: RequestInit = {},
@@ -77,9 +43,41 @@ export async function apiFetchJson<T = unknown>(
 ): Promise<T> {
   const response = await apiFetch(endpoint, options, token);
 
-  // Retornar undefined para respostas 204 No Content
-  if (response.status === 204) {
-    return undefined as T;
+  if (response.status === 204) return undefined as T;
+
+  // Auto-refresh: tenta renovar o access_token e repetir a requisição em caso de 401
+  if (response.status === 401 && !endpoint.includes('/auth/') && !isRefreshing) {
+    isRefreshing = true;
+    try {
+      const refreshResponse = await fetch(getApiUrl('/auth/refresh'), {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (refreshResponse.ok) {
+        isRefreshing = false;
+        const retryResponse = await apiFetch(endpoint, options, token);
+        if (retryResponse.status === 204) return undefined as T;
+        const retryData = await retryResponse.json().catch(() => ({}));
+        if (!retryResponse.ok) {
+          throw new Error(
+            Array.isArray(retryData.message)
+              ? retryData.message.join(', ')
+              : retryData.message || `Erro ${retryResponse.status}`,
+          );
+        }
+        return retryData as T;
+      } else {
+        isRefreshing = false;
+        window.dispatchEvent(new Event('auth:session-expired'));
+        throw new Error('Sessão expirada. Por favor, faça login novamente.');
+      }
+    } catch (error) {
+      isRefreshing = false;
+      if (error instanceof Error && error.message.includes('Sessão expirada')) throw error;
+      window.dispatchEvent(new Event('auth:session-expired'));
+      throw new Error('Sessão expirada. Por favor, faça login novamente.');
+    }
   }
 
   const data = await response.json().catch(() => ({}));

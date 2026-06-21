@@ -1,8 +1,6 @@
 import { apiFetchJson } from '@/services/apiClient';
 
 export interface LoginResponse {
-  accessToken?: string;
-  refreshToken?: string;
   user: {
     id: string;
     fullName: string;
@@ -26,10 +24,6 @@ export interface RegisterRequest {
   professionalCouncil?: string;
 }
 
-const AUTH_TOKEN_KEY = 'accessToken';
-const REFRESH_TOKEN_KEY = 'refreshToken';
-const USER_KEY = 'user';
-
 async function authFetch<T>(path: string, body: unknown): Promise<T> {
   return apiFetchJson<T>(path, {
     method: 'POST',
@@ -50,27 +44,19 @@ const authService = {
   async resetPassword(email: string) {
     return authFetch('/auth/reset-password', { email });
   },
+
+  async logout() {
+    return apiFetchJson('/auth/logout', { method: 'POST' });
+  },
 };
 
+// Mantido para compatibilidade — tokens agora ficam em httpOnly cookie
 export function getAccessToken(): string | null {
-  return localStorage.getItem(AUTH_TOKEN_KEY);
-}
-
-export function setAuthTokens({
-  accessToken,
-  refreshToken,
-}: {
-  accessToken: string;
-  refreshToken: string;
-}) {
-  localStorage.setItem(AUTH_TOKEN_KEY, accessToken);
-  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  return null;
 }
 
 export function clearAuthTokens() {
-  localStorage.removeItem(AUTH_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
+  // no-op: tokens são gerenciados pelo browser via httpOnly cookie
 }
 
 export default authService;

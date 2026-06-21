@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Menu, MessageSquare, BarChart3, UserCheck, LogOut, Wifi, WifiOff } from "lucide-react";
+import { Bell, Menu, MessageSquare, BarChart3, UserCheck, LogOut, Wifi, WifiOff } from "lucide-react";
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -26,6 +26,7 @@ const AdminSidebarMenu: React.FC = () => {
     { name: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
     { name: "Profissionais", href: "/admin/professionals", icon: UserCheck },
     { name: "WhatsApp", href: "/admin/whatsapp", icon: MessageSquare },
+    { name: "Reminders", href: "/admin/reminders", icon: Bell },
   ];
 
   const toggleMobileMenu = () => {

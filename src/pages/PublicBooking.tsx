@@ -12,7 +12,9 @@ import { getProfessionByValue } from "@/lib/professions";
 import ProfileAvatarEditor from "@/components/ProfileAvatarEditor";
 import schedulePublicProfileService from "@/services/schedulePublicProfileService";
 
-const BASE_URL = (import.meta as any).env?.VITE_API_URL ?? "http://localhost:6001/api";
+const BASE_URL = (import.meta as any).env?.VITE_API_URL ?? "http://localhost:4002/api";
+const SUPPORT_WHATSAPP: string = import.meta.env.VITE_WHATSAPP_NUMBER ?? "";
+const CONSENT_MESSAGE: string = import.meta.env.VITE_WHATSAPP_MESSAGE ?? "Olá! Aceito receber um lembrete via WhatsApp para confirmação do meu atendimento.";
 
 async function publicFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
@@ -433,15 +435,31 @@ const PublicBooking: React.FC = () => {
             <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
             <div>
               <h3 className="text-lg sm:text-xl font-semibold mb-2">Agendamento Criado!</h3>
-              {isPatient === true && (
-                <p className="text-sm sm:text-base text-muted-foreground mb-3">
-                  Bem-vindo! Recebeu uma mensagem no WhatsApp com os detalhes.
-                </p>
-              )}
               <p className="text-sm sm:text-base text-muted-foreground">
                 {selectedDate && format(selectedDate, "dd/MM/yyyy")} às {selectedTime}
               </p>
             </div>
+            {isPatient === true && SUPPORT_WHATSAPP && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground px-2">
+                  Para receber lembretes de agendamento via WhatsApp, clique abaixo e envie a mensagem de consentimento.
+                </p>
+                <a
+                  href={`https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(`${CONSENT_MESSAGE} (${patientName})`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full"
+                >
+                  <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+                    <svg className="h-4 w-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.118.554 4.103 1.523 5.827L.057 23.428a.5.5 0 00.515.572l5.764-1.428A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.908a9.9 9.9 0 01-5.032-1.371l-.36-.214-3.732.924.997-3.638-.235-.374A9.863 9.863 0 012.092 12C2.092 6.533 6.533 2.092 12 2.092S21.908 6.533 21.908 12 17.467 21.908 12 21.908z"/>
+                    </svg>
+                    Aceitar lembretes via WhatsApp
+                  </Button>
+                </a>
+              </div>
+            )}
             <Button onClick={resetBooking} variant="outline" className="w-full">
               Novo Agendamento
             </Button>
