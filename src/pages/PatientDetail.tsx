@@ -74,6 +74,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { Label } from "@/components/ui/label";
 import { formatPhoneNumber } from "@/lib/format";
+import usersService from "@/services/usersService";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -149,11 +150,41 @@ const PatientDetail: React.FC = () => {
 
   const { toast } = useToast();
 
+  const [professionalProfile, setProfessionalProfile] = useState({
+    name: "",
+    profession: "",
+    registration: "",
+  });
+
   useEffect(() => {
     if (id) {
       fetchPatient(id);
     }
   }, [id]);
+
+  useEffect(() => {
+    const loadProfessionalProfile = async () => {
+      try {
+        const profile = await usersService.getCurrentProfile();
+        setProfessionalProfile({
+          name: profile.fullName || "",
+          profession: profile.profession || "",
+          registration: `${profile.professionalCouncil || ""} ${profile.professionalRegister || ""}`.trim(),
+        });
+      } catch (error) {
+        console.error("Erro ao carregar dados do profissional:", error);
+      }
+    };
+
+    loadProfessionalProfile();
+  }, []);
+
+  const formatProfession = (profession: string) => {
+    return profession
+      .split("_")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+  };
 
   const getInitials = (name: string) => {
     return name
@@ -346,7 +377,12 @@ const PatientDetail: React.FC = () => {
 <div class="wrap">
   <div class="top">
     <div class="brand"><span style="color:#111">mind</span><span style="color:#4F46E5">ro</span></div>
-    <div class="meta"><b>Relatório de Cobrança</b>${new Date().toLocaleDateString('pt-BR')}</div>
+    <div class="meta">
+      <b>Relatório de Cobrança</b>${new Date().toLocaleDateString('pt-BR')}
+      ${professionalProfile.name ? `<div style="margin-top:8px">${professionalProfile.name}</div>` : ''}
+      ${professionalProfile.profession ? `<div>${formatProfession(professionalProfile.profession)}</div>` : ''}
+      ${professionalProfile.registration ? `<div>${professionalProfile.registration}</div>` : ''}
+    </div>
   </div>
 
   <div class="patient">
